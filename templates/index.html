@@ -38,7 +38,11 @@
                         <tbody>
                             {% for row in data %}
                             <tr>
-                                <td class="fw-bold">{{ row.id }}</td>
+                                <td class="fw-bold">
+                                    <a href="{{ url_for('asset_detail', sewaan_id=row.sewaan_id) }}" class="text-decoration-none text-primary">
+                                        {{ row.id }}
+                                    </a>
+                                </td>
                                 <td>{{ row.lokasi }}</td>
                                 <td>
                                     {% if row.penyewa == 'Tiada Maklumat' %}

@@ -3,74 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Butiran Aset - {{ asset.lokasi }}</title>
+    <title>Butiran Aset - {{ asset.aset.id_aset }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="#">
     <style>
-        body { font-family: sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1em; background-color: #fff; box-shadow: 0 2px 3px rgba(0,0,0,0.1); }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #6c7ae0; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .container { max-width: 1000px; margin: auto; background-color: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .asset-details { background-color: #f9f9f9; padding: 1.5em; border-left: 5px solid #6c7ae0; margin-bottom: 2em; border-radius: 5px; }
-        .payment-form { margin-top: 2em; padding: 2em; border: 1px solid #ddd; border-radius: 8px; background-color: #fdfdfd; }
-        .payment-form input, .payment-form textarea, .payment-form button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
-        .payment-form button { background-color: #5cb85c; color: white; padding: 12px 20px; border: none; cursor: pointer; font-size: 16px; }
-        .payment-form button:hover { background-color: #4cae4c; }
-        h1, h2 { color: #6c7ae0; }
-        a { color: #6c7ae0; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        body { background-color: #f8f9fa; }
+        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .bg-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="{{ url_for('index') }}">&lt; Kembali ke Senarai Aset</a>
-        <h1>Butiran Aset</h1>
+    <div class="container mt-5 mb-5">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mb-3">&larr; Kembali ke Dashboard</a>
         
-        <div class="asset-details">
-            <h2>{{ asset.lokasi }}</h2>
-            <p><strong>ID Aset:</strong> {{ asset.id }}</p>
-            <p><strong>Penyewa:</strong> {{ asset.penyewa }}</p>
-            <p><strong>Sewa Bulanan (RM):</strong> {{ "%.2f"|format(asset.sewa|float) }}</p>
-        </div>
+        <div class="row">
+            <!-- Maklumat Aset -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="mb-0">Maklumat Aset</h5>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="h4 text-primary">{{ asset.aset.id_aset }}</h2>
+                        <p class="text-muted">{{ asset.aset.lokasi }}</p>
+                        <hr>
+                        <p><strong>Penyewa:</strong><br> {{ asset.penyewa.nama_penyewa }}</p>
+                        <p><strong>No Telefon:</strong><br> {{ asset.penyewa.no_telefon_penyewa or '-' }}</p>
+                        <p><strong>Sewa Bulanan:</strong><br> RM {{ "{:,.2f}".format(asset.sewa_bulanan_rm) }}</p>
+                        <p><strong>Status:</strong><br> <span class="badge bg-info">{{ asset.status_bayaran_terkini }}</span></p>
+                    </div>
+                </div>
+            </div>
 
-        <h2>Sejarah Pembayaran</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Tarikh Pembayaran</th>
-                    <th>Amaun Dibayar (RM)</th>
-                    <th>Nota</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for payment in payments %}
-                <tr>
-                    <td>{{ payment.payment_date }}</td>
-                    <td>{{ "%.2f"|format(payment.amount_paid|float) }}</td>
-                    <td>{{ payment.notes }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="3" style="text-align: center;">Tiada rekod pembayaran dijumpai.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <!-- Sejarah Pembayaran -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Rekod Pembayaran</h5>
+                        
+                        <!-- Filter Tahun -->
+                        <form action="" method="get" class="d-flex">
+                            <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                                {% for y in range(current_year, current_year - 3, -1) %}
+                                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-light border">
+                            <strong>Jumlah Bayaran ({{ selected_year }}):</strong> RM {{ "{:,.2f}".format(total_bayaran) }}
+                        </div>
 
-        <div class="payment-form">
-            <h2>Tambah Pembayaran Baharu</h2>
-            <form action="{{ url_for('add_payment', asset_id=asset.id) }}" method="post">
-                <label for="payment_date">Tarikh Pembayaran:</label>
-                <input type="date" id="payment_date" name="payment_date" required>
-                
-                <label for="amount_paid">Amaun Dibayar (RM):</label>
-                <input type="number" id="amount_paid" name="amount_paid" step="0.01" required>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Tarikh</th>
+                                        <th>Amaun (RM)</th>
+                                        <th>Nota</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tx in transactions %}
+                                    <tr>
+                                        <td>{{ tx.tarikh_bayaran }}</td>
+                                        <td class="text-success fw-bold">+ {{ "{:,.2f}".format(tx.amaun_bayaran) }}</td>
+                                        <td>{{ tx.nota or '-' }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">Tiada rekod pembayaran untuk tahun {{ selected_year }}.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-                <label for="notes">Nota:</label>
-                <textarea id="notes" name="notes" rows="3"></textarea>
-
-                <button type="submit">Tambah Rekod</button>
-            </form>
+                <!-- Borang Tambah Bayaran (Admin Input) -->
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">➕ Tambah Bayaran Baru</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('add_payment', sewaan_id=asset.sewaan_id) }}" method="post">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Tarikh Bayaran</label>
+                                    <input type="date" name="tarikh_bayaran" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Amaun (RM)</label>
+                                    <input type="number" name="amaun_bayaran" class="form-control" step="0.01" placeholder="0.00" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Nota / Rujukan</label>
+                                    <input type="text" name="nota" class="form-control" placeholder="Cth: Resit 12345">
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button type="submit" class="btn btn-success">Simpan Rekod</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </body>
