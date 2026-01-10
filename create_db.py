@@ -1,41 +1,48 @@
-import pandas as pd
-import sqlite3
 import os
+from supabase import create_client, Client
+from dotenv import load_dotenv
 
-DB_FILE = 'sewaan.db'
-CSV_FILE = 'senarai_aset_sewaan.csv'
-TABLE_NAME = 'aset'
+load_dotenv()
 
-def migrate():
-    """
-    Reads data from a CSV file and migrates it to a SQLite database table.
-    The script will not run if the database file already exists to prevent duplication.
-    """
-    if not os.path.exists(CSV_FILE):
-        print(f"Ralat: Fail '{CSV_FILE}' tidak dijumpai.")
-        return
+# Initialize Supabase client
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
 
-    if os.path.exists(DB_FILE):
-        print(f"Pangkalan data '{DB_FILE}' sudah wujud. Migrasi dibatalkan untuk mengelak data berganda.")
-        return
-
+def create_tables():
+    """Create tables in the Supabase database."""
     try:
-        # Baca data dari CSV
-        df = pd.read_csv(CSV_FILE)
-        
-        # Sambung ke pangkalan data SQLite (ia akan dicipta jika tidak wujud)
-        conn = sqlite3.connect(DB_FILE)
-        
-        # Gunakan pandas to_sql untuk memindahkan data ke jadual
-        # 'if_exists='fail'' akan menyebabkan ralat jika jadual sudah wujud
-        df.to_sql(TABLE_NAME, conn, if_exists='fail', index=False)
-        
-        conn.close()
-        
-        print(f"Berjaya! Data dari '{CSV_FILE}' telah dimuat naik ke jadual '{TABLE_NAME}' dalam '{DB_FILE}'.")
+        # Create assets table
+        supabase.table("assets").upsert({
+            "id": 1, 
+            "lokasi": "DESA TUN RAZAK (NO.52)",
+            "penyewa": "TADIKA (ROSYAZAIMA PUTEH/ZUHAIRI)",
+            "sewa": 3500.00,
+            "status_bayaran": "Pembayaran Berjalan"
+        }).execute()
+        print("Table 'assets' created successfully.")
+
+        # Create tenants table
+        supabase.table("tenants").upsert({
+            "id": 1,
+            "nama": "TADIKA (ROSYAZAIMA PUTEH/ZUHAIRI)",
+            "asset_id": 1
+        }).execute()
+        print("Table 'tenants' created successfully.")
+
+        # Create payments table
+        supabase.table("payments").upsert({
+            "id": 1,
+            "asset_id": 1,
+            "bulan": "Januari",
+            "tahun": 2025,
+            "jumlah": 3500.00,
+            "status": "Selesai"
+        }).execute()
+        print("Table 'payments' created successfully.")
 
     except Exception as e:
-        print(f"Satu ralat telah berlaku: {e}")
+        print(f"An error occurred: {e}")
 
-if __name__ == '__main__':
-    migrate()
+if __name__ == "__main__":
+    create_tables()

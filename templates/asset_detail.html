@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Butiran Aset - {{ asset['Lokasi'] }}</title>
+    <title>Butiran Aset - {{ asset.lokasi }}</title>
     <style>
         body { font-family: sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
         table { width: 100%; border-collapse: collapse; margin-top: 1em; background-color: #fff; box-shadow: 0 2px 3px rgba(0,0,0,0.1); }
@@ -27,10 +27,10 @@
         <h1>Butiran Aset</h1>
         
         <div class="asset-details">
-            <h2>{{ asset['Lokasi'] }}</h2>
-            <p><strong>ID Aset:</strong> {{ asset['ID_Aset'] }}</p>
-            <p><strong>Penyewa:</strong> {{ asset['Nama_Penyewa'] }}</p>
-            <p><strong>Sewa Bulanan (RM):</strong> {{ "%.2f"|format(asset['Sewa_Bulanan_RM']|float) }}</p>
+            <h2>{{ asset.lokasi }}</h2>
+            <p><strong>ID Aset:</strong> {{ asset.id }}</p>
+            <p><strong>Penyewa:</strong> {{ asset.penyewa }}</p>
+            <p><strong>Sewa Bulanan (RM):</strong> {{ "%.2f"|format(asset.sewa|float) }}</p>
         </div>
 
         <h2>Sejarah Pembayaran</h2>
@@ -45,9 +45,9 @@
             <tbody>
                 {% for payment in payments %}
                 <tr>
-                    <td>{{ payment['payment_date'] }}</td>
-                    <td>{{ "%.2f"|format(payment['amount_paid']|float) }}</td>
-                    <td>{{ payment['notes'] }}</td>
+                    <td>{{ payment.payment_date }}</td>
+                    <td>{{ "%.2f"|format(payment.amount_paid|float) }}</td>
+                    <td>{{ payment.notes }}</td>
                 </tr>
                 {% else %}
                 <tr>
@@ -59,7 +59,7 @@
 
         <div class="payment-form">
             <h2>Tambah Pembayaran Baharu</h2>
-            <form action="{{ url_for('add_payment', asset_id=asset['ID_Aset']) }}" method="post">
+            <form action="{{ url_for('add_payment', asset_id=asset.id) }}" method="post">
                 <label for="payment_date">Tarikh Pembayaran:</label>
                 <input type="date" id="payment_date" name="payment_date" required>
                 

@@ -56,10 +56,9 @@
             display: inline-block;
             min-width: 90px;
         }
-        .status-lunas { background-color: #27ae60; } /* Green */
-        .status-separa { background-color: #f39c12; } /* Orange */
-        .status-belum-bayar { background-color: #c0392b; } /* Red */
-        .status-na { background-color: #7f8c8d; } /* Gray */
+        .status-berjalan { background-color: #27ae60; } /* Green */
+        .status-tertunggak { background-color: #c0392b; } /* Red */
+        .status-kosong { background-color: #7f8c8d; } /* Gray */
     </style>
 </head>
 <body>
@@ -72,39 +71,27 @@
                     <th>Lokasi</th>
                     <th>Penyewa</th>
                     <th>Sewa (RM)</th>
-                    <th>Status Bulan Ini</th>
+                    <th>Status Bayaran</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in data %}
-                <tr data-href="{{ url_for('asset_detail', asset_id=row.ID_Aset) }}">
-                    <td>{{ row.ID_Aset }}</td>
-                    <td>{{ row.Lokasi }}</td>
-                    <td>{{ row.Nama_Penyewa }}</td>
-                    <td>{{ "%.2f"|format(row.Sewa_Bulanan_RM|float) }}</td>
+                <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.lokasi }}</td>
+                    <td>{{ row.penyewa }}</td>
+                    <td>{{ "%.2f"|format(row.sewa|float) }}</td>
                     <td>
-                        {% set status_class = 'status-na' %}
-                        {% if row.payment_status == 'Lunas' %}{% set status_class = 'status-lunas' %}{% endif %}
-                        {% if row.payment_status == 'Bayaran separa' %}{% set status_class = 'status-separa' %}{% endif %}
-                        {% if row.payment_status == 'Belum Bayar' %}{% set status_class = 'status-belum-bayar' %}{% endif %}
-                        <span class="status {{ status_class }}">{{ row.payment_status }}</span>
+                        {% set status_class = '' %}
+                        {% if 'Berjalan' in row.status_bayaran %}{% set status_class = 'status-berjalan' %}{% endif %}
+                        {% if 'Tertunggak' in row.status_bayaran %}{% set status_class = 'status-tertunggak' %}{% endif %}
+                        {% if 'Kosong' in row.status_bayaran %}{% set status_class = 'status-kosong' %}{% endif %}
+                        <span class="status {{ status_class }}">{{ row.status_bayaran }}</span>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const rows = document.querySelectorAll("tr[data-href]");
-
-            rows.forEach(row => {
-                row.addEventListener("click", () => {
-                    window.location.href = row.dataset.href;
-                });
-            });
-        });
-    </script>
 </body>
 </html>

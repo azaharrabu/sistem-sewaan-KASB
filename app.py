@@ -1,129 +1,50 @@
-import pandas as pd
-from flask import Flask, render_template
-import sqlite3
 import os
+from flask import Flask, render_template
+from supabase import create_client, Client
+from dotenv import load_dotenv
 
-# Initialize the Flask app
+# Load environment variables
+load_dotenv()
+
+# Initialize Flask app
 app = Flask(__name__)
 
-DB_FILE = 'sewaan.db'
-CSV_FILE = 'senarai_aset_sewaan.csv'
-TABLE_NAME = 'aset'
+# Initialize Supabase client
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
 
-
-import sqlite3
-from flask import Flask, render_template, request, redirect, url_for
-import os
-from datetime import datetime
-
-# Initialize the Flask app
-# ... (kod sedia ada)
-
-# Define the main route
 @app.route('/')
 def index():
     """
-    Reads data from the database, calculates current month's payment status,
-    and renders the dashboard.
+    Fetches asset rental data from the Supabase database and renders the dashboard.
     """
-    if not os.path.exists(DB_FILE):
-        return "Pangkalan data tidak dijumpai. Sila lawati /migrate untuk memulakan."
-
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
-    # Get the current month in YYYY-MM format
-    current_month = datetime.now().strftime('%Y-%m')
-
     try:
-        cur.execute(f"SELECT * FROM {TABLE_NAME}")
-        assets_rows = cur.fetchall()
+        # Fetch data from Supabase, joining tables
+        response = supabase.table('sewaan').select('*, aset(id_aset, lokasi), penyewa(nama_penyewa)').execute()
         
-        data = []
-        for asset_row in assets_rows:
-            asset = dict(asset_row)
-            
-            # Get sum of payments for the current month for this asset
-            cur.execute("""
-                SELECT SUM(amount_paid) 
-                FROM payments 
-                WHERE ID_Aset = ? AND strftime('%Y-%m', payment_date) = ?
-            """, (asset['ID_Aset'], current_month))
-            
-            result = cur.fetchone()
-            paid_this_month = result[0] if result[0] is not None else 0.0
-            
-            # Calculate payment status
-            expected_rent = asset.get('Sewa_Bulanan_RM', 0.0)
-            if expected_rent > 0:
-                if paid_this_month >= expected_rent:
-                    asset['payment_status'] = 'Lunas'
-                elif paid_this_month > 0:
-                    asset['payment_status'] = 'Bayaran separa'
-                else:
-                    asset['payment_status'] = 'Belum Bayar'
-            else:
-                asset['payment_status'] = 'N/A' # Not Applicable for free rent
-
-            data.append(asset)
+        # The data from the API response
+        api_data = response.data
         
-    except sqlite3.Error as e:
-        return f"Ralat pangkalan data: {e}"
-    finally:
-        conn.close()
+        # Transform the data for the template
+        template_data = []
+        for item in api_data:
+            penyewa_nama = item.get('penyewa', {}).get('nama_penyewa') if item.get('penyewa') else 'Tiada Maklumat'
+            
+            template_data.append({
+                'id': item.get('aset', {}).get('id_aset', 'N/A'),
+                'lokasi': item.get('aset', {}).get('lokasi', 'N/A'),
+                'penyewa': penyewa_nama,
+                'sewa': item.get('sewa_bulanan_rm', 0.00),
+                'status_bayaran': item.get('status_bayaran_terkini', 'N/A')
+            })
 
-    # Render the HTML template, passing the data to it
-    return render_template('index.html', data=data)
+    except Exception as e:
+        # If there's an error, display it to make debugging easier
+        return f"Database error: {e}"
 
-from flask import Flask, render_template, request, redirect, url_for
-
-# (kod sedia ada di sini...)
-
-@app.route('/asset/<asset_id>')
-def asset_detail(asset_id):
-    """
-    Displays the details and payment history for a specific asset.
-    """
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
-    # Fetch asset details
-    cur.execute(f"SELECT * FROM {TABLE_NAME} WHERE ID_Aset = ?", (asset_id,))
-    asset = cur.fetchone()
-
-    # Fetch payment history
-    cur.execute("SELECT * FROM payments WHERE ID_Aset = ? ORDER BY payment_date DESC", (asset_id,))
-    payments = cur.fetchall()
-
-    conn.close()
-
-    if asset is None:
-        return "Aset tidak dijumpai.", 404
-
-    return render_template('asset_detail.html', asset=asset, payments=payments)
-
-@app.route('/add_payment/<asset_id>', methods=['POST'])
-def add_payment(asset_id):
-    """
-    Handles the form submission for adding a new payment record.
-    """
-    payment_date = request.form['payment_date']
-    amount_paid = request.form['amount_paid']
-    notes = request.form.get('notes', '') # .get doesn't raise error if key missing
-
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO payments (ID_Aset, payment_date, amount_paid, notes)
-        VALUES (?, ?, ?, ?)
-    """, (asset_id, payment_date, amount_paid, notes))
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('asset_detail', asset_id=asset_id))
-
+    # Render the HTML template, passing the transformed data to it
+    return render_template('index.html', data=template_data)
 
 # This allows the app to be run directly from the command line
 if __name__ == '__main__':
