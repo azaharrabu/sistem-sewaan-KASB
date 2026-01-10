@@ -82,10 +82,11 @@
                     <td>{{ row.penyewa }}</td>
                     <td>{{ "%.2f"|format(row.sewa|float) }}</td>
                     <td>
+                        {% set status_str = row.status_bayaran | string %}
                         {% set status_class = '' %}
-                        {% if 'Berjalan' in row.status_bayaran %}{% set status_class = 'status-berjalan' %}{% endif %}
-                        {% if 'Tertunggak' in row.status_bayaran %}{% set status_class = 'status-tertunggak' %}{% endif %}
-                        {% if 'Kosong' in row.status_bayaran %}{% set status_class = 'status-kosong' %}{% endif %}
+                        {% if 'Berjalan' in status_str %}{% set status_class = 'status-berjalan' %}{% endif %}
+                        {% if 'Tertunggak' in status_str %}{% set status_class = 'status-tertunggak' %}{% endif %}
+                        {% if 'Kosong' in status_str %}{% set status_class = 'status-kosong' %}{% endif %}
                         <span class="status {{ status_class }}">{{ row.status_bayaran }}</span>
                     </td>
                 </tr>
