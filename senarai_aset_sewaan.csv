@@ -1,0 +1,23 @@
+ID_Aset,Jenis_Aset,Lokasi,Nama_Penyewa,No_Telefon_Penyewa,Sewa_Bulanan_RM,Tarikh_Mula_Sewa,Status_Perjanjian,Status_Bayaran_Terkini
+ASSET-001,Premis,"DESA TUN RAZAK (NO.52)","TADIKA (ROSYAZAIMA PUTEH/ZUHAIRI)",,3500.00,,,Pembayaran Berjalan
+ASSET-002,Premis,"DESA TUN RAZAK (NO.67)",EVECUSTOM,,3500.00,,,Pembayaran Berjalan
+ASSET-003,Premis,"BANGI (BAWAH, 30)","BANK BSN",,6900.00,,,Pembayaran Berjalan
+ASSET-004,Premis,"BANGI (ARAS 1, 30-1)","A&R FASHION",,1600.00,,,Pembayaran Berjalan
+ASSET-005,Premis,"BANGI (ARAS 2, 30-2)",ImagisMedia,,1200.00,,,Pembayaran Berjalan
+ASSET-006,Premis,"AUTOCITY, SHAH ALAM (6-9-2A)","AYAM PENYET BAKSO (YE MIN NAING)",,1000.00,,,Pembayaran Berjalan
+ASSET-007,Premis,"AUTOCITY, SHAH ALAM (6-11-2A)","DERAS NIAGA",,1100.00,,,Pembayaran Berjalan
+ASSET-008,Premis,"AUTOCITY, SHAH ALAM (6-13-2A)","OCK RECYCLE (OON CHIN KIAT)",,1000.00,,,Pembayaran Berjalan
+ASSET-009,Premis,"KRISTAL VIEW,SHAH ALAM (B-9-13)","MRS. FAUZLINA",,1650.00,,,Pembayaran Berjalan
+ASSET-010,Premis,"KENANGA POINT A-5-13","ZARINA ISMAIL(SHARUNIZAM)",,1500.00,,,Pembayaran Tertunggak
+ASSET-011,Premis,"PLAZA CITRA,KAJANG (LOT 2-G)","RIZKEY MOTOSPORT (ZAKIR BIN HASBULLAH)",,3500.00,,,Pembayaran Tertunggak
+ASSET-012,Premis,"PLAZA CITRA,KAJANG (LOT 2-3)","TYME WYSE INDUSTRY (SALMAH BINTI ATAN)",,1000.00,,,Pembayaran Tertunggak
+ASSET-013,Premis,"PLAZA CITRA,KAJANG (LOT 3-2)",KOSONG,,0.00,,,Kosong
+ASSET-014,Premis,"SERI BULAN,PD",KOSONG,,0.00,,,Kosong
+ASSET-015,Premis,"SERI BULAN,PD",KOSONG,,0.00,,,Kosong
+ASSET-016,Premis,"KRISTAL VIEW,SHAH ALAM (B-9-12)",,,1650.00,,,Pembayaran Tertunggak
+ASSET-017,Tapak Sewaan,"BBP MERU",GTP,,2340.00,,,Pembayaran Berjalan
+ASSET-018,Tapak Sewaan,"ABPM WILAYAH TIMUR","CLEANPRO EXPRESS",,0.00,,,Pembayaran Berjalan
+ASSET-019,Tapak Sewaan,"BBP PUCHONG","TETUAN RIDAA",,2300.00,,,Pembayaran Berjalan
+ASSET-020,Tapak Sewaan,"BBP SEKSYEN 15 SHAH ALAM","TETUAN RIDAA",,2100.00,,,Pembayaran Berjalan
+ASSET-021,Tapak Sewaan,"BBP SEKSYEN 15 SHAH ALAM","MEDIA HOUSE",,3300.00,,,Pembayaran Berjalan
+ASSET-022,Tapak Sewaan,"BBP JALAN PERAK","MRH DIGITAL",,2000.00,,,Pembayaran Berjalan

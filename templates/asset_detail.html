@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Butiran Aset - {{ asset['Lokasi'] }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1em; background-color: #fff; box-shadow: 0 2px 3px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #6c7ae0; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .container { max-width: 1000px; margin: auto; background-color: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .asset-details { background-color: #f9f9f9; padding: 1.5em; border-left: 5px solid #6c7ae0; margin-bottom: 2em; border-radius: 5px; }
+        .payment-form { margin-top: 2em; padding: 2em; border: 1px solid #ddd; border-radius: 8px; background-color: #fdfdfd; }
+        .payment-form input, .payment-form textarea, .payment-form button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        .payment-form button { background-color: #5cb85c; color: white; padding: 12px 20px; border: none; cursor: pointer; font-size: 16px; }
+        .payment-form button:hover { background-color: #4cae4c; }
+        h1, h2 { color: #6c7ae0; }
+        a { color: #6c7ae0; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('index') }}">&lt; Kembali ke Senarai Aset</a>
+        <h1>Butiran Aset</h1>
+        
+        <div class="asset-details">
+            <h2>{{ asset['Lokasi'] }}</h2>
+            <p><strong>ID Aset:</strong> {{ asset['ID_Aset'] }}</p>
+            <p><strong>Penyewa:</strong> {{ asset['Nama_Penyewa'] }}</p>
+            <p><strong>Sewa Bulanan (RM):</strong> {{ "%.2f"|format(asset['Sewa_Bulanan_RM']|float) }}</p>
+        </div>
+
+        <h2>Sejarah Pembayaran</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tarikh Pembayaran</th>
+                    <th>Amaun Dibayar (RM)</th>
+                    <th>Nota</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>{{ payment['payment_date'] }}</td>
+                    <td>{{ "%.2f"|format(payment['amount_paid']|float) }}</td>
+                    <td>{{ payment['notes'] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center;">Tiada rekod pembayaran dijumpai.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="payment-form">
+            <h2>Tambah Pembayaran Baharu</h2>
+            <form action="{{ url_for('add_payment', asset_id=asset['ID_Aset']) }}" method="post">
+                <label for="payment_date">Tarikh Pembayaran:</label>
+                <input type="date" id="payment_date" name="payment_date" required>
+                
+                <label for="amount_paid">Amaun Dibayar (RM):</label>
+                <input type="number" id="amount_paid" name="amount_paid" step="0.01" required>
+
+                <label for="notes">Nota:</label>
+                <textarea id="notes" name="notes" rows="3"></textarea>
+
+                <button type="submit">Tambah Rekod</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

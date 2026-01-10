@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papan Pemuka Sewaan Aset</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        thead th {
+            background-color: #34495e;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tbody tr:hover {
+            background-color: #e8f4fd;
+            cursor: pointer;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            color: #fff;
+            font-weight: 500;
+            text-align: center;
+            display: inline-block;
+            min-width: 90px;
+        }
+        .status-lunas { background-color: #27ae60; } /* Green */
+        .status-separa { background-color: #f39c12; } /* Orange */
+        .status-belum-bayar { background-color: #c0392b; } /* Red */
+        .status-na { background-color: #7f8c8d; } /* Gray */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Senarai Aset dan Status Sewaan</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Aset</th>
+                    <th>Lokasi</th>
+                    <th>Penyewa</th>
+                    <th>Sewa (RM)</th>
+                    <th>Status Bulan Ini</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr data-href="{{ url_for('asset_detail', asset_id=row.ID_Aset) }}">
+                    <td>{{ row.ID_Aset }}</td>
+                    <td>{{ row.Lokasi }}</td>
+                    <td>{{ row.Nama_Penyewa }}</td>
+                    <td>{{ "%.2f"|format(row.Sewa_Bulanan_RM|float) }}</td>
+                    <td>
+                        {% set status_class = 'status-na' %}
+                        {% if row.payment_status == 'Lunas' %}{% set status_class = 'status-lunas' %}{% endif %}
+                        {% if row.payment_status == 'Bayaran separa' %}{% set status_class = 'status-separa' %}{% endif %}
+                        {% if row.payment_status == 'Belum Bayar' %}{% set status_class = 'status-belum-bayar' %}{% endif %}
+                        <span class="status {{ status_class }}">{{ row.payment_status }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const rows = document.querySelectorAll("tr[data-href]");
+
+            rows.forEach(row => {
+                row.addEventListener("click", () => {
+                    window.location.href = row.dataset.href;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
