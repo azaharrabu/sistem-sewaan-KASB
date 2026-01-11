@@ -44,19 +44,37 @@
                     <table class="table table-hover table-striped align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th>Tarikh</th>
-                                <th>Nota / Keterangan</th>
-                                <th class="text-end">Amaun (RM)</th>
+                                {% if source == 'Efeis' %}
+                                    <th>Tarikh Kursus</th>
+                                    <th class="text-center">Bil Peserta</th>
+                                    <th class="text-end">Kutipan Yuran (RM)</th>
+                                    <th class="text-end">Kos Pengurusan (RM)</th>
+                                    <th class="text-end">Keuntungan Bersih (RM)</th>
+                                {% else %}
+                                    <th>Tarikh</th>
+                                    <th>Nota / Keterangan</th>
+                                    <th class="text-end">Amaun (RM)</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
                             {% for row in data %}
                             <tr>
-                                <td>{{ row.tarikh }}</td>
-                                <td>{{ row.nota or '-' }}</td>
-                                <td class="text-end fw-bold text-success">
-                                    + {{ "{:,.2f}".format(row.amaun) }}
-                                </td>
+                                {% if source == 'Efeis' %}
+                                    <td>{{ row.tarikh }}</td>
+                                    <td class="text-center">{{ row.bil_penyertaan }}</td>
+                                    <td class="text-end">{{ "{:,.2f}".format(row.kutipan_yuran) }}</td>
+                                    <td class="text-end text-danger">- {{ "{:,.2f}".format(row.kos_pengurusan) }}</td>
+                                    <td class="text-end fw-bold text-success">
+                                        + {{ "{:,.2f}".format(row.amaun) }}
+                                    </td>
+                                {% else %}
+                                    <td>{{ row.tarikh }}</td>
+                                    <td>{{ row.nota or '-' }}</td>
+                                    <td class="text-end fw-bold text-success">
+                                        + {{ "{:,.2f}".format(row.amaun) }}
+                                    </td>
+                                {% endif %}
                             </tr>
                             {% else %}
                             <tr>
