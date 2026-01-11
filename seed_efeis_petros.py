@@ -12,21 +12,16 @@ supabase: Client = create_client(url, key)
 # --- RUANGAN INPUT DATA (SILA ISI DI SINI) ---
 # Format: {"tarikh": "YYYY-MM-DD", "amaun": 1234.50, "nota": "..."}
 
-# DATA EFEIS: Sila rujuk page 'Laporan FST' dalam fail anda.
-# Masukkan amaun pada bulan yang ada kursus sahaja. Biarkan 0.00 jika tiada.
+# DATA EFEIS: Sila isikan jumlah sebenar di sini berdasarkan Laporan FST
+# Gantikan 0.00 dengan jumlah pendapatan sebenar.
 DATA_EFEIS = [
-    {"tarikh": "2025-01-31", "amaun": 0.00, "nota": "Kursus Efeis Jan 2025"},
-    {"tarikh": "2025-02-28", "amaun": 0.00, "nota": "Kursus Efeis Feb 2025"},
-    {"tarikh": "2025-03-31", "amaun": 0.00, "nota": "Kursus Efeis Mac 2025"},
-    {"tarikh": "2025-04-30", "amaun": 0.00, "nota": "Kursus Efeis Apr 2025"},
-    {"tarikh": "2025-05-31", "amaun": 0.00, "nota": "Kursus Efeis Mei 2025"},
-    {"tarikh": "2025-06-30", "amaun": 0.00, "nota": "Kursus Efeis Jun 2025"},
-    {"tarikh": "2025-07-31", "amaun": 0.00, "nota": "Kursus Efeis Jul 2025"},
-    {"tarikh": "2025-08-31", "amaun": 0.00, "nota": "Kursus Efeis Ogos 2025"},
-    {"tarikh": "2025-09-30", "amaun": 0.00, "nota": "Kursus Efeis Sep 2025"},
-    {"tarikh": "2025-10-31", "amaun": 0.00, "nota": "Kursus Efeis Okt 2025"},
-    {"tarikh": "2025-11-30", "amaun": 0.00, "nota": "Kursus Efeis Nov 2025"},
-    {"tarikh": "2025-12-31", "amaun": 0.00, "nota": "Kursus Efeis Dis 2025"},
+    {"tarikh": "2025-02-21", "amaun": 22012.50, "nota": "Kursus Efeis (21 Feb 2025)"},
+    {"tarikh": "2025-05-02", "amaun": 23115.00, "nota": "Kursus Efeis (02 Mei 2025)"},
+    {"tarikh": "2025-05-16", "amaun": 21355.00, "nota": "Kursus Efeis (16 Mei 2025)"},
+    {"tarikh": "2025-07-04", "amaun": 24620.00, "nota": "Kursus Efeis (04 Jul 2025)"},
+    {"tarikh": "2025-08-15", "amaun": 22582.50, "nota": "Kursus Efeis (15 Ogos 2025)"},
+    {"tarikh": "2025-10-31", "amaun": 23660.00, "nota": "Kursus Efeis (31 Okt 2025)"},
+    {"tarikh": "2025-12-12", "amaun": 20190.00, "nota": "Kursus Efeis (12 Dis 2025)"},
 ]
 
 # DATA PETROS: Format sama seperti Cleanpro Express.
