@@ -37,15 +37,19 @@
         <!-- Ringkasan Tahunan Mengikut Sumber (Cards) -->
         <div class="row mb-3">
             <div class="col-md-4">
-                <div class="card text-white bg-primary mb-3 h-100">
-                    <div class="card-body text-center">
-                        <h6 class="card-title text-uppercase opacity-75">Sewaan Aset</h6>
-                        <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['sewaan']) }}</p>
+                <a href="{{ url_for('sewaan_dashboard') }}" class="text-decoration-none">
+                    <div class="card text-white bg-primary mb-3 h-100 shadow-sm hover-effect">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-uppercase opacity-75">Sewaan Aset</h6>
+                            <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['sewaan']) }}</p>
+                            <small class="text-white-50">Klik untuk perincian &rarr;</small>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-4">
-                <div class="card text-white bg-info mb-3 h-100">
+                <!-- Placeholder link untuk Efeis -->
+                <div class="card text-white bg-info mb-3 h-100 shadow-sm">
                     <div class="card-body text-center">
                         <h6 class="card-title text-uppercase opacity-75">Kursus Efeis</h6>
                         <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['efeis']) }}</p>
@@ -53,7 +57,8 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card text-white bg-warning mb-3 h-100">
+                <!-- Placeholder link untuk Petros -->
+                <div class="card text-white bg-warning mb-3 h-100 shadow-sm">
                     <div class="card-body text-center">
                         <h6 class="card-title text-uppercase opacity-75 text-dark">Petros</h6>
                         <p class="card-text fs-4 fw-bold text-dark">RM {{ "{:,.2f}".format(yearly_totals['petros']) }}</p>
@@ -82,7 +87,9 @@
                         <tbody>
                             <!-- Baris Sewaan -->
                             <tr>
-                                <td class="text-start fw-bold text-primary">Sewaan</td>
+                                <td class="text-start fw-bold">
+                                    <a href="{{ url_for('sewaan_dashboard') }}" class="text-decoration-none text-primary">Sewaan</a>
+                                </td>
                                 {% for m in range(1, 13) %}
                                 <td>
                                     <span class="{% if financial_data[m]['sewaan'] > 0 %}text-dark{% else %}text-muted{% endif %}">
@@ -130,57 +137,6 @@
                     </table>
                 </div>
                 <small class="text-muted mt-2 d-block">*Angka ini adalah gabungan Sewaan Aset, Efeis, dan Petros.</small>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped align-middle">
-                        <thead>
-                            <tr>
-                                <th>ID Aset</th>
-                                <th>Lokasi</th>
-                                <th>Penyewa</th>
-                                <th class="text-end">Sewa (RM)</th>
-                                <th class="text-center">Status Bayaran</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in data %}
-                            <tr>
-                                <td class="fw-bold">
-                                    <a href="{{ url_for('asset_detail', sewaan_id=row.sewaan_id) }}" class="text-decoration-none text-primary">
-                                        {{ row.id }}
-                                    </a>
-                                </td>
-                                <td>{{ row.lokasi }}</td>
-                                <td>
-                                    {% if row.penyewa == 'Tiada Maklumat' %}
-                                        <span class="text-muted fst-italic">Tiada Penyewa</span>
-                                    {% else %}
-                                        {{ row.penyewa }}
-                                    {% endif %}
-                                </td>
-                                <td class="text-end">{{ "{:,.2f}".format(row.sewa) }}</td>
-                                <td class="text-center">
-                                    {% if 'Berjalan' in row.status_bayaran %}
-                                        <span class="badge bg-success">Berjalan</span>
-                                    {% elif 'Tertunggak' in row.status_bayaran %}
-                                        <span class="badge bg-danger">Tertunggak</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ row.status_bayaran }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="5" class="text-center py-4">Tiada data ditemui.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
         

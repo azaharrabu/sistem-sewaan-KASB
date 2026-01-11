@@ -23,9 +23,6 @@ def index():
     Fetches asset rental data from the Supabase database and renders the dashboard.
     """
     try:
-        # Fetch data from Supabase, joining tables
-        response = supabase.table('sewaan').select('*, aset(id_aset, lokasi), penyewa(nama_penyewa)').order('aset_id', desc=False).execute()
-        
         # --- LOGIK BARU: KIRA PENDAPATAN BULANAN & TAHUNAN ---
         current_year = datetime.now().year
         selected_year = request.args.get('year', current_year, type=int)
@@ -69,35 +66,46 @@ def index():
 
         # -----------------------------------------------------
 
-        # The data from the API response
-        api_data = response.data
-        
-        # Transform the data for the template
-        template_data = []
-        for item in api_data:
-            penyewa_nama = item.get('penyewa', {}).get('nama_penyewa') if item.get('penyewa') else 'Tiada Maklumat'
-            
-            template_data.append({
-                'sewaan_id': item.get('sewaan_id'), # Penting untuk link ke detail
-                'id': item.get('aset', {}).get('id_aset', 'N/A'),
-                'lokasi': item.get('aset', {}).get('lokasi', 'N/A'),
-                'penyewa': penyewa_nama,
-                'sewa': item.get('sewa_bulanan_rm', 0.00),
-                'status_bayaran': item.get('status_bayaran_terkini', 'N/A')
-            })
-
     except Exception as e:
         # If there's an error, display it to make debugging easier
         return f"Database error: {e}"
 
     # Render the HTML template, passing the transformed data to it
     return render_template('index.html', 
-                           data=template_data, 
                            financial_data=financial_data, 
                            yearly_totals=yearly_totals,
                            total_yearly_income=total_yearly_income,
                            selected_year=selected_year,
                            current_year=current_year)
+
+@app.route('/sewaan')
+def sewaan_dashboard():
+    """
+    Memaparkan senarai terperinci aset sewaan.
+    """
+    try:
+        # Fetch data from Supabase, joining tables
+        response = supabase.table('sewaan').select('*, aset(id_aset, lokasi), penyewa(nama_penyewa)').order('aset_id', desc=False).execute()
+        
+        api_data = response.data
+        template_data = []
+        
+        for item in api_data:
+            penyewa_nama = item.get('penyewa', {}).get('nama_penyewa') if item.get('penyewa') else 'Tiada Maklumat'
+            
+            template_data.append({
+                'sewaan_id': item.get('sewaan_id'),
+                'id': item.get('aset', {}).get('id_aset', 'N/A'),
+                'lokasi': item.get('aset', {}).get('lokasi', 'N/A'),
+                'penyewa': penyewa_nama,
+                'sewa': item.get('sewa_bulanan_rm', 0.00),
+                'status_bayaran': item.get('status_bayaran_terkini', 'N/A')
+            })
+            
+        return render_template('sewaan_list.html', data=template_data)
+        
+    except Exception as e:
+        return f"Ralat memuatkan senarai sewaan: {e}"
 
 @app.route('/asset/<int:sewaan_id>')
 def asset_detail(sewaan_id):
