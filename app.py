@@ -1,5 +1,6 @@
 import os
-from datetime import datetime
+import calendar
+from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -77,10 +78,58 @@ def asset_detail(sewaan_id):
         # Kira total bayaran tahun ini
         total_bayaran = sum(item['amaun_bayaran'] for item in transaksi_data)
 
+        # 4. Logik Status Bulanan (Jan - Dec)
+        monthly_status = []
+        sewa_bulanan = float(sewaan_data.get('sewa_bulanan_rm', 0))
+        
+        for month in range(1, 13):
+            month_name = calendar.month_name[month]
+            
+            # Cari bayaran dalam bulan ini
+            bayaran_bulan_ini = sum(
+                t['amaun_bayaran'] for t in transaksi_data 
+                if int(t['tarikh_bayaran'].split('-')[1]) == month
+            )
+            
+            status = "Tertunggak"
+            badge_class = "bg-danger"
+            
+            # Logic mudah status
+            if sewa_bulanan > 0:
+                if bayaran_bulan_ini >= sewa_bulanan:
+                    status = "Selesai"
+                    badge_class = "bg-success"
+                elif bayaran_bulan_ini > 0:
+                    status = "Sebahagian"
+                    badge_class = "bg-warning text-dark"
+            else:
+                # Logic khas untuk Profit Sharing (Sewa = 0)
+                if bayaran_bulan_ini > 0:
+                    status = "Diterima"
+                    badge_class = "bg-success"
+                else:
+                    status = "-"
+                    badge_class = "bg-secondary"
+            
+            # Logic Notis (Hanya untuk tahun semasa & bulan yang dah lepas/sedang berlaku)
+            today = date.today()
+            if selected_year == today.year:
+                if month > today.month:
+                    status = "-"
+                    badge_class = "bg-secondary"
+            
+            monthly_status.append({
+                "month": month_name,
+                "paid": bayaran_bulan_ini,
+                "status": status,
+                "badge": badge_class
+            })
+
         return render_template(
             'asset_detail.html', 
             asset=sewaan_data, 
             transactions=transaksi_data,
+            monthly_status=monthly_status,
             selected_year=selected_year,
             total_bayaran=total_bayaran,
             current_year=current_year

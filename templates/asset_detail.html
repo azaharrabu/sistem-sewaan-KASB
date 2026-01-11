@@ -37,6 +37,38 @@
 
             <!-- Sejarah Pembayaran -->
             <div class="col-md-8">
+                
+                <!-- Status Bulanan Grid -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Status Bulanan {{ selected_year }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm text-center">
+                                <thead class="table-light">
+                                    <tr>
+                                        {% for m in monthly_status %}
+                                            <th>{{ m.month[:3] }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        {% for m in monthly_status %}
+                                        <td>
+                                            <span class="badge {{ m.badge }}" title="RM {{ '{:,.2f}'.format(m.paid) }}">
+                                                {{ m.status }}
+                                            </span>
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Rekod Pembayaran</h5>
@@ -44,7 +76,7 @@
                         <!-- Filter Tahun -->
                         <form action="" method="get" class="d-flex">
                             <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
-                                {% for y in range(current_year, current_year - 3, -1) %}
+                                {% for y in range(current_year, 2024, -1) %}
                                 <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
                                 {% endfor %}
                             </select>
