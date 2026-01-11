@@ -34,10 +34,38 @@
             </form>
         </div>
 
+        <!-- Ringkasan Tahunan Mengikut Sumber (Cards) -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card text-white bg-primary mb-3 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="card-title text-uppercase opacity-75">Sewaan Aset</h6>
+                        <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['sewaan']) }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-info mb-3 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="card-title text-uppercase opacity-75">Kursus Efeis</h6>
+                        <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['efeis']) }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-warning mb-3 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="card-title text-uppercase opacity-75 text-dark">Petros</h6>
+                        <p class="card-text fs-4 fw-bold text-dark">RM {{ "{:,.2f}".format(yearly_totals['petros']) }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Ringkasan Kewangan (Total Income) -->
-        <div class="card mb-4 border-primary">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">💰 Jumlah Pendapatan Sewaan ({{ selected_year }})</h5>
+        <div class="card mb-4 border-dark">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">💰 Jumlah Pendapatan Keseluruhan ({{ selected_year }})</h5>
                 <h3 class="mb-0 fw-bold">RM {{ "{:,.2f}".format(total_yearly_income) }}</h3>
             </div>
             <div class="card-body bg-light">
@@ -45,24 +73,63 @@
                     <table class="table table-bordered table-sm text-center mb-0">
                         <thead class="table-secondary">
                             <tr>
+                                <th class="text-start">Sumber</th>
                                 <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th>
                                 <th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
+                                <th class="table-dark">Jumlah</th>
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- Baris Sewaan -->
                             <tr>
+                                <td class="text-start fw-bold text-primary">Sewaan</td>
                                 {% for m in range(1, 13) %}
                                 <td>
-                                    <span class="fw-bold {% if monthly_income[m] > 0 %}text-success{% else %}text-muted{% endif %}">
-                                        {{ "{:,.0f}".format(monthly_income[m]) }}
+                                    <span class="{% if financial_data[m]['sewaan'] > 0 %}text-dark{% else %}text-muted{% endif %}">
+                                        {{ "{:,.0f}".format(financial_data[m]['sewaan']) }}
                                     </span>
                                 </td>
                                 {% endfor %}
+                                <td class="fw-bold table-light">{{ "{:,.0f}".format(yearly_totals['sewaan']) }}</td>
+                            </tr>
+                            <!-- Baris Efeis -->
+                            <tr>
+                                <td class="text-start fw-bold text-info">Efeis</td>
+                                {% for m in range(1, 13) %}
+                                <td>
+                                    <span class="{% if financial_data[m]['efeis'] > 0 %}text-dark{% else %}text-muted{% endif %}">
+                                        {{ "{:,.0f}".format(financial_data[m]['efeis']) }}
+                                    </span>
+                                </td>
+                                {% endfor %}
+                                <td class="fw-bold table-light">{{ "{:,.0f}".format(yearly_totals['efeis']) }}</td>
+                            </tr>
+                            <!-- Baris Petros -->
+                            <tr>
+                                <td class="text-start fw-bold text-warning">Petros</td>
+                                {% for m in range(1, 13) %}
+                                <td>
+                                    <span class="{% if financial_data[m]['petros'] > 0 %}text-dark{% else %}text-muted{% endif %}">
+                                        {{ "{:,.0f}".format(financial_data[m]['petros']) }}
+                                    </span>
+                                </td>
+                                {% endfor %}
+                                <td class="fw-bold table-light">{{ "{:,.0f}".format(yearly_totals['petros']) }}</td>
+                            </tr>
+                            <!-- Baris Total -->
+                            <tr class="table-active border-top border-dark">
+                                <td class="text-start fw-bold">JUMLAH</td>
+                                {% for m in range(1, 13) %}
+                                <td class="fw-bold">
+                                    {{ "{:,.0f}".format(financial_data[m]['total']) }}
+                                </td>
+                                {% endfor %}
+                                <td class="fw-bold bg-dark text-white">{{ "{:,.0f}".format(total_yearly_income) }}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <small class="text-muted mt-2 d-block">*Angka ini adalah jumlah kasar kutipan sewaan aset sahaja.</small>
+                <small class="text-muted mt-2 d-block">*Angka ini adalah gabungan Sewaan Aset, Efeis, dan Petros.</small>
             </div>
         </div>
 

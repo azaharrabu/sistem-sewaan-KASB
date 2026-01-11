@@ -37,15 +37,35 @@ def index():
         tx_res = supabase.table('transaksi_bayaran').select('amaun_bayaran, tarikh_bayaran').gte('tarikh_bayaran', start_date).lte('tarikh_bayaran', end_date).execute()
         transactions = tx_res.data
 
-        # Agregat mengikut bulan
-        monthly_income = {m: 0.00 for m in range(1, 13)}
+        # Dapatkan pendapatan lain (Efeis & Petros)
+        other_res = supabase.table('pendapatan_lain').select('*').gte('tarikh', start_date).lte('tarikh', end_date).execute()
+        other_data = other_res.data
+
+        # Struktur Data Kewangan: { bulan: { 'sewaan': 0, 'efeis': 0, 'petros': 0, 'total': 0 } }
+        financial_data = {m: {'sewaan': 0.0, 'efeis': 0.0, 'petros': 0.0, 'total': 0.0} for m in range(1, 13)}
+        yearly_totals = {'sewaan': 0.0, 'efeis': 0.0, 'petros': 0.0}
         total_yearly_income = 0.00
 
+        # Proses Sewaan
         for t in transactions:
-            # Tarikh format YYYY-MM-DD
             dt = datetime.strptime(t['tarikh_bayaran'], '%Y-%m-%d')
-            monthly_income[dt.month] += float(t['amaun_bayaran'])
-            total_yearly_income += float(t['amaun_bayaran'])
+            amt = float(t['amaun_bayaran'])
+            financial_data[dt.month]['sewaan'] += amt
+            financial_data[dt.month]['total'] += amt
+            yearly_totals['sewaan'] += amt
+            total_yearly_income += amt
+
+        # Proses Pendapatan Lain
+        for item in other_data:
+            dt = datetime.strptime(item['tarikh'], '%Y-%m-%d')
+            amt = float(item['amaun'])
+            src = item['sumber'].lower() # 'efeis' atau 'petros'
+            if src in financial_data[dt.month]:
+                financial_data[dt.month][src] += amt
+                yearly_totals[src] += amt
+            
+            financial_data[dt.month]['total'] += amt
+            total_yearly_income += amt
 
         # -----------------------------------------------------
 
@@ -73,7 +93,8 @@ def index():
     # Render the HTML template, passing the transformed data to it
     return render_template('index.html', 
                            data=template_data, 
-                           monthly_income=monthly_income, 
+                           financial_data=financial_data, 
+                           yearly_totals=yearly_totals,
                            total_yearly_income=total_yearly_income,
                            selected_year=selected_year,
                            current_year=current_year)
