@@ -26,6 +26,29 @@ def index():
         # Fetch data from Supabase, joining tables
         response = supabase.table('sewaan').select('*, aset(id_aset, lokasi), penyewa(nama_penyewa)').order('aset_id', desc=False).execute()
         
+        # --- LOGIK BARU: KIRA PENDAPATAN BULANAN & TAHUNAN ---
+        current_year = datetime.now().year
+        selected_year = request.args.get('year', current_year, type=int)
+        
+        start_date = f"{selected_year}-01-01"
+        end_date = f"{selected_year}-12-31"
+
+        # Dapatkan semua transaksi untuk tahun yang dipilih
+        tx_res = supabase.table('transaksi_bayaran').select('amaun_bayaran, tarikh_bayaran').gte('tarikh_bayaran', start_date).lte('tarikh_bayaran', end_date).execute()
+        transactions = tx_res.data
+
+        # Agregat mengikut bulan
+        monthly_income = {m: 0.00 for m in range(1, 13)}
+        total_yearly_income = 0.00
+
+        for t in transactions:
+            # Tarikh format YYYY-MM-DD
+            dt = datetime.strptime(t['tarikh_bayaran'], '%Y-%m-%d')
+            monthly_income[dt.month] += float(t['amaun_bayaran'])
+            total_yearly_income += float(t['amaun_bayaran'])
+
+        # -----------------------------------------------------
+
         # The data from the API response
         api_data = response.data
         
@@ -48,7 +71,12 @@ def index():
         return f"Database error: {e}"
 
     # Render the HTML template, passing the transformed data to it
-    return render_template('index.html', data=template_data)
+    return render_template('index.html', 
+                           data=template_data, 
+                           monthly_income=monthly_income, 
+                           total_yearly_income=total_yearly_income,
+                           selected_year=selected_year,
+                           current_year=current_year)
 
 @app.route('/asset/<int:sewaan_id>')
 def asset_detail(sewaan_id):
