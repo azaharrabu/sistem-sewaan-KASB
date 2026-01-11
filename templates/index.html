@@ -21,7 +21,7 @@
         <!-- Header & Filter Tahun -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="h3 text-primary fw-bold">🏠 Dashboard Sewaan Aset KASB</h1>
+                <h1 class="h3 text-primary fw-bold">🏠 Dashboard Pendapatan KASB</h1>
                 <p class="text-muted mb-0">Ringkasan Prestasi Sewaan & Kewangan</p>
             </div>
             <form action="{{ url_for('index') }}" method="get" class="d-flex align-items-center">
@@ -48,22 +48,26 @@
                 </a>
             </div>
             <div class="col-md-4">
-                <!-- Placeholder link untuk Efeis -->
-                <div class="card text-white bg-info mb-3 h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <h6 class="card-title text-uppercase opacity-75">Kursus Efeis</h6>
-                        <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['efeis']) }}</p>
+                <a href="{{ url_for('efeis_dashboard') }}" class="text-decoration-none">
+                    <div class="card text-white bg-info mb-3 h-100 shadow-sm hover-effect">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-uppercase opacity-75">Kursus Efeis</h6>
+                            <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['efeis']) }}</p>
+                            <small class="text-white-50">Klik untuk perincian &rarr;</small>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-4">
-                <!-- Placeholder link untuk Petros -->
-                <div class="card text-white bg-warning mb-3 h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <h6 class="card-title text-uppercase opacity-75 text-dark">Petros</h6>
-                        <p class="card-text fs-4 fw-bold text-dark">RM {{ "{:,.2f}".format(yearly_totals['petros']) }}</p>
+                <a href="{{ url_for('petros_dashboard') }}" class="text-decoration-none">
+                    <div class="card text-white bg-warning mb-3 h-100 shadow-sm hover-effect">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-uppercase opacity-75 text-dark">Petros</h6>
+                            <p class="card-text fs-4 fw-bold text-dark">RM {{ "{:,.2f}".format(yearly_totals['petros']) }}</p>
+                            <small class="text-dark-50">Klik untuk perincian &rarr;</small>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
 
@@ -101,7 +105,9 @@
                             </tr>
                             <!-- Baris Efeis -->
                             <tr>
-                                <td class="text-start fw-bold text-info">Efeis</td>
+                                <td class="text-start fw-bold">
+                                    <a href="{{ url_for('efeis_dashboard') }}" class="text-decoration-none text-info">Efeis</a>
+                                </td>
                                 {% for m in range(1, 13) %}
                                 <td>
                                     <span class="{% if financial_data[m]['efeis'] > 0 %}text-dark{% else %}text-muted{% endif %}">
@@ -113,7 +119,9 @@
                             </tr>
                             <!-- Baris Petros -->
                             <tr>
-                                <td class="text-start fw-bold text-warning">Petros</td>
+                                <td class="text-start fw-bold">
+                                    <a href="{{ url_for('petros_dashboard') }}" class="text-decoration-none text-warning">Petros</a>
+                                </td>
                                 {% for m in range(1, 13) %}
                                 <td>
                                     <span class="{% if financial_data[m]['petros'] > 0 %}text-dark{% else %}text-muted{% endif %}">

@@ -107,6 +107,32 @@ def sewaan_dashboard():
     except Exception as e:
         return f"Ralat memuatkan senarai sewaan: {e}"
 
+@app.route('/efeis')
+def efeis_dashboard():
+    return render_income_detail('Efeis')
+
+@app.route('/petros')
+def petros_dashboard():
+    return render_income_detail('Petros')
+
+def render_income_detail(source_name):
+    try:
+        current_year = datetime.now().year
+        selected_year = request.args.get('year', current_year, type=int)
+        
+        # Dapatkan data dari table pendapatan_lain
+        response = supabase.table('pendapatan_lain').select('*').eq('sumber', source_name).order('tarikh', desc=True).execute()
+        data = response.data
+        
+        # Filter ikut tahun (Python side filtering untuk mudah)
+        filtered_data = [d for d in data if d['tarikh'].startswith(str(selected_year))]
+        total_income = sum(float(d['amaun']) for d in filtered_data)
+
+        return render_template('income_list.html', source=source_name, data=filtered_data, selected_year=selected_year, current_year=current_year, total_income=total_income)
+        
+    except Exception as e:
+        return f"Ralat memuatkan data {source_name}: {e}"
+
 @app.route('/asset/<int:sewaan_id>')
 def asset_detail(sewaan_id):
     try:
