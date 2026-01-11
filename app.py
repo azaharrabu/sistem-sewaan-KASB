@@ -127,8 +127,14 @@ def render_income_detail(source_name):
         # Filter ikut tahun (Python side filtering untuk mudah)
         filtered_data = [d for d in data if d['tarikh'].startswith(str(selected_year))]
         total_income = sum(float(d['amaun']) for d in filtered_data)
+        
+        # Agregat bulanan untuk paparan jadual
+        monthly_breakdown = {m: 0.0 for m in range(1, 13)}
+        for item in filtered_data:
+            m = int(item['tarikh'].split('-')[1])
+            monthly_breakdown[m] += float(item['amaun'])
 
-        return render_template('income_list.html', source=source_name, data=filtered_data, selected_year=selected_year, current_year=current_year, total_income=total_income)
+        return render_template('income_list.html', source=source_name, data=filtered_data, selected_year=selected_year, current_year=current_year, total_income=total_income, monthly_breakdown=monthly_breakdown)
         
     except Exception as e:
         return f"Ralat memuatkan data {source_name}: {e}"
