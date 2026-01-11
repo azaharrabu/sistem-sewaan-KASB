@@ -251,6 +251,51 @@ def add_payment(sewaan_id):
     except Exception as e:
         return f"Ralat menambah pembayaran: {e}"
 
+@app.route('/add_income/<source_name>', methods=['POST'])
+def add_income(source_name):
+    try:
+        tarikh = request.form.get('tarikh')
+        nota = request.form.get('nota')
+        
+        data = {
+            "sumber": source_name,
+            "tarikh": tarikh,
+            "nota": nota
+        }
+
+        if source_name == 'Efeis':
+            bil = request.form.get('bil_penyertaan', 0)
+            yuran = float(request.form.get('kutipan_yuran', 0))
+            kos = float(request.form.get('kos_pengurusan', 0))
+            
+            # Kira keuntungan bersih secara automatik
+            amaun = yuran - kos
+            
+            data.update({
+                "bil_penyertaan": int(bil) if bil else 0,
+                "kutipan_yuran": yuran,
+                "kos_pengurusan": kos,
+                "amaun": amaun
+            })
+        else:
+            # Untuk Petros atau lain-lain, amaun dimasukkan terus
+            amaun = float(request.form.get('amaun', 0))
+            data["amaun"] = amaun
+
+        supabase.table('pendapatan_lain').insert(data).execute()
+        
+        # Redirect ke tahun tarikh tersebut supaya user nampak data yang baru dimasukkan
+        year = tarikh.split('-')[0]
+        if source_name == 'Efeis':
+            return redirect(url_for('efeis_dashboard', year=year))
+        elif source_name == 'Petros':
+            return redirect(url_for('petros_dashboard', year=year))
+        else:
+            return redirect(url_for('index'))
+
+    except Exception as e:
+        return f"Ralat menambah pendapatan: {e}"
+
 # This allows the app to be run directly from the command line
 if __name__ == '__main__':
     # Using debug=True will auto-reload the server when you make changes

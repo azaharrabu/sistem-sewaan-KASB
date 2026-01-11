@@ -87,6 +87,52 @@
             </div>
         </div>
         
+        <!-- Form Tambah Pendapatan -->
+        <div class="card border-success mt-4 mb-5">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">➕ Tambah Rekod {{ source }} Baru</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('add_income', source_name=source) }}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tarikh</label>
+                            <input type="date" name="tarikh" class="form-control" required>
+                        </div>
+
+                        {% if source == 'Efeis' %}
+                        <div class="col-md-4">
+                            <label class="form-label">Bilangan Peserta</label>
+                            <input type="number" name="bil_penyertaan" class="form-control" placeholder="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Kutipan Yuran (RM)</label>
+                            <input type="number" name="kutipan_yuran" class="form-control" step="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Kos Pengurusan (RM)</label>
+                            <input type="number" name="kos_pengurusan" class="form-control" step="0.01" placeholder="0.00" required>
+                        </div>
+                        {% else %}
+                        <div class="col-md-4">
+                            <label class="form-label">Amaun Pendapatan (RM)</label>
+                            <input type="number" name="amaun" class="form-control" step="0.01" placeholder="0.00" required>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-8">
+                            <label class="form-label">Nota / Keterangan</label>
+                            <input type="text" name="nota" class="form-control" placeholder="Contoh: Kursus Siri 1 / Profit Sharing Jan">
+                        </div>
+                        
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-success">Simpan Rekod</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <footer class="text-center mt-4 text-muted small">
             &copy; 2026 KASB Properties.
         </footer>
