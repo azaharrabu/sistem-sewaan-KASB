@@ -4,6 +4,7 @@ from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
 
 # Load environment variables
 load_dotenv()
@@ -214,11 +215,17 @@ def asset_detail(sewaan_id):
                 "badge": badge_class
             })
 
+        # 5. Dapatkan Dokumen Berkaitan
+        aset_id = sewaan_data['aset']['aset_id']
+        docs_res = supabase.table('dokumen_aset').select('*').eq('aset_id', aset_id).order('created_at', desc=True).execute()
+        documents = docs_res.data
+
         return render_template(
             'asset_detail.html', 
             asset=sewaan_data, 
             transactions=transaksi_data,
             monthly_status=monthly_status,
+            documents=documents,
             selected_year=selected_year,
             total_bayaran=total_bayaran,
             current_year=current_year
@@ -256,6 +263,40 @@ def add_payment(sewaan_id):
 
     except Exception as e:
         return f"Ralat menambah pembayaran: {e}"
+
+@app.route('/upload_document/<int:sewaan_id>', methods=['POST'])
+def upload_document(sewaan_id):
+    try:
+        file = request.files.get('file')
+        jenis = request.form.get('jenis_dokumen')
+        nota = request.form.get('nota')
+
+        if not file:
+            return "Tiada fail dipilih"
+
+        # Dapatkan aset_id daripada sewaan_id
+        sewaan_res = supabase.table('sewaan').select('aset_id').eq('sewaan_id', sewaan_id).single().execute()
+        aset_id = sewaan_res.data['aset_id']
+
+        # Proses nama fail yang selamat
+        filename = secure_filename(file.filename)
+        file_path = f"{aset_id}/{int(datetime.now().timestamp())}_{filename}"
+
+        # Upload ke Supabase Storage (Bucket 'dokumen')
+        file_content = file.read()
+        supabase.storage.from_("dokumen").upload(file_path, file_content, {"content-type": file.content_type})
+
+        # Dapatkan Public URL
+        public_url = supabase.storage.from_("dokumen").get_public_url(file_path)
+
+        # Simpan metadata ke database
+        doc_data = {"aset_id": aset_id, "jenis_dokumen": jenis, "nama_fail": filename, "url_fail": public_url, "nota": nota}
+        supabase.table('dokumen_aset').insert(doc_data).execute()
+
+        return redirect(url_for('asset_detail', sewaan_id=sewaan_id))
+
+    except Exception as e:
+        return f"Ralat memuat naik dokumen: {e}"
 
 @app.route('/add_income/<source_name>', methods=['POST'])
 def add_income(source_name):
