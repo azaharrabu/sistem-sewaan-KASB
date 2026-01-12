@@ -51,7 +51,15 @@
                     <select name="kursus" class="form-select" required>
                         <option value="" disabled selected>Sila Pilih...</option>
                         {% for slot in slots %}
-                        <option value="{{ slot.nama_slot }}">{{ slot.nama_slot }}</option>
+                            {% if slot.is_full %}
+                                <option value="{{ slot.nama_slot }}" disabled class="text-danger">
+                                    {{ slot.nama_slot }} (PENUH - {{ slot.registered }}/{{ slot.max_peserta }})
+                                </option>
+                            {% else %}
+                                <option value="{{ slot.nama_slot }}">
+                                    {{ slot.nama_slot }} (Baki: {{ slot.remaining }} tempat)
+                                </option>
+                            {% endif %}
                         {% endfor %}
                     </select>
                 </div>

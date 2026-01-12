@@ -62,8 +62,12 @@ def tetapan():
     if request.method == 'POST':
         # Tambah Slot Baru
         nama_slot = request.form.get('nama_slot')
+        max_peserta = request.form.get('max_peserta')
+        
         if nama_slot:
-            supabase.table('kursus_slot').insert({"nama_slot": nama_slot}).execute()
+            # Default 50 jika tidak ditetapkan
+            limit = int(max_peserta) if max_peserta else 50
+            supabase.table('kursus_slot').insert({"nama_slot": nama_slot, "max_peserta": limit}).execute()
             flash('Slot kursus berjaya ditambah.', 'success')
     
     # Dapatkan senarai slot
@@ -498,6 +502,21 @@ def daftar_kursus():
     # Dapatkan slot kursus yang aktif dari DB
     res = supabase.table('kursus_slot').select('*').eq('status', 'Aktif').order('created_at', desc=True).execute()
     slots = res.data
+    
+    # Dapatkan senarai semua peserta untuk kira kekosongan
+    # (Nota: Untuk skala besar, count patut dibuat di DB level, tapi untuk sekarang ini memadai)
+    p_res = supabase.table('peserta_kursus').select('kursus_dipilih').execute()
+    all_participants = p_res.data
+    
+    for slot in slots:
+        # Kira berapa orang dah daftar untuk slot ini
+        count = sum(1 for p in all_participants if p.get('kursus_dipilih') == slot['nama_slot'])
+        limit = slot.get('max_peserta') or 50
+        
+        slot['registered'] = count
+        slot['remaining'] = max(0, limit - count)
+        slot['is_full'] = count >= limit
+
     return render_template('daftar_kursus.html', slots=slots)
 
 @app.route('/senarai-peserta')

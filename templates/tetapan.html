@@ -16,9 +16,13 @@
             <div class="card-body">
                 <!-- Form Tambah -->
                 <form method="post" class="row g-2 mb-4 align-items-end">
-                    <div class="col-md-9">
+                    <div class="col-md-7">
                         <label class="form-label fw-bold">Tambah Slot Baru</label>
                         <input type="text" name="nama_slot" class="form-control" placeholder="Contoh: Kursus Asas Efeis (Disember 2026)" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Kuota</label>
+                        <input type="number" name="max_peserta" class="form-control" value="50" min="1">
                     </div>
                     <div class="col-md-3">
                         <button type="submit" class="btn btn-success w-100">Tambah Slot</button>
@@ -34,6 +38,7 @@
                         <thead class="table-secondary">
                             <tr>
                                 <th>Nama Slot</th>
+                                <th class="text-center">Kuota</th>
                                 <th>Status</th>
                                 <th class="text-center">Tindakan</th>
                             </tr>
@@ -42,6 +47,7 @@
                             {% for slot in slots %}
                             <tr>
                                 <td>{{ slot.nama_slot }}</td>
+                                <td class="text-center">{{ slot.max_peserta or 50 }}</td>
                                 <td><span class="badge bg-primary">{{ slot.status }}</span></td>
                                 <td class="text-center">
                                     <a href="{{ url_for('padam_slot', id=slot.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Adakah anda pasti?')">Padam</a>
