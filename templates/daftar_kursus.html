@@ -20,7 +20,7 @@
                 <p class="text-muted">Kursus Kompetensi Efeis</p>
             </div>
 
-            <form action="{{ url_for('daftar_kursus') }}" method="post">
+            <form action="{{ url_for('daftar_kursus') }}" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label class="form-label">Nama Penuh</label>
                     <input type="text" name="nama" class="form-control" required placeholder="Seperti dalam KP">
@@ -42,13 +42,38 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Pilih Kursus</label>
+                    <label class="form-label">Nama Syarikat (Jika Ada)</label>
+                    <input type="text" name="syarikat" class="form-control" placeholder="Nama Syarikat / Agensi">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Pilihan Slot Kursus</label>
                     <select name="kursus" class="form-select" required>
                         <option value="" disabled selected>Sila Pilih...</option>
                         <option value="Kursus Asas Efeis (Mac 2026)">Kursus Asas Efeis (Mac 2026)</option>
                         <option value="Kursus Lanjutan Efeis (Mei 2026)">Kursus Lanjutan Efeis (Mei 2026)</option>
                         <option value="Kursus Kompetensi (Julai 2026)">Kursus Kompetensi (Julai 2026)</option>
                     </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Kaedah Pembayaran</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="kaedah_bayaran" value="Self Pay" id="pay1" checked>
+                        <label class="form-check-label" for="pay1">Bayaran Sendiri (Self Pay)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="kaedah_bayaran" value="HRDC Claimable" id="pay2">
+                        <label class="form-check-label" for="pay2">Tuntutan HRDC (Syarikat)</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Bukti Bayaran / Surat Jaminan (GL)</label>
+                    <input type="file" name="bukti_bayaran" class="form-control" accept="image/*,.pdf">
+                    <div class="form-text text-muted">
+                        Sila muat naik resit atau GL jika ada.
+                    </div>
                 </div>
 
                 <div class="d-grid gap-2 mt-4">

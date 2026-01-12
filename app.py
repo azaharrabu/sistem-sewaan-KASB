@@ -347,19 +347,34 @@ def add_income(source_name):
     except Exception as e:
         return f"Ralat menambah pendapatan: {e}"
 
-@app.route('/daftar', methods=['GET', 'POST'])
+@app.route('/daftar-efeis', methods=['GET', 'POST'])
 def daftar_kursus():
     """
     Halaman awam untuk peserta mendaftar kursus Efeis.
     """
     if request.method == 'POST':
         try:
+            # Proses fail bukti bayaran
+            file = request.files.get('bukti_bayaran')
+            bukti_url = None
+            
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                # Simpan dalam folder 'bayaran' di bucket 'dokumen'
+                file_path = f"bayaran/{int(datetime.now().timestamp())}_{filename}"
+                file_content = file.read()
+                supabase.storage.from_("dokumen").upload(file_path, file_content, {"content-type": file.content_type})
+                bukti_url = supabase.storage.from_("dokumen").get_public_url(file_path)
+
             data = {
                 "nama_penuh": request.form.get('nama'),
                 "no_ic": request.form.get('ic'),
                 "no_telefon": request.form.get('telefon'),
                 "email": request.form.get('email'),
-                "kursus_dipilih": request.form.get('kursus')
+                "nama_syarikat": request.form.get('syarikat'),
+                "kursus_dipilih": request.form.get('kursus'),
+                "kaedah_bayaran": request.form.get('kaedah_bayaran'),
+                "bukti_bayaran_url": bukti_url
             }
             
             supabase.table('peserta_kursus').insert(data).execute()
@@ -369,6 +384,17 @@ def daftar_kursus():
             return f"Ralat pendaftaran: {e}"
             
     return render_template('daftar_kursus.html')
+
+@app.route('/senarai-peserta')
+def senarai_peserta():
+    """
+    Halaman admin untuk melihat senarai peserta yang mendaftar.
+    """
+    try:
+        response = supabase.table('peserta_kursus').select('*').order('tarikh_daftar', desc=True).execute()
+        return render_template('peserta_list.html', peserta=response.data)
+    except Exception as e:
+        return f"Ralat memuatkan senarai peserta: {e}"
 
 # This allows the app to be run directly from the command line
 if __name__ == '__main__':
