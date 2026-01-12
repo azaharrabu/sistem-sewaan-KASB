@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <title>Pengurusan Modul - KASB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mb-3">&larr; Kembali ke Dashboard</a>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">📚 Pengurusan Modul E-Learning</h5>
+            </div>
+            <div class="card-body">
+                <!-- Form Tambah -->
+                <form method="post" class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Tajuk Modul</label>
+                        <input type="text" name="tajuk" class="form-control" placeholder="Contoh: Pengenalan Efeis" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Kategori</label>
+                        <select name="kategori" class="form-select">
+                            <option value="Umum">Umum</option>
+                            <option value="Asas">Asas</option>
+                            <option value="Lanjutan">Lanjutan</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold">ID Video YouTube (Bukan Link Penuh)</label>
+                        <input type="text" name="video" class="form-control" placeholder="Contoh: dQw4w9WgXcQ (Ambil ID di hujung link YouTube)">
+                        <div class="form-text">Contoh Link: https://www.youtube.com/watch?v=<b>dQw4w9WgXcQ</b></div>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold">Pautan Nota (Google Drive / PDF URL)</label>
+                        <input type="text" name="nota" class="form-control" placeholder="https://...">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Simpan Modul</button>
+                    </div>
+                </form>
+
+                <hr>
+
+                <!-- Senarai Modul -->
+                <h6 class="fw-bold text-muted">Senarai Modul Aktif</h6>
+                <div class="list-group">
+                    {% for m in moduls %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 fw-bold">{{ m.tajuk }} <span class="badge bg-secondary">{{ m.kategori }}</span></h6>
+                            <small class="text-muted">Video ID: {{ m.pautan_video or '-' }} | Nota: {{ 'Ada' if m.pautan_nota else 'Tiada' }}</small>
+                        </div>
+                        <a href="{{ url_for('padam_modul', id=m.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Padam modul ini?')">Padam</a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3 text-muted">Tiada modul dimasukkan.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

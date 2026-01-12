@@ -125,6 +125,31 @@ def padam_peserta(id):
     flash('Peserta berjaya dipadam.', 'danger')
     return redirect(url_for('senarai_peserta'))
 
+# --- ROUTES: PENGURUSAN MODUL (LMS) ---
+@app.route('/urus-modul', methods=['GET', 'POST'])
+@login_required
+def urus_modul():
+    if request.method == 'POST':
+        data = {
+            "tajuk": request.form.get('tajuk'),
+            "pautan_video": request.form.get('video'),
+            "pautan_nota": request.form.get('nota'),
+            "kategori": request.form.get('kategori')
+        }
+        supabase.table('modul_kursus').insert(data).execute()
+        flash('Modul berjaya ditambah.', 'success')
+    
+    # Dapatkan senarai modul
+    res = supabase.table('modul_kursus').select('*').order('created_at', desc=True).execute()
+    return render_template('urus_modul.html', moduls=res.data)
+
+@app.route('/padam-modul/<int:id>')
+@login_required
+def padam_modul(id):
+    supabase.table('modul_kursus').delete().eq('id', id).execute()
+    flash('Modul berjaya dipadam.', 'warning')
+    return redirect(url_for('urus_modul'))
+
 @app.route('/')
 @login_required
 def index():
@@ -548,7 +573,15 @@ def dashboard_peserta():
     
     user_id = session['peserta_id']
     res = supabase.table('peserta_kursus').select('*').eq('id', user_id).single().execute()
-    return render_template('dashboard_peserta.html', p=res.data)
+    peserta = res.data
+    
+    moduls = []
+    # Hanya tunjuk modul jika bayaran selesai
+    if peserta.get('status_bayaran') == 'Selesai':
+        mod_res = supabase.table('modul_kursus').select('*').order('created_at', desc=False).execute()
+        moduls = mod_res.data
+        
+    return render_template('dashboard_peserta.html', p=peserta, moduls=moduls)
 
 @app.route('/logout-peserta')
 def logout_peserta():
