@@ -33,6 +33,7 @@
                                 <th>Kursus</th>
                                 <th>Bayaran</th>
                                 <th>Bukti</th>
+                                <th class="text-center">Tindakan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -57,9 +58,13 @@
                                     <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('edit_peserta', id=p.id) }}" class="btn btn-sm btn-warning text-dark">Edit</a>
+                                    <a href="{{ url_for('padam_peserta', id=p.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Padam peserta ini?')">Padam</a>
+                                </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="6" class="text-center py-4">Tiada pendaftaran baru.</td></tr>
+                            <tr><td colspan="7" class="text-center py-4">Tiada pendaftaran baru.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>

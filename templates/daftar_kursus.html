@@ -50,9 +50,9 @@
                     <label class="form-label">Pilihan Slot Kursus</label>
                     <select name="kursus" class="form-select" required>
                         <option value="" disabled selected>Sila Pilih...</option>
-                        <option value="Kursus Asas Efeis (Mac 2026)">Kursus Asas Efeis (Mac 2026)</option>
-                        <option value="Kursus Lanjutan Efeis (Mei 2026)">Kursus Lanjutan Efeis (Mei 2026)</option>
-                        <option value="Kursus Kompetensi (Julai 2026)">Kursus Kompetensi (Julai 2026)</option>
+                        {% for slot in slots %}
+                        <option value="{{ slot.nama_slot }}">{{ slot.nama_slot }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 

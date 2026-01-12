@@ -21,7 +21,10 @@
         <!-- Header & Filter Tahun -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="h3 text-primary fw-bold">🏠 Dashboard Pendapatan KASB</h1>
+                <h1 class="h3 text-primary fw-bold">
+                    🏠 Dashboard Pendapatan KASB
+                    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
+                </h1>
                 <p class="text-muted mb-0">Ringkasan Prestasi Sewaan & Kewangan</p>
             </div>
             <form action="{{ url_for('index') }}" method="get" class="d-flex align-items-center">
@@ -36,6 +39,9 @@
 
         <!-- Pautan Pantas -->
         <div class="d-flex justify-content-end mb-3">
+            <a href="{{ url_for('tetapan') }}" class="btn btn-outline-dark shadow-sm me-2">
+                ⚙️ Tetapan Kursus
+            </a>
             <a href="{{ url_for('senarai_peserta') }}" class="btn btn-outline-primary shadow-sm me-2">
                 👥 Semak Senarai Peserta
             </a>

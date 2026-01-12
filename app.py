@@ -1,10 +1,12 @@
 import os
 import calendar
 from datetime import datetime, date
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash, generate_password_hash
+from functools import wraps
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +20,109 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
+# --- AUTH DECORATOR ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- ROUTES: AUTH ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        # Cari user dalam DB
+        res = supabase.table('users').select('*').eq('username', username).execute()
+        user = res.data[0] if res.data else None
+        
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+            return redirect(url_for('index'))
+        else:
+            flash('Username atau Password salah!', 'danger')
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+# --- ROUTES: TETAPAN (SLOT KURSUS) ---
+@app.route('/tetapan', methods=['GET', 'POST'])
+@login_required
+def tetapan():
+    if request.method == 'POST':
+        # Tambah Slot Baru
+        nama_slot = request.form.get('nama_slot')
+        if nama_slot:
+            supabase.table('kursus_slot').insert({"nama_slot": nama_slot}).execute()
+            flash('Slot kursus berjaya ditambah.', 'success')
+    
+    # Dapatkan senarai slot
+    res = supabase.table('kursus_slot').select('*').order('created_at', desc=True).execute()
+    return render_template('tetapan.html', slots=res.data)
+
+@app.route('/padam-slot/<int:id>')
+@login_required
+def padam_slot(id):
+    supabase.table('kursus_slot').delete().eq('id', id).execute()
+    flash('Slot berjaya dipadam.', 'warning')
+    return redirect(url_for('tetapan'))
+
+# --- ROUTES: PENGURUSAN PESERTA ---
+@app.route('/edit-peserta/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_peserta(id):
+    if request.method == 'POST':
+        data = {
+            "nama_penuh": request.form.get('nama'),
+            "no_ic": request.form.get('ic'),
+            "no_telefon": request.form.get('telefon'),
+            "email": request.form.get('email'),
+            "nama_syarikat": request.form.get('syarikat'),
+            "kursus_dipilih": request.form.get('kursus'),
+            "kaedah_bayaran": request.form.get('kaedah_bayaran'),
+            "status_bayaran": request.form.get('status_bayaran')
+        }
+        
+        # Handle file upload jika ada perubahan resit
+        file = request.files.get('bukti_bayaran')
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            file_path = f"bayaran/{int(datetime.now().timestamp())}_{filename}"
+            file_content = file.read()
+            supabase.storage.from_("dokumen").upload(file_path, file_content, {"content-type": file.content_type})
+            public_url = supabase.storage.from_("dokumen").get_public_url(file_path)
+            data['bukti_bayaran_url'] = public_url
+
+        supabase.table('peserta_kursus').update(data).eq('id', id).execute()
+        flash('Maklumat peserta berjaya dikemaskini.', 'success')
+        return redirect(url_for('senarai_peserta'))
+
+    # GET method
+    res = supabase.table('peserta_kursus').select('*').eq('id', id).single().execute()
+    # Dapatkan juga senarai slot untuk dropdown
+    slots_res = supabase.table('kursus_slot').select('*').eq('status', 'Aktif').execute()
+    
+    return render_template('edit_peserta.html', p=res.data, slots=slots_res.data)
+
+@app.route('/padam-peserta/<int:id>')
+@login_required
+def padam_peserta(id):
+    supabase.table('peserta_kursus').delete().eq('id', id).execute()
+    flash('Peserta berjaya dipadam.', 'danger')
+    return redirect(url_for('senarai_peserta'))
+
 @app.route('/')
+@login_required
 def index():
     """
     Fetches asset rental data from the Supabase database and renders the dashboard.
@@ -80,6 +184,7 @@ def index():
                            current_year=current_year)
 
 @app.route('/sewaan')
+@login_required
 def sewaan_dashboard():
     """
     Memaparkan senarai terperinci aset sewaan.
@@ -109,10 +214,12 @@ def sewaan_dashboard():
         return f"Ralat memuatkan senarai sewaan: {e}"
 
 @app.route('/efeis')
+@login_required
 def efeis_dashboard():
     return render_income_detail('Efeis')
 
 @app.route('/petros')
+@login_required
 def petros_dashboard():
     return render_income_detail('Petros')
 
@@ -141,6 +248,7 @@ def render_income_detail(source_name):
         return f"Ralat memuatkan data {source_name}: {e}"
 
 @app.route('/asset/<int:sewaan_id>')
+@login_required
 def asset_detail(sewaan_id):
     try:
         # 1. Dapatkan maklumat asas sewaan (Aset & Penyewa)
@@ -239,6 +347,7 @@ def asset_detail(sewaan_id):
         return f"Ralat memuatkan detail: {e}"
 
 @app.route('/add_payment/<int:sewaan_id>', methods=['POST'])
+@login_required
 def add_payment(sewaan_id):
     try:
         tarikh = request.form.get('tarikh_bayaran')
@@ -269,6 +378,7 @@ def add_payment(sewaan_id):
         return f"Ralat menambah pembayaran: {e}"
 
 @app.route('/upload_document/<int:sewaan_id>', methods=['POST'])
+@login_required
 def upload_document(sewaan_id):
     try:
         file = request.files.get('file')
@@ -303,6 +413,7 @@ def upload_document(sewaan_id):
         return f"Ralat memuat naik dokumen: {e}"
 
 @app.route('/add_income/<source_name>', methods=['POST'])
+@login_required
 def add_income(source_name):
     try:
         tarikh = request.form.get('tarikh')
@@ -347,6 +458,7 @@ def add_income(source_name):
     except Exception as e:
         return f"Ralat menambah pendapatan: {e}"
 
+# Route ini PUBLIC (Tidak perlu login)
 @app.route('/daftar-efeis', methods=['GET', 'POST'])
 def daftar_kursus():
     """
@@ -383,9 +495,13 @@ def daftar_kursus():
         except Exception as e:
             return f"Ralat pendaftaran: {e}"
             
-    return render_template('daftar_kursus.html')
+    # Dapatkan slot kursus yang aktif dari DB
+    res = supabase.table('kursus_slot').select('*').eq('status', 'Aktif').order('created_at', desc=True).execute()
+    slots = res.data
+    return render_template('daftar_kursus.html', slots=slots)
 
 @app.route('/senarai-peserta')
+@login_required
 def senarai_peserta():
     """
     Halaman admin untuk melihat senarai peserta yang mendaftar.
