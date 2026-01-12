@@ -490,7 +490,9 @@ def daftar_kursus():
                 "nama_syarikat": request.form.get('syarikat'),
                 "kursus_dipilih": request.form.get('kursus'),
                 "kaedah_bayaran": request.form.get('kaedah_bayaran'),
-                "bukti_bayaran_url": bukti_url
+                "bukti_bayaran_url": bukti_url,
+                # Auto-generate password menggunakan No. IC
+                "password_hash": generate_password_hash(request.form.get('ic'))
             }
             
             supabase.table('peserta_kursus').insert(data).execute()
@@ -518,6 +520,41 @@ def daftar_kursus():
         slot['is_full'] = count >= limit
 
     return render_template('daftar_kursus.html', slots=slots)
+
+# --- ROUTES: PORTAL PESERTA (E-LEARNING) ---
+@app.route('/login-peserta', methods=['GET', 'POST'])
+def login_peserta():
+    if request.method == 'POST':
+        ic = request.form.get('ic')
+        password = request.form.get('password')
+        
+        # Cari peserta berdasarkan No. IC
+        res = supabase.table('peserta_kursus').select('*').eq('no_ic', ic).execute()
+        user = res.data[0] if res.data else None
+        
+        if user and check_password_hash(user['password_hash'], password):
+            session['peserta_id'] = user['id']
+            session['nama_peserta'] = user['nama_penuh']
+            return redirect(url_for('dashboard_peserta'))
+        else:
+            flash('No. Kad Pengenalan atau Kata Laluan salah.', 'danger')
+            
+    return render_template('login_peserta.html')
+
+@app.route('/dashboard-peserta')
+def dashboard_peserta():
+    if 'peserta_id' not in session:
+        return redirect(url_for('login_peserta'))
+    
+    user_id = session['peserta_id']
+    res = supabase.table('peserta_kursus').select('*').eq('id', user_id).single().execute()
+    return render_template('dashboard_peserta.html', p=res.data)
+
+@app.route('/logout-peserta')
+def logout_peserta():
+    session.pop('peserta_id', None)
+    session.pop('nama_peserta', None)
+    return redirect(url_for('login_peserta'))
 
 @app.route('/senarai-peserta')
 @login_required
