@@ -172,8 +172,12 @@ def asset_detail(sewaan_id):
         monthly_status = []
         sewa_bulanan = float(sewaan_data.get('sewa_bulanan_rm', 0))
         
+        # Senarai nama bulan dalam Bahasa Melayu
+        nama_bulan_melayu = ["", "Jan", "Feb", "Mac", "Apr", "Mei", "Jun", 
+                             "Jul", "Ogo", "Sep", "Okt", "Nov", "Dis"]
+
         for month in range(1, 13):
-            month_name = calendar.month_name[month]
+            month_name = nama_bulan_melayu[month]
             
             # Cari bayaran dalam bulan ini
             bayaran_bulan_ini = sum(
@@ -342,6 +346,29 @@ def add_income(source_name):
 
     except Exception as e:
         return f"Ralat menambah pendapatan: {e}"
+
+@app.route('/daftar', methods=['GET', 'POST'])
+def daftar_kursus():
+    """
+    Halaman awam untuk peserta mendaftar kursus Efeis.
+    """
+    if request.method == 'POST':
+        try:
+            data = {
+                "nama_penuh": request.form.get('nama'),
+                "no_ic": request.form.get('ic'),
+                "no_telefon": request.form.get('telefon'),
+                "email": request.form.get('email'),
+                "kursus_dipilih": request.form.get('kursus')
+            }
+            
+            supabase.table('peserta_kursus').insert(data).execute()
+            return render_template('daftar_sukses.html', nama=data['nama_penuh'])
+            
+        except Exception as e:
+            return f"Ralat pendaftaran: {e}"
+            
+    return render_template('daftar_kursus.html')
 
 # This allows the app to be run directly from the command line
 if __name__ == '__main__':
