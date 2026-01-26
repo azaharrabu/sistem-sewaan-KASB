@@ -55,6 +55,7 @@
                                 <th class="text-end">Nilai Projek (RM)</th>
                                 <th class="text-end">Kos Projek (RM)</th>
                                 <th class="text-end bg-success text-white">Keuntungan Bersih (RM)</th>
+                                {% if session['role'] == 'owner' %}<th class="text-center">Tindakan</th>{% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -65,10 +66,15 @@
                                 <td class="text-end">{{ "{:,.2f}".format(p.nilai_projek or 0) }}</td>
                                 <td class="text-end">{{ "{:,.2f}".format(p.kos_projek or 0) }}</td>
                                 <td class="text-end fw-bold text-success">{{ "{:,.2f}".format(p.keuntungan_bersih or 0) }}</td>
+                                {% if session['role'] == 'owner' %}
+                                <td class="text-center">
+                                    <a href="{{ url_for('padam_projek', id=p.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Adakah anda pasti mahu memadam rekod ini?')">Padam</a>
+                                </td>
+                                {% endif %}
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="5" class="text-center text-muted">Tiada rekod projek.</td>
+                                <td colspan="{% if session['role'] == 'owner' %}6{% else %}5{% endif %}" class="text-center text-muted">Tiada rekod projek.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

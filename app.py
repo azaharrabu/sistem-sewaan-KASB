@@ -50,6 +50,41 @@ def login():
             
     return render_template('login.html')
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+
+        if password != confirm_password:
+            flash('Kata laluan tidak sepadan.', 'danger')
+            return redirect(url_for('register'))
+
+        # Semak jika email sudah wujud
+        res = supabase.table('users').select('*').eq('username', email).execute()
+        if res.data:
+            flash('Email ini sudah didaftarkan. Sila log masuk.', 'warning')
+            return redirect(url_for('login'))
+
+        # Daftar pengguna baru (Role: user)
+        hashed_password = generate_password_hash(password)
+        data = {
+            "username": email, # Guna email sebagai username
+            "password_hash": hashed_password,
+            "role": "user"
+        }
+        supabase.table('users').insert(data).execute()
+        
+        flash('Pendaftaran berjaya! Sila log masuk.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+@app.route('/forgot-password')
+def forgot_password():
+    return render_template('forgot_password.html')
+
 @app.route('/logout')
 def logout():
     session.clear()
@@ -233,6 +268,52 @@ def index():
             yearly_totals['kerjasama'] += amt
             total_yearly_income += amt
 
+        # --- LOGIK PENGIRAAN GAJI & KOMISYEN ---
+        # Kadar Gaji & Komisyen
+        RATE_GAJI_ASAS = 0.08      # 8% dari Sewaan + Efeis + Petros
+        RATE_KOMISYEN_PROJEK = 0.10 # 10% dari Projek Baru
+        RATE_KOMISYEN_KERJASAMA = 0.15 # 15% dari Kerjasama
+
+        breakdown_data = {m: {
+            'group_a_total': 0.0, 'gaji_asas': 0.0,
+            'projek_amt': 0.0, 'projek_comm': 0.0,
+            'kerjasama_amt': 0.0, 'kerjasama_comm': 0.0,
+            'total_comm': 0.0
+        } for m in range(1, 13)}
+
+        totals_breakdown = {
+            'group_a_total': 0.0, 'gaji_asas': 0.0,
+            'projek_amt': 0.0, 'projek_comm': 0.0,
+            'kerjasama_amt': 0.0, 'kerjasama_comm': 0.0,
+            'total_comm': 0.0
+        }
+
+        for m in range(1, 13):
+            # Group A: Sewaan + Efeis + Petros
+            g_a = financial_data[m]['sewaan'] + financial_data[m]['efeis'] + financial_data[m]['petros']
+            breakdown_data[m]['group_a_total'] = g_a
+            breakdown_data[m]['gaji_asas'] = g_a * RATE_GAJI_ASAS
+            totals_breakdown['group_a_total'] += g_a
+            totals_breakdown['gaji_asas'] += breakdown_data[m]['gaji_asas']
+
+            # Group B: Projek (10%) & Kerjasama (15%)
+            p_amt = financial_data[m]['projek']
+            k_amt = financial_data[m]['kerjasama']
+            
+            breakdown_data[m]['projek_amt'] = p_amt
+            breakdown_data[m]['projek_comm'] = p_amt * RATE_KOMISYEN_PROJEK
+            
+            breakdown_data[m]['kerjasama_amt'] = k_amt
+            breakdown_data[m]['kerjasama_comm'] = k_amt * RATE_KOMISYEN_KERJASAMA
+            
+            breakdown_data[m]['total_comm'] = breakdown_data[m]['projek_comm'] + breakdown_data[m]['kerjasama_comm']
+
+            totals_breakdown['projek_amt'] += p_amt
+            totals_breakdown['projek_comm'] += breakdown_data[m]['projek_comm']
+            totals_breakdown['kerjasama_amt'] += k_amt
+            totals_breakdown['kerjasama_comm'] += breakdown_data[m]['kerjasama_comm']
+            totals_breakdown['total_comm'] += breakdown_data[m]['total_comm']
+
         # -----------------------------------------------------
 
     except Exception as e:
@@ -243,6 +324,8 @@ def index():
     return render_template('index.html', 
                            financial_data=financial_data, 
                            yearly_totals=yearly_totals,
+                           breakdown_data=breakdown_data,
+                           totals_breakdown=totals_breakdown,
                            total_yearly_income=total_yearly_income,
                            selected_year=selected_year,
                            current_year=current_year)
@@ -350,6 +433,17 @@ def projek_baru_list():
     
     return render_template('projek_baru_list.html', projek_list=projek_list)
 
+@app.route('/padam-projek/<int:id>')
+@login_required
+def padam_projek(id):
+    # Hanya 'owner' boleh padam
+    if session.get('role') != 'owner':
+        flash('Akses ditolak. Hanya Owner boleh memadam rekod.', 'danger')
+        return redirect(url_for('projek_baru_list'))
+    
+    supabase.table('projek_baru').delete().eq('id', id).execute()
+    flash('Rekod projek berjaya dipadam.', 'warning')
+    return redirect(url_for('projek_baru_list'))
 
 @app.route('/kerjasama', methods=['GET', 'POST'])
 @login_required
@@ -382,6 +476,17 @@ def kerjasama_list():
     
     return render_template('kerjasama_list.html', kerjasama_list=kerjasama_list)
 
+@app.route('/padam-kerjasama/<int:id>')
+@login_required
+def padam_kerjasama(id):
+    # Hanya 'owner' boleh padam
+    if session.get('role') != 'owner':
+        flash('Akses ditolak. Hanya Owner boleh memadam rekod.', 'danger')
+        return redirect(url_for('kerjasama_list'))
+    
+    supabase.table('kerjasama_ketiga').delete().eq('id', id).execute()
+    flash('Rekod kerjasama berjaya dipadam.', 'warning')
+    return redirect(url_for('kerjasama_list'))
 
 @app.route('/asset/<int:sewaan_id>')
 @login_required
