@@ -219,6 +219,8 @@
             </div>
         </div>
 
+        <!-- HANYA OWNER BOLEH LIHAT PECAHAN GAJI & KOMISYEN -->
+        {% if session['role'] == 'owner' %}
         <!-- JADUAL PECAHAN GAJI & KOMISYEN -->
         <div class="row">
             <!-- Jadual 1: Gaji Asas (8%) -->
@@ -234,7 +236,8 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Bulan</th>
-                                        {% for m in range(1, 13) %}<th>{{ m }}</th>{% endfor %}
+                                        <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th>
+                                        <th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
                                         <th class="table-dark">Jumlah</th>
                                     </tr>
                                 </thead>
@@ -260,12 +263,12 @@
                 </div>
             </div>
 
-            <!-- Jadual 2: Komisyen (10% & 15%) -->
+            <!-- Jadual 2: Komisyen Projek Baru (Tiered) -->
             <div class="col-md-12 mb-4">
                 <div class="card border-success">
                     <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">🚀 Pengiraan Komisyen (10% & 15%)</h5>
-                        <small>Sumber: Projek Baru (10%) & Kerjasama (15%)</small>
+                        <h5 class="mb-0">🏗️ Komisyen Projek Baru</h5>
+                        <small>Kadar: 10% (Untung &lt; RM500k) | 15% (Untung &ge; RM500k)</small>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -273,31 +276,65 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Bulan</th>
-                                        {% for m in range(1, 13) %}<th>{{ m }}</th>{% endfor %}
+                                        <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th>
+                                        <th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
                                         <th class="table-dark">Jumlah</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td class="text-start">Komisyen Projek (10%)</td>
+                                        <td class="text-start">Untung Bersih Projek</td>
                                         {% for m in range(1, 13) %}
-                                        <td class="text-muted">{{ "{:,.0f}".format(breakdown_data[m]['projek_comm']) }}</td>
+                                        <td class="text-muted">{{ "{:,.0f}".format(breakdown_data[m]['projek_amt']) }}</td>
                                         {% endfor %}
-                                        <td class="fw-bold">{{ "{:,.0f}".format(totals_breakdown['projek_comm']) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-start">Komisyen Kerjasama (15%)</td>
-                                        {% for m in range(1, 13) %}
-                                        <td class="text-muted">{{ "{:,.0f}".format(breakdown_data[m]['kerjasama_comm']) }}</td>
-                                        {% endfor %}
-                                        <td class="fw-bold">{{ "{:,.0f}".format(totals_breakdown['kerjasama_comm']) }}</td>
+                                        <td class="fw-bold">{{ "{:,.0f}".format(totals_breakdown['projek_amt']) }}</td>
                                     </tr>
                                     <tr class="table-success">
-                                        <td class="text-start fw-bold">Total Komisyen (RM)</td>
+                                        <td class="text-start fw-bold">Komisyen Diterima</td>
                                         {% for m in range(1, 13) %}
-                                        <td class="fw-bold text-dark">{{ "{:,.0f}".format(breakdown_data[m]['total_comm']) }}</td>
+                                        <td class="fw-bold text-dark">{{ "{:,.0f}".format(breakdown_data[m]['projek_comm']) }}</td>
                                         {% endfor %}
-                                        <td class="fw-bold bg-success text-white">{{ "{:,.2f}".format(totals_breakdown['total_comm']) }}</td>
+                                        <td class="fw-bold bg-success text-white">{{ "{:,.2f}".format(totals_breakdown['projek_comm']) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jadual 3: Komisyen Kerjasama (1.5/5) -->
+            <div class="col-md-12 mb-4">
+                <div class="card border-secondary">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">🤝 Komisyen Kerjasama</h5>
+                        <small>Formula: 1.5/5 daripada Nilai Revenue</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered text-center mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Bulan</th>
+                                        <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th>
+                                        <th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
+                                        <th class="table-dark">Jumlah</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-start">Nilai Revenue</td>
+                                        {% for m in range(1, 13) %}
+                                        <td class="text-muted">{{ "{:,.0f}".format(breakdown_data[m]['kerjasama_amt']) }}</td>
+                                        {% endfor %}
+                                        <td class="fw-bold">{{ "{:,.0f}".format(totals_breakdown['kerjasama_amt']) }}</td>
+                                    </tr>
+                                    <tr class="table-secondary">
+                                        <td class="text-start fw-bold">Komisyen (1.5/5)</td>
+                                        {% for m in range(1, 13) %}
+                                        <td class="fw-bold text-dark">{{ "{:,.0f}".format(breakdown_data[m]['kerjasama_comm']) }}</td>
+                                        {% endfor %}
+                                        <td class="fw-bold bg-secondary text-white">{{ "{:,.2f}".format(totals_breakdown['kerjasama_comm']) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -306,6 +343,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
         
         <footer class="text-center mt-4 text-muted small">
             &copy; 2026 KASB Properties.

@@ -271,8 +271,8 @@ def index():
         # --- LOGIK PENGIRAAN GAJI & KOMISYEN ---
         # Kadar Gaji & Komisyen
         RATE_GAJI_ASAS = 0.08      # 8% dari Sewaan + Efeis + Petros
-        RATE_KOMISYEN_PROJEK = 0.10 # 10% dari Projek Baru
-        RATE_KOMISYEN_KERJASAMA = 0.15 # 15% dari Kerjasama
+        # Projek Baru: <500k (10%), >=500k (15%) - Dikira per item di bawah
+        # Kerjasama: 1.5/5 dari Revenue - Dikira per item di bawah
 
         breakdown_data = {m: {
             'group_a_total': 0.0, 'gaji_asas': 0.0,
@@ -288,30 +288,54 @@ def index():
             'total_comm': 0.0
         }
 
+        # --- PENGIRAAN TERPERINCI ---
+
+        # 1. KIRA GROUP A (Gaji Asas) - Berdasarkan monthly total financial_data
         for m in range(1, 13):
-            # Group A: Sewaan + Efeis + Petros
             g_a = financial_data[m]['sewaan'] + financial_data[m]['efeis'] + financial_data[m]['petros']
             breakdown_data[m]['group_a_total'] = g_a
             breakdown_data[m]['gaji_asas'] = g_a * RATE_GAJI_ASAS
-            totals_breakdown['group_a_total'] += g_a
-            totals_breakdown['gaji_asas'] += breakdown_data[m]['gaji_asas']
 
-            # Group B: Projek (10%) & Kerjasama (15%)
-            p_amt = financial_data[m]['projek']
-            k_amt = financial_data[m]['kerjasama']
+        # 2. KIRA PROJEK BARU (Tiered Commission)
+        for p in projek_data:
+            dt = datetime.strptime(p['tarikh_masuk'], '%Y-%m-%d')
+            amt = float(p.get('keuntungan_bersih') or 0)
             
-            breakdown_data[m]['projek_amt'] = p_amt
-            breakdown_data[m]['projek_comm'] = p_amt * RATE_KOMISYEN_PROJEK
+            # Logik Tier: < 500k = 10%, >= 500k = 15%
+            if amt < 500000:
+                comm = amt * 0.10
+            else:
+                comm = amt * 0.15
             
-            breakdown_data[m]['kerjasama_amt'] = k_amt
-            breakdown_data[m]['kerjasama_comm'] = k_amt * RATE_KOMISYEN_KERJASAMA
+            breakdown_data[dt.month]['projek_amt'] += amt
+            breakdown_data[dt.month]['projek_comm'] += comm
+
+        # 3. KIRA KERJASAMA (1.5/5 dari Revenue)
+        for k in kerjasama_data:
+            dt = datetime.strptime(k['tarikh_terima'], '%Y-%m-%d')
+            amt = float(k.get('jumlah_diterima_kasb') or 0) # Ini adalah Nilai Revenue
             
+            # Logik: 1.5 bahagian dari 5 bahagian
+            comm = amt * (1.5 / 5.0)
+            
+            breakdown_data[dt.month]['kerjasama_amt'] += amt
+            breakdown_data[dt.month]['kerjasama_comm'] += comm
+
+        # 4. AGREGAT TOTAL TAHUNAN
+        for m in range(1, 13):
+            # Total Comm Bulanan
             breakdown_data[m]['total_comm'] = breakdown_data[m]['projek_comm'] + breakdown_data[m]['kerjasama_comm']
-
-            totals_breakdown['projek_amt'] += p_amt
+            
+            # Tambah ke Grand Total Tahunan
+            totals_breakdown['group_a_total'] += breakdown_data[m]['group_a_total']
+            totals_breakdown['gaji_asas'] += breakdown_data[m]['gaji_asas']
+            
+            totals_breakdown['projek_amt'] += breakdown_data[m]['projek_amt']
             totals_breakdown['projek_comm'] += breakdown_data[m]['projek_comm']
-            totals_breakdown['kerjasama_amt'] += k_amt
+            
+            totals_breakdown['kerjasama_amt'] += breakdown_data[m]['kerjasama_amt']
             totals_breakdown['kerjasama_comm'] += breakdown_data[m]['kerjasama_comm']
+            
             totals_breakdown['total_comm'] += breakdown_data[m]['total_comm']
 
         # -----------------------------------------------------
