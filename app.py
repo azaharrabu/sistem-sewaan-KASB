@@ -44,7 +44,12 @@ def login():
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
-            return redirect(url_for('index'))
+            
+            # Redirect mengikut role
+            if user['role'] == 'tenant':
+                return redirect(url_for('dashboard_penyewa'))
+            else:
+                return redirect(url_for('index'))
         else:
             flash('Username atau Password salah!', 'danger')
             
@@ -56,6 +61,7 @@ def register():
         email = request.form.get('email')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
+        selected_role = request.form.get('role') # Dapatkan role dari dropdown
 
         if password != confirm_password:
             flash('Kata laluan tidak sepadan.', 'danger')
@@ -67,19 +73,12 @@ def register():
             flash('Email ini sudah didaftarkan. Sila log masuk.', 'warning')
             return redirect(url_for('login'))
 
-        # Semak jika email wujud dalam table 'penyewa'
-        # Jika ya, set role sebagai 'tenant'
-        role = "user"
-        penyewa_res = supabase.table('penyewa').select('*').eq('email', email).execute()
-        if penyewa_res.data:
-            role = "tenant"
-
         # Daftar pengguna baru
         hashed_password = generate_password_hash(password)
         data = {
             "username": email, # Guna email sebagai username
             "password_hash": hashed_password,
-            "role": role
+            "role": selected_role if selected_role else "user" # Guna dropdown, default ke user
         }
         supabase.table('users').insert(data).execute()
         

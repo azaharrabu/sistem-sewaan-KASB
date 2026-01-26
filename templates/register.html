@@ -31,6 +31,15 @@
                 <input type="email" name="email" class="form-control" placeholder="nama@contoh.com" required>
             </div>
             <div class="mb-3">
+                <label class="form-label small fw-bold">Jenis Akaun</label>
+                <select name="role" class="form-select" required>
+                    <option value="" disabled selected>Sila Pilih...</option>
+                    <option value="user">Admin / Staff</option>
+                    <option value="tenant">Penyewa</option>
+                    <option value="partner">Rakan Kerjasama</option>
+                </select>
+            </div>
+            <div class="mb-3">
                 <label class="form-label small fw-bold">Kata Laluan</label>
                 <input type="password" name="password" class="form-control" placeholder="******" required>
             </div>
