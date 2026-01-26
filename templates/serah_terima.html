@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist Serah Terima - Sistem Sewaan KASB</title>
+    <!-- Bootstrap CSS untuk styling pantas -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Elakkan error 404 favicon di log -->
+    <link rel="shortcut icon" href="#">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-check { padding-left: 2.5rem; }
+        .form-check-input { margin-left: -2.5rem; }
+        .category-title { font-weight: bold; color: #2c3e50; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-5 mb-5">
+        
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 text-primary fw-bold">
+                    📋 Checklist Serah Terima Aset
+                </h1>
+                <p class="text-muted mb-0">Dokumen rujukan untuk proses ambil alih pengurusan aset.</p>
+            </div>
+            <div>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary">&larr; Kembali ke Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
+            </div>
+        </div>
+
+        <!-- Checklist Card -->
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Senarai Semak Serah Terima Tugas & Dokumen</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Column 1 -->
+                    <div class="col-md-6">
+                        <h5 class="category-title">1. Dokumen Perundangan & Hak Milik</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check1">
+                            <label class="form-check-label" for="check1">Geran/Dokumen Hak Milik Aset</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check2">
+                            <label class="form-check-label" for="check2">Perjanjian Sewaan (TA) Semasa</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check3">
+                            <label class="form-check-label" for="check3">Perjanjian Sewaan (TA) Terdahulu</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check4">
+                            <label class="form-check-label" for="check4">Polisi Insurans Aset</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check5">
+                            <label class="form-check-label" for="check5">Sijil Layak Menduduki (CCC/CFO)</label>
+                        </div>
+
+                        <h5 class="category-title">2. Kewangan & Operasi</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check6">
+                            <label class="form-check-label" for="check6">Rekod Sejarah Kutipan Sewa</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check7">
+                            <label class="form-check-label" for="check7">Salinan Resit/Bukti Bayaran</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check8">
+                            <label class="form-check-label" for="check8">Dokumentasi Kaedah Kutipan Sewa</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check9">
+                            <label class="form-check-label" for="check9">Rekod Deposit (Sekuriti & Utiliti)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check10">
+                            <label class="form-check-label" for="check10">Rekod Penyelenggaraan & Pembaikan</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check11">
+                            <label class="form-check-label" for="check11">Salinan Bil Cukai (Taksiran & Tanah)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check12">
+                            <label class="form-check-label" for="check12">Salinan Bil Utiliti (TNB, Air, dll)</label>
+                        </div>
+                    </div>
+
+                    <!-- Column 2 -->
+                    <div class="col-md-6">
+                        <h5 class="category-title">3. Maklumat Penyewa</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check13">
+                            <label class="form-check-label" for="check13">Profil & Maklumat Hubungan Penyewa</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check14">
+                            <label class="form-check-label" for="check14">Salinan Dokumen Pengenalan Penyewa</label>
+                        </div>
+
+                        <h5 class="category-title">4. Aset Fizikal</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check15">
+                            <label class="form-check-label" for="check15">Senarai Inventori Lekapan & Lengkapan</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check16">
+                            <label class="form-check-label" for="check16">Semua Set Kunci Aset</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check17">
+                            <label class="form-check-label" for="check17">Laporan Bergambar Keadaan Aset</label>
+                        </div>
+
+                        <h5 class="category-title">5. Sistem Digital</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check18">
+                            <label class="form-check-label" for="check18">Akses Penuh 'Sistem Sewaan KASB'</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check19">
+                            <label class="form-check-label" for="check19">Fail Digital (Softcopy) Semua Dokumen</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                Gunakan senarai ini sebagai panduan semasa mesyuarat serah tugas untuk setiap aset.
+            </div>
+        </div>
+
+        <footer class="text-center mt-4 text-muted small">
+            &copy; 2026 KASB Properties.
+        </footer>
+    </div>
+
+</body>
+</html>

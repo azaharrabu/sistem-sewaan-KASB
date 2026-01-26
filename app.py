@@ -55,6 +55,16 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+
+@app.route('/serah-terima')
+@login_required
+def serah_terima():
+    """
+    Memaparkan halaman checklist serah terima aset.
+    """
+    return render_template('serah_terima.html')
+
+
 # --- ROUTES: TETAPAN (SLOT KURSUS) ---
 @app.route('/tetapan', methods=['GET', 'POST'])
 @login_required
