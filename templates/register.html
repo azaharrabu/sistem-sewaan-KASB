@@ -32,13 +32,26 @@
             </div>
             <div class="mb-3">
                 <label class="form-label small fw-bold">Jenis Akaun</label>
-                <select name="role" class="form-select" required>
+                <select name="role" id="roleSelect" class="form-select" required onchange="togglePenyewaField()">
                     <option value="" disabled selected>Sila Pilih...</option>
                     <option value="user">Admin / Staff</option>
                     <option value="tenant">Penyewa</option>
                     <option value="partner">Rakan Kerjasama</option>
                 </select>
             </div>
+
+            <!-- Dropdown Khas Untuk Penyewa (Hidden by default) -->
+            <div class="mb-3" id="penyewaField" style="display: none;">
+                <label class="form-label small fw-bold text-primary">Sila Pilih Nama Anda / Syarikat</label>
+                <select name="penyewa_id" id="penyewaSelect" class="form-select">
+                    <option value="" disabled selected>Cari nama dalam senarai...</option>
+                    {% for p in penyewa_list %}
+                    <option value="{{ p.penyewa_id }}">{{ p.nama_penyewa }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text small">Pilih nama yang sepadan dengan rekod sewaan anda.</div>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label small fw-bold">Kata Laluan</label>
                 <input type="password" name="password" class="form-control" placeholder="******" required>
@@ -53,5 +66,22 @@
             </div>
         </form>
     </div>
+
+    <script>
+        function togglePenyewaField() {
+            var role = document.getElementById("roleSelect").value;
+            var penyewaDiv = document.getElementById("penyewaField");
+            var penyewaInput = document.getElementById("penyewaSelect");
+
+            if (role === "tenant") {
+                penyewaDiv.style.display = "block";
+                penyewaInput.required = true; // Wajib pilih jika tenant
+            } else {
+                penyewaDiv.style.display = "none";
+                penyewaInput.required = false;
+                penyewaInput.value = ""; // Reset pilihan
+            }
+        }
+    </script>
 </body>
 </html>

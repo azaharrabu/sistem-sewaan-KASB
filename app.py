@@ -62,6 +62,7 @@ def register():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         selected_role = request.form.get('role') # Dapatkan role dari dropdown
+        selected_penyewa_id = request.form.get('penyewa_id') # ID Penyewa jika role = tenant
 
         if password != confirm_password:
             flash('Kata laluan tidak sepadan.', 'danger')
@@ -82,10 +83,26 @@ def register():
         }
         supabase.table('users').insert(data).execute()
         
+        # Jika pengguna adalah Penyewa, hubungkan email dengan rekod penyewa sedia ada
+        if selected_role == 'tenant' and selected_penyewa_id:
+            try:
+                supabase.table('penyewa').update({'email': email}).eq('penyewa_id', selected_penyewa_id).execute()
+            except Exception as e:
+                # Log error jika perlu, tapi user tetap berjaya didaftarkan
+                print(f"Ralat menghubungkan penyewa: {e}")
+
         flash('Pendaftaran berjaya! Sila log masuk.', 'success')
         return redirect(url_for('login'))
 
-    return render_template('register.html')
+    # Dapatkan senarai penyewa untuk dropdown (GET request)
+    penyewa_list = []
+    try:
+        res = supabase.table('penyewa').select('penyewa_id, nama_penyewa').order('nama_penyewa').execute()
+        penyewa_list = res.data
+    except Exception:
+        pass
+
+    return render_template('register.html', penyewa_list=penyewa_list)
 
 @app.route('/dashboard-penyewa')
 @login_required
