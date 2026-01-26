@@ -220,7 +220,7 @@
         </div>
 
         <!-- HANYA OWNER BOLEH LIHAT PECAHAN GAJI & KOMISYEN -->
-        {% if session['role'] == 'owner' %}
+        {% if session['role'] and session['role']|lower == 'owner' %}
         <!-- JADUAL PECAHAN GAJI & KOMISYEN -->
         <div class="row">
             <!-- Jadual 1: Gaji Asas (8%) -->

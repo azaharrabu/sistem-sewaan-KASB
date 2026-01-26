@@ -31,6 +31,21 @@
                         <p><strong>No Telefon:</strong><br> {{ asset.penyewa.no_telefon_penyewa or '-' }}</p>
                         <p><strong>Sewa Bulanan:</strong><br> RM {{ "{:,.2f}".format(asset.sewa_bulanan_rm) }}</p>
                         <p><strong>Status:</strong><br> <span class="badge bg-info">{{ asset.status_bayaran_terkini }}</span></p>
+                        
+                        <!-- WhatsApp Reminder Button -->
+                        {% if asset.penyewa.no_telefon_penyewa %}
+                        <div class="d-grid mt-3">
+                            <a href="https://wa.me/60{{ asset.penyewa.no_telefon_penyewa|replace('-', '')|replace(' ', '') }}?text=Salam {{ asset.penyewa.nama_penyewa }}, peringatan mesra untuk bayaran sewa bulan ini bagi aset {{ asset.aset.id_aset }}. Sila abaikan jika telah bayar. Terima kasih." 
+                               target="_blank" class="btn btn-success btn-sm">
+                                📱 Hantar Peringatan WhatsApp
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning py-1 mt-2 small">
+                            Tiada No. Telefon untuk WhatsApp.
+                        </div>
+                        {% endif %}
+
                     </div>
                 </div>
 
@@ -80,6 +95,17 @@
             <!-- Sejarah Pembayaran -->
             <div class="col-md-8">
                 
+                <!-- Amaran Penalti (Jika Lewat) -->
+                {% if penalty_info.is_late %}
+                <div class="alert alert-danger shadow-sm mb-4">
+                    <h5 class="alert-heading fw-bold">⚠️ Bayaran Lewat Dikesan!</h5>
+                    <p class="mb-0">
+                        Penyewa lewat <strong>{{ penalty_info.days }} hari</strong> dari tarikh akhir (7hb).<br>
+                        Anggaran Penalti Semasa: <strong>RM {{ "{:,.2f}".format(penalty_info.amount) }}</strong>
+                    </p>
+                </div>
+                {% endif %}
+
                 <!-- Status Bulanan Grid -->
                 <div class="card mb-4">
                     <div class="card-header">

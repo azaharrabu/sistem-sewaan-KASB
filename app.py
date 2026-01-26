@@ -67,12 +67,19 @@ def register():
             flash('Email ini sudah didaftarkan. Sila log masuk.', 'warning')
             return redirect(url_for('login'))
 
-        # Daftar pengguna baru (Role: user)
+        # Semak jika email wujud dalam table 'penyewa'
+        # Jika ya, set role sebagai 'tenant'
+        role = "user"
+        penyewa_res = supabase.table('penyewa').select('*').eq('email', email).execute()
+        if penyewa_res.data:
+            role = "tenant"
+
+        # Daftar pengguna baru
         hashed_password = generate_password_hash(password)
         data = {
             "username": email, # Guna email sebagai username
             "password_hash": hashed_password,
-            "role": "user"
+            "role": role
         }
         supabase.table('users').insert(data).execute()
         
@@ -80,6 +87,46 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
+@app.route('/dashboard-penyewa')
+@login_required
+def dashboard_penyewa():
+    # Pastikan pengguna adalah tenant
+    if session.get('role') != 'tenant':
+        return redirect(url_for('index'))
+    
+    email = session.get('username')
+    
+    # Dapatkan maklumat penyewa berdasarkan email
+    penyewa_res = supabase.table('penyewa').select('*').eq('email', email).single().execute()
+    if not penyewa_res.data:
+        flash("Rekod penyewa tidak dijumpai.", "danger")
+        return redirect(url_for('logout'))
+    
+    penyewa = penyewa_res.data
+    
+    # Dapatkan maklumat sewaan aktif
+    sewaan_res = supabase.table('sewaan').select('*, aset(*)').eq('penyewa_id', penyewa['penyewa_id']).execute()
+    sewaan_list = sewaan_res.data
+    
+    # Proses data untuk paparan (Kira Penalti dsb)
+    today = date.today()
+    for s in sewaan_list:
+        # Logik Penalti Mudah: Jika hari ini > hari_akhir dan status bukan 'Selesai'
+        # Nota: Ini hanya anggaran paparan. Logic sebenar perlu semak baki bayaran bulan semasa.
+        s['penalti'] = 0.00
+        s['hari_lewat'] = 0
+        
+        if today.day > (s.get('hari_akhir_bayaran') or 7):
+            # Semak status bayaran terkini (Anda mungkin perlu logic lebih kompleks di sini)
+            if 'Selesai' not in (s.get('status_bayaran_terkini') or ''):
+                due_day = s.get('hari_akhir_bayaran') or 7
+                days_late = today.day - due_day
+                rate = float(s.get('kadar_penalti_harian') or 0)
+                s['hari_lewat'] = days_late
+                s['penalti'] = days_late * rate
+
+    return render_template('dashboard_penyewa.html', penyewa=penyewa, sewaan_list=sewaan_list, today=today)
 
 @app.route('/forgot-password')
 def forgot_password():
@@ -201,6 +248,19 @@ def index():
     """
     Fetches asset rental data from the Supabase database and renders the dashboard.
     """
+    # --- KEMASKINI ROLE TERKINI (AUTO-REFRESH) ---
+    # Pastikan session role sentiasa dikemaskini dari database
+    if 'user_id' in session:
+        try:
+            user_data = supabase.table('users').select('role').eq('id', session['user_id']).single().execute()
+            if user_data.data:
+                session['role'] = user_data.data['role']
+                # Redirect tenant ke dashboard khas jika tersesat ke admin dashboard
+                if session['role'] == 'tenant' and request.endpoint == 'index':
+                    return redirect(url_for('dashboard_penyewa'))
+        except Exception:
+            pass # Abaikan jika berlaku ralat sambungan seketika
+
     try:
         # --- LOGIK BARU: KIRA PENDAPATAN BULANAN & TAHUNAN ---
         current_year = datetime.now().year
@@ -597,6 +657,19 @@ def asset_detail(sewaan_id):
         docs_res = supabase.table('dokumen_aset').select('*').eq('aset_id', aset_id).order('created_at', desc=True).execute()
         documents = docs_res.data
 
+        # 6. Kira Penalti (Untuk Paparan Admin)
+        today = date.today()
+        penalty_info = {"amount": 0.00, "days": 0, "is_late": False}
+        
+        # Logic: Jika bulan semasa belum selesai bayar DAN hari ini > due date
+        current_month_idx = today.month - 1 # 0-index for list access if needed, but we use loop
+        current_month_status = monthly_status[current_month_idx] # Status bulan semasa
+        
+        if current_month_status['status'] != "Selesai" and today.day > (sewaan_data.get('hari_akhir_bayaran') or 7):
+            days_late = today.day - (sewaan_data.get('hari_akhir_bayaran') or 7)
+            rate = float(sewaan_data.get('kadar_penalti_harian') or 0)
+            penalty_info = {"amount": days_late * rate, "days": days_late, "is_late": True}
+
         return render_template(
             'asset_detail.html', 
             asset=sewaan_data, 
@@ -604,8 +677,9 @@ def asset_detail(sewaan_id):
             monthly_status=monthly_status,
             documents=documents,
             selected_year=selected_year,
-            total_bayaran=total_bayaran,
-            current_year=current_year
+            total_bayaran=total_bayaran, 
+            current_year=current_year,
+            penalty_info=penalty_info
         )
 
     except Exception as e:
