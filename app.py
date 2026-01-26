@@ -182,9 +182,16 @@ def index():
         other_res = supabase.table('pendapatan_lain').select('*').gte('tarikh', start_date).lte('tarikh', end_date).execute()
         other_data = other_res.data
 
-        # Struktur Data Kewangan: { bulan: { 'sewaan': 0, 'efeis': 0, 'petros': 0, 'total': 0 } }
-        financial_data = {m: {'sewaan': 0.0, 'efeis': 0.0, 'petros': 0.0, 'total': 0.0} for m in range(1, 13)}
-        yearly_totals = {'sewaan': 0.0, 'efeis': 0.0, 'petros': 0.0}
+        # Dapatkan Projek Baru & Kerjasama
+        projek_res = supabase.table('projek_baru').select('*').gte('tarikh_masuk', start_date).lte('tarikh_masuk', end_date).execute()
+        projek_data = projek_res.data
+
+        kerjasama_res = supabase.table('kerjasama_ketiga').select('*').gte('tarikh_terima', start_date).lte('tarikh_terima', end_date).execute()
+        kerjasama_data = kerjasama_res.data
+
+        # Struktur Data Kewangan
+        financial_data = {m: {'sewaan': 0.0, 'efeis': 0.0, 'petros': 0.0, 'projek': 0.0, 'kerjasama': 0.0, 'total': 0.0} for m in range(1, 13)}
+        yearly_totals = {'sewaan': 0.0, 'efeis': 0.0, 'petros': 0.0, 'projek': 0.0, 'kerjasama': 0.0}
         total_yearly_income = 0.00
 
         # Proses Sewaan
@@ -206,6 +213,24 @@ def index():
                 yearly_totals[src] += amt
             
             financial_data[dt.month]['total'] += amt
+            total_yearly_income += amt
+            
+        # Proses Projek Baru (Guna tarikh_masuk & komisyen)
+        for p in projek_data:
+            dt = datetime.strptime(p['tarikh_masuk'], '%Y-%m-%d')
+            amt = float(p.get('komisyen') or 0)
+            financial_data[dt.month]['projek'] += amt
+            financial_data[dt.month]['total'] += amt
+            yearly_totals['projek'] += amt
+            total_yearly_income += amt
+
+        # Proses Kerjasama (Guna tarikh_terima & komisyen)
+        for k in kerjasama_data:
+            dt = datetime.strptime(k['tarikh_terima'], '%Y-%m-%d')
+            amt = float(k.get('komisyen') or 0)
+            financial_data[dt.month]['kerjasama'] += amt
+            financial_data[dt.month]['total'] += amt
+            yearly_totals['kerjasama'] += amt
             total_yearly_income += amt
 
         # -----------------------------------------------------
@@ -285,6 +310,71 @@ def render_income_detail(source_name):
         
     except Exception as e:
         return f"Ralat memuatkan data {source_name}: {e}"
+
+
+@app.route('/projek-baru', methods=['GET', 'POST'])
+@login_required
+def projek_baru_list():
+    """
+    Menguruskan (menambah dan memaparkan) projek baru dengan komisyen 10/15%.
+    """
+    if request.method == 'POST':
+        try:
+            data = {
+                "nama_projek": request.form.get('nama_projek'),
+                "keuntungan_bersih": float(request.form.get('keuntungan_bersih')),
+                "tarikh_masuk": request.form.get('tarikh_masuk'),
+                "user_id": session.get('user_id')
+            }
+            supabase.table('projek_baru').insert(data).execute()
+            flash('Projek baru berjaya direkodkan.', 'success')
+        except Exception as e:
+            flash(f'Ralat merekod projek: {e}', 'danger')
+        
+        return redirect(url_for('projek_baru_list'))
+
+    # GET request: Paparkan senarai
+    try:
+        res = supabase.table('projek_baru').select('*').order('tarikh_masuk', desc=True).execute()
+        projek_list = res.data
+    except Exception as e:
+        flash(f'Ralat memuatkan senarai projek: {e}', 'danger')
+        projek_list = []
+    
+    return render_template('projek_baru_list.html', projek_list=projek_list)
+
+
+@app.route('/kerjasama', methods=['GET', 'POST'])
+@login_required
+def kerjasama_list():
+    """
+    Menguruskan (menambah dan memaparkan) kerjasama pihak ketiga (komisyen 30%).
+    """
+    if request.method == 'POST':
+        try:
+            data = {
+                "nama_kerjasama": request.form.get('nama_kerjasama'),
+                "jumlah_diterima_kasb": float(request.form.get('jumlah_diterima_kasb')),
+                "tarikh_terima": request.form.get('tarikh_terima'),
+                "user_id": session.get('user_id')
+            }
+            supabase.table('kerjasama_ketiga').insert(data).execute()
+            flash('Rekod kerjasama berjaya disimpan.', 'success')
+        except Exception as e:
+            flash(f'Ralat merekod kerjasama: {e}', 'danger')
+        
+        return redirect(url_for('kerjasama_list'))
+
+    # GET request: Paparkan senarai
+    try:
+        res = supabase.table('kerjasama_ketiga').select('*').order('tarikh_terima', desc=True).execute()
+        kerjasama_list = res.data
+    except Exception as e:
+        flash(f'Ralat memuatkan senarai kerjasama: {e}', 'danger')
+        kerjasama_list = []
+    
+    return render_template('kerjasama_list.html', kerjasama_list=kerjasama_list)
+
 
 @app.route('/asset/<int:sewaan_id>')
 @login_required
