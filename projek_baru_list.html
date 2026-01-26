@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <title>Senarai Projek Baru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📁 Pengurusan Projek Baru</h2>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Kembali ke Dashboard</a>
+        </div>
+
+        <!-- Borang Tambah Projek -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Tambah Projek Baru</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Nama Projek</label>
+                            <input type="text" name="nama_projek" class="form-control" required placeholder="Contoh: Projek Renovasi Pejabat">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Nilai Projek (RM)</label>
+                            <input type="number" step="0.01" name="nilai_projek" class="form-control" required placeholder="0.00">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Kos Projek (RM)</label>
+                            <input type="number" step="0.01" name="kos_projek" class="form-control" required placeholder="0.00">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Tarikh Masuk</label>
+                            <input type="date" name="tarikh_masuk" class="form-control" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Simpan Rekod</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Senarai Projek -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Sejarah Projek</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Tarikh</th>
+                                <th>Nama Projek</th>
+                                <th class="text-end">Nilai Projek (RM)</th>
+                                <th class="text-end">Kos Projek (RM)</th>
+                                <th class="text-end bg-success text-white">Keuntungan Bersih (RM)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in projek_list %}
+                            <tr>
+                                <td>{{ p.tarikh_masuk }}</td>
+                                <td>{{ p.nama_projek }}</td>
+                                <td class="text-end">{{ "{:,.2f}".format(p.nilai_projek or 0) }}</td>
+                                <td class="text-end">{{ "{:,.2f}".format(p.kos_projek or 0) }}</td>
+                                <td class="text-end fw-bold text-success">{{ "{:,.2f}".format(p.keuntungan_bersih or 0) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Tiada rekod projek.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                {% for category, message in messages %}
+                    <div class="toast show align-items-center text-white bg-{{ category }} border-0" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">{{ message }}</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

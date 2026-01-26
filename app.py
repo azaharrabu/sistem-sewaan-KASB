@@ -218,7 +218,7 @@ def index():
         # Proses Projek Baru (Guna tarikh_masuk & komisyen)
         for p in projek_data:
             dt = datetime.strptime(p['tarikh_masuk'], '%Y-%m-%d')
-            amt = float(p.get('komisyen') or 0)
+            amt = float(p.get('keuntungan_bersih') or 0)
             financial_data[dt.month]['projek'] += amt
             financial_data[dt.month]['total'] += amt
             yearly_totals['projek'] += amt
@@ -227,7 +227,7 @@ def index():
         # Proses Kerjasama (Guna tarikh_terima & komisyen)
         for k in kerjasama_data:
             dt = datetime.strptime(k['tarikh_terima'], '%Y-%m-%d')
-            amt = float(k.get('komisyen') or 0)
+            amt = float(k.get('jumlah_diterima_kasb') or 0)
             financial_data[dt.month]['kerjasama'] += amt
             financial_data[dt.month]['total'] += amt
             yearly_totals['kerjasama'] += amt
@@ -320,9 +320,16 @@ def projek_baru_list():
     """
     if request.method == 'POST':
         try:
+            nilai = float(request.form.get('nilai_projek') or 0)
+            kos = float(request.form.get('kos_projek') or 0)
+            # Kira keuntungan bersih (Nilai - Kos)
+            untung = nilai - kos
+
             data = {
                 "nama_projek": request.form.get('nama_projek'),
-                "keuntungan_bersih": float(request.form.get('keuntungan_bersih')),
+                "nilai_projek": nilai,
+                "kos_projek": kos,
+                "keuntungan_bersih": untung,
                 "tarikh_masuk": request.form.get('tarikh_masuk'),
                 "user_id": session.get('user_id')
             }
