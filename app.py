@@ -44,10 +44,13 @@ def login():
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
+            session['linked_name'] = user.get('linked_name') # Simpan nama link (untuk partner)
             
             # Redirect mengikut role
             if user['role'] == 'tenant':
                 return redirect(url_for('dashboard_penyewa'))
+            elif user['role'] == 'partner':
+                return redirect(url_for('dashboard_partner'))
             else:
                 return redirect(url_for('index'))
         else:
@@ -63,6 +66,7 @@ def register():
         confirm_password = request.form.get('confirm_password')
         selected_role = request.form.get('role') # Dapatkan role dari dropdown
         selected_penyewa_id = request.form.get('penyewa_id') # ID Penyewa jika role = tenant
+        selected_partner_name = request.form.get('partner_name') # Nama Partner jika role = partner
 
         if password != confirm_password:
             flash('Kata laluan tidak sepadan.', 'danger')
@@ -79,7 +83,8 @@ def register():
         data = {
             "username": email, # Guna email sebagai username
             "password_hash": hashed_password,
-            "role": selected_role if selected_role else "user" # Guna dropdown, default ke user
+            "role": selected_role if selected_role else "user",
+            "linked_name": selected_partner_name if selected_role == 'partner' else None
         }
         supabase.table('users').insert(data).execute()
         
@@ -102,7 +107,16 @@ def register():
     except Exception:
         pass
 
-    return render_template('register.html', penyewa_list=penyewa_list)
+    # Dapatkan senarai nama kerjasama unik untuk dropdown
+    partner_list = []
+    try:
+        # Ambil semua nama dan filter unik dalam Python (Supabase JS client ada .distinct(), Python client terhad)
+        res_p = supabase.table('kerjasama_ketiga').select('nama_kerjasama').execute()
+        partner_list = sorted(list(set([item['nama_kerjasama'] for item in res_p.data])))
+    except Exception:
+        pass
+
+    return render_template('register.html', penyewa_list=penyewa_list, partner_list=partner_list)
 
 @app.route('/dashboard-penyewa')
 @login_required
@@ -143,6 +157,31 @@ def dashboard_penyewa():
                 s['penalti'] = days_late * rate
 
     return render_template('dashboard_penyewa.html', penyewa=penyewa, sewaan_list=sewaan_list, today=today)
+
+@app.route('/dashboard-partner')
+@login_required
+def dashboard_partner():
+    # Pastikan pengguna adalah partner
+    if session.get('role') != 'partner':
+        return redirect(url_for('index'))
+    
+    linked_name = session.get('linked_name')
+    if not linked_name:
+        flash("Akaun anda tidak dipautkan dengan mana-mana rekod kerjasama.", "warning")
+        return redirect(url_for('logout'))
+
+    # Dapatkan rekod kerjasama khusus untuk nama ini
+    res = supabase.table('kerjasama_ketiga').select('*').eq('nama_kerjasama', linked_name).order('tarikh_terima', desc=True).execute()
+    records = res.data
+
+    # Kira total pendapatan & komisyen (30% untuk partner, 70% KASB - contoh logik, atau ikut logik 1.5/5 tadi?)
+    # Tadi logik: Partner (Owner) dapat 1.5/5. 
+    # Untuk "Rakan Kerjasama" luar, mungkin mereka nak tengok berapa revenue yang mereka bawa?
+    # Kita paparkan Revenue Asal dan Bahagian KASB.
+    
+    total_revenue = sum(float(r['jumlah_diterima_kasb'] or 0) for r in records)
+    
+    return render_template('dashboard_partner.html', records=records, partner_name=linked_name, total_revenue=total_revenue)
 
 @app.route('/forgot-password')
 def forgot_password():
@@ -274,6 +313,8 @@ def index():
                 # Redirect tenant ke dashboard khas jika tersesat ke admin dashboard
                 if session['role'] == 'tenant' and request.endpoint == 'index':
                     return redirect(url_for('dashboard_penyewa'))
+                elif session['role'] == 'partner' and request.endpoint == 'index':
+                    return redirect(url_for('dashboard_partner'))
         except Exception:
             pass # Abaikan jika berlaku ralat sambungan seketika
 

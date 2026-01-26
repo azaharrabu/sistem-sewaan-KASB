@@ -52,6 +52,18 @@
                 <div class="form-text small">Pilih nama yang sepadan dengan rekod sewaan anda.</div>
             </div>
 
+            <!-- Dropdown Khas Untuk Partner (Hidden by default) -->
+            <div class="mb-3" id="partnerField" style="display: none;">
+                <label class="form-label small fw-bold text-success">Sila Pilih Nama Kerjasama</label>
+                <select name="partner_name" id="partnerSelect" class="form-select">
+                    <option value="" disabled selected>Cari nama projek/kerjasama...</option>
+                    {% for name in partner_list %}
+                    <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text small">Pilih nama yang direkodkan dalam sistem.</div>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label small fw-bold">Kata Laluan</label>
                 <input type="password" name="password" class="form-control" placeholder="******" required>
@@ -72,14 +84,20 @@
             var role = document.getElementById("roleSelect").value;
             var penyewaDiv = document.getElementById("penyewaField");
             var penyewaInput = document.getElementById("penyewaSelect");
+            var partnerDiv = document.getElementById("partnerField");
+            var partnerInput = document.getElementById("partnerSelect");
+
+            // Reset
+            penyewaDiv.style.display = "none"; penyewaInput.required = false;
+            partnerDiv.style.display = "none"; partnerInput.required = false;
 
             if (role === "tenant") {
                 penyewaDiv.style.display = "block";
-                penyewaInput.required = true; // Wajib pilih jika tenant
-            } else {
-                penyewaDiv.style.display = "none";
-                penyewaInput.required = false;
-                penyewaInput.value = ""; // Reset pilihan
+                penyewaInput.required = true;
+            } 
+            else if (role === "partner") {
+                partnerDiv.style.display = "block";
+                partnerInput.required = true;
             }
         }
     </script>
