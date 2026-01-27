@@ -71,6 +71,11 @@ def register():
         if password != confirm_password:
             flash('Kata laluan tidak sepadan.', 'danger')
             return redirect(url_for('register'))
+            
+        # Validasi: Pastikan Penyewa memilih nama dari senarai
+        if selected_role == 'tenant' and not selected_penyewa_id:
+            flash('Sila pilih Nama Penyewa daripada senarai yang disediakan.', 'warning')
+            return redirect(url_for('register'))
 
         # Semak jika email sudah wujud
         res = supabase.table('users').select('*').eq('username', email).execute()
@@ -128,12 +133,13 @@ def dashboard_penyewa():
     email = session.get('username')
     
     # Dapatkan maklumat penyewa berdasarkan email
-    penyewa_res = supabase.table('penyewa').select('*').eq('email', email).single().execute()
-    if not penyewa_res.data:
-        flash("Rekod penyewa tidak dijumpai.", "danger")
+    try:
+        penyewa_res = supabase.table('penyewa').select('*').eq('email', email).single().execute()
+        penyewa = penyewa_res.data
+    except Exception:
+        # Jika tiada rekod dijumpai (akaun user wujud tapi tiada link ke table penyewa)
+        flash("Rekod penyewa tidak dijumpai atau belum dipautkan. Sila hubungi admin.", "danger")
         return redirect(url_for('logout'))
-    
-    penyewa = penyewa_res.data
     
     # Dapatkan maklumat sewaan aktif
     sewaan_res = supabase.table('sewaan').select('*, aset(*)').eq('penyewa_id', penyewa['penyewa_id']).execute()
