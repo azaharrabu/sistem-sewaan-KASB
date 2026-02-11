@@ -51,6 +51,8 @@ def login():
                 return redirect(url_for('dashboard_penyewa'))
             elif user['role'] == 'partner':
                 return redirect(url_for('dashboard_partner'))
+            elif user['role'] == 'petros_admin':
+                return redirect(url_for('petros_dashboard'))
             else:
                 return redirect(url_for('index'))
         else:
@@ -321,6 +323,8 @@ def index():
                     return redirect(url_for('dashboard_penyewa'))
                 elif session['role'] == 'partner' and request.endpoint == 'index':
                     return redirect(url_for('dashboard_partner'))
+                elif session['role'] == 'petros_admin' and request.endpoint == 'index':
+                    return redirect(url_for('petros_dashboard'))
         except Exception:
             pass # Abaikan jika berlaku ralat sambungan seketika
 
@@ -483,6 +487,10 @@ def sewaan_dashboard():
     """
     Memaparkan senarai terperinci aset sewaan.
     """
+    # Sekat akses untuk Petros Admin
+    if session.get('role') == 'petros_admin':
+        return redirect(url_for('petros_dashboard'))
+
     try:
         # Fetch data from Supabase, joining tables
         response = supabase.table('sewaan').select('*, aset(id_aset, lokasi), penyewa(nama_penyewa)').order('aset_id', desc=False).execute()
@@ -510,6 +518,9 @@ def sewaan_dashboard():
 @app.route('/efeis')
 @login_required
 def efeis_dashboard():
+    # Sekat akses untuk Petros Admin
+    if session.get('role') == 'petros_admin':
+        return redirect(url_for('petros_dashboard'))
     return render_income_detail('Efeis')
 
 @app.route('/petros')
@@ -548,6 +559,10 @@ def projek_baru_list():
     """
     Menguruskan (menambah dan memaparkan) projek baru dengan komisyen 10/15%.
     """
+    # Sekat akses untuk Petros Admin
+    if session.get('role') == 'petros_admin':
+        return redirect(url_for('petros_dashboard'))
+
     if request.method == 'POST':
         try:
             nilai = float(request.form.get('nilai_projek') or 0)
@@ -598,6 +613,10 @@ def kerjasama_list():
     """
     Menguruskan (menambah dan memaparkan) kerjasama pihak ketiga (komisyen 30%).
     """
+    # Sekat akses untuk Petros Admin
+    if session.get('role') == 'petros_admin':
+        return redirect(url_for('petros_dashboard'))
+
     if request.method == 'POST':
         try:
             data = {
