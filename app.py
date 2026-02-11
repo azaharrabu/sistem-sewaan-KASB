@@ -841,13 +841,47 @@ def add_income(source_name):
                 "kos_pengurusan": kos,
                 "amaun": amaun
             })
+        elif source_name == 'Petros':
+            # Proses input array dari form Petros
+            jenis_list = request.form.getlist('petros_jenis[]')
+            vol_list = request.form.getlist('petros_vol[]')
+            comm_list = request.form.getlist('petros_comm[]')
+            kos_list = request.form.getlist('petros_kos[]')
+            profit_list = request.form.getlist('petros_profit[]')
+            
+            total_profit = 0.0
+            details_data = []
+            
+            # Loop setiap baris (RON95, RON97, dll)
+            for i in range(len(jenis_list)):
+                p_profit = float(profit_list[i]) if profit_list[i] else 0.0
+                total_profit += p_profit
+                
+                details_data.append({
+                    "jenis_minyak": jenis_list[i],
+                    "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0,
+                    "earned_commission": float(comm_list[i]) if comm_list[i] else 0.0,
+                    "kos": float(kos_list[i]) if kos_list[i] else 0.0,
+                    "profit": p_profit
+                })
+            
+            # Set amaun utama sebagai total profit
+            data["amaun"] = total_profit
+            
         else:
             # Untuk Petros atau lain-lain, amaun dimasukkan terus
             amaun = float(request.form.get('amaun', 0))
             data["amaun"] = amaun
 
-        supabase.table('pendapatan_lain').insert(data).execute()
+        res = supabase.table('pendapatan_lain').insert(data).execute()
         
+        # Jika Petros, masukkan details selepas dapat ID utama
+        if source_name == 'Petros' and res.data and details_data:
+            main_id = res.data[0]['id']
+            for d in details_data:
+                d['pendapatan_id'] = main_id
+            supabase.table('petros_details').insert(details_data).execute()
+
         # Redirect ke tahun tarikh tersebut supaya user nampak data yang baru dimasukkan
         year = tarikh.split('-')[0]
         if source_name == 'Efeis':
@@ -859,6 +893,78 @@ def add_income(source_name):
 
     except Exception as e:
         return f"Ralat menambah pendapatan: {e}"
+
+@app.route('/edit-pendapatan/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_pendapatan(id):
+    if request.method == 'POST':
+        try:
+            sumber = request.form.get('sumber')
+            data = {
+                "tarikh": request.form.get('tarikh'),
+                "nota": request.form.get('nota'),
+                "amaun": float(request.form.get('amaun', 0))
+            }
+            
+            supabase.table('pendapatan_lain').update(data).eq('id', id).execute()
+            flash('Rekod berjaya dikemaskini.', 'success')
+            
+            # Redirect ke dashboard yang betul
+            year = data['tarikh'].split('-')[0]
+            if sumber == 'Efeis':
+                return redirect(url_for('efeis_dashboard', year=year))
+            return redirect(url_for('petros_dashboard', year=year))
+            
+        except Exception as e:
+            flash(f"Ralat kemaskini: {e}", "danger")
+            return redirect(url_for('index'))
+
+    # GET Request: Paparkan borang edit
+    try:
+        res = supabase.table('pendapatan_lain').select('*').eq('id', id).single().execute()
+        return render_template('edit_income.html', record=res.data)
+    except Exception as e:
+        flash(f"Rekod tidak dijumpai: {e}", "danger")
+        return redirect(url_for('index'))
+
+@app.route('/petros/detail/<int:id>')
+@login_required
+def petros_detail_view(id):
+    try:
+        # Dapatkan rekod utama
+        main_res = supabase.table('pendapatan_lain').select('*').eq('id', id).single().execute()
+        main_record = main_res.data
+        
+        # Dapatkan pecahan detail
+        detail_res = supabase.table('petros_details').select('*').eq('pendapatan_id', id).execute()
+        details = detail_res.data
+        
+        return render_template('petros_detail.html', record=main_record, details=details)
+    except Exception as e:
+        flash(f"Ralat memuatkan detail Petros: {e}", "danger")
+        return redirect(url_for('petros_dashboard'))
+
+@app.route('/padam-pendapatan/<int:id>')
+@login_required
+def padam_pendapatan(id):
+    try:
+        # Dapatkan info dulu untuk redirect
+        res = supabase.table('pendapatan_lain').select('sumber, tarikh').eq('id', id).single().execute()
+        if res.data:
+            sumber = res.data['sumber']
+            year = res.data['tarikh'].split('-')[0]
+            
+            supabase.table('pendapatan_lain').delete().eq('id', id).execute()
+            flash('Rekod berjaya dipadam.', 'warning')
+            
+            if sumber == 'Efeis':
+                return redirect(url_for('efeis_dashboard', year=year))
+            return redirect(url_for('petros_dashboard', year=year))
+            
+    except Exception as e:
+        flash(f"Ralat memadam: {e}", "danger")
+        
+    return redirect(url_for('index'))
 
 # Route ini PUBLIC (Tidak perlu login)
 @app.route('/daftar-efeis', methods=['GET', 'POST'])

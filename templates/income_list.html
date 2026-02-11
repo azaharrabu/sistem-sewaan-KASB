@@ -77,6 +77,7 @@
                                     <th>Tarikh</th>
                                     <th>Nota / Keterangan</th>
                                     <th class="text-end">Amaun (RM)</th>
+                                    {% if source == 'Petros' %}<th class="text-center">Tindakan</th>{% endif %}
                                 {% endif %}
                             </tr>
                         </thead>
@@ -97,6 +98,11 @@
                                     <td class="text-end fw-bold text-success">
                                         + {{ "{:,.2f}".format(row.amaun) }}
                                     </td>
+                                    {% if source == 'Petros' %}
+                                    <td class="text-center">
+                                        <a href="{{ url_for('petros_detail_view', id=row.id) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
+                                    </td>
+                                    {% endif %}
                                 {% endif %}
                             </tr>
                             {% else %}
@@ -135,6 +141,35 @@
                         <div class="col-md-4">
                             <label class="form-label">Kos Pengurusan (RM)</label>
                             <input type="number" name="kos_pengurusan" class="form-control" step="0.01" placeholder="0.00" required>
+                        </div>
+                        {% elif source == 'Petros' %}
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Perincian Jualan Minyak</label>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm text-center align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 20%;">Jenis</th>
+                                            <th>Volume (Liter)</th>
+                                            <th>Revenue/Comm (RM)</th>
+                                            <th>Kos (RM)</th>
+                                            <th>Profit (RM)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for jenis in ['RON 95', 'RON 97', 'Diesel', 'Minyak Pelincir'] %}
+                                        <tr>
+                                            <td><input type="text" name="petros_jenis[]" class="form-control form-control-sm fw-bold" value="{{ jenis }}" readonly></td>
+                                            <td><input type="number" step="0.01" name="petros_vol[]" class="form-control form-control-sm" placeholder="0"></td>
+                                            <td><input type="number" step="0.01" name="petros_comm[]" class="form-control form-control-sm" placeholder="0.00"></td>
+                                            <td><input type="number" step="0.01" name="petros_kos[]" class="form-control form-control-sm" placeholder="0.00"></td>
+                                            <td><input type="number" step="0.01" name="petros_profit[]" class="form-control form-control-sm" placeholder="0.00"></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-text text-primary small">* Jumlah Profit akan dikira secara automatik dan disimpan sebagai Pendapatan Bulanan.</div>
                         </div>
                         {% else %}
                         <div class="col-md-4">

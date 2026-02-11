@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kemaskini Rekod - {{ record.sumber }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">✏️ Kemaskini Rekod {{ record.sumber }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="sumber" value="{{ record.sumber }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tarikh</label>
+                        <input type="date" name="tarikh" class="form-control" value="{{ record.tarikh }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Amaun (RM)</label>
+                        <input type="number" step="0.01" name="amaun" class="form-control" value="{{ record.amaun }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nota / Keterangan</label>
+                        <textarea name="nota" class="form-control" rows="3">{{ record.nota }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="javascript:history.back()" class="btn btn-secondary">Batal</a>
+                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
