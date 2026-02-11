@@ -32,7 +32,14 @@
                         <tbody>
                             {% for item in details %}
                             <tr>
-                                <td class="text-start fw-bold">{{ item.jenis_minyak }}</td>
+                                <td class="text-start">
+                                    <span class="fw-bold">{{ item.jenis_minyak }}</span>
+                                    <div class="small text-muted mt-1">
+                                        Debit: RM {{ "{:,.2f}".format(item.sales_debit or 0) }}<br>
+                                        E-Wallet: RM {{ "{:,.2f}".format(item.sales_ewallet or 0) }}<br>
+                                        Cash: RM {{ "{:,.2f}".format(item.sales_cash or 0) }}
+                                    </div>
+                                </td>
                                 <td>{{ "{:,.0f}".format(item.daily_volume) }}</td>
                                 <td>{{ "{:,.2f}".format(item.earned_commission) }}</td>
                                 <td class="text-danger">- {{ "{:,.2f}".format(item.kos) }}</td>
