@@ -91,7 +91,6 @@
                                     <th class="text-end">Keuntungan Bersih (RM)</th>
                                 {% elif source == 'Petros' %}
                                     <th>Tarikh</th>
-                                    <th>Nota / Keterangan</th>
                                     <th class="text-end">Total Profit (RM)</th>
                                     <th class="text-center">Kadar (%)</th>
                                     <th class="text-end">KASB (RM)</th>
@@ -117,7 +116,6 @@
                                     </td>
                                 {% elif source == 'Petros' %}
                                     <td>{{ row.tarikh }}</td>
-                                    <td>{{ row.nota or '-' }}</td>
                                     <!-- Total Profit (disimpan dalam kutipan_yuran) -->
                                     <td class="text-end">{{ "{:,.2f}".format(row.kutipan_yuran or 0) }}</td>
                                     
@@ -244,10 +242,12 @@
                         </div>
                         {% endif %}
 
+                        {% if source != 'Petros' %}
                         <div class="col-md-8">
                             <label class="form-label">Nota / Keterangan</label>
                             <input type="text" name="nota" class="form-control" placeholder="Contoh: Kursus Siri 1 / Profit Sharing Jan">
                         </div>
+                        {% endif %}
                         
                         <div class="col-12 text-end">
                             <button type="submit" class="btn btn-success">Simpan Rekod</button>
