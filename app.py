@@ -937,11 +937,26 @@ def edit_pendapatan(id):
     if request.method == 'POST':
         try:
             sumber = request.form.get('sumber')
+            tarikh = request.form.get('tarikh')
+            nota = request.form.get('nota')
+            input_amaun = float(request.form.get('amaun', 0))
+            
             data = {
-                "tarikh": request.form.get('tarikh'),
-                "nota": request.form.get('nota'),
-                "amaun": float(request.form.get('amaun', 0))
+                "tarikh": tarikh,
+                "nota": nota
             }
+            
+            if sumber == 'Petros':
+                # Jika Petros, input_amaun adalah Total Profit (kutipan_yuran)
+                # Kita perlu kira semula bahagian KASB
+                rec_date = datetime.strptime(tarikh, "%Y-%m-%d").date()
+                start_date_25 = date(2028, 1, 1)
+                rate = 0.25 if rec_date >= start_date_25 else 0.20
+                
+                data["kutipan_yuran"] = input_amaun
+                data["amaun"] = input_amaun * rate
+            else:
+                data["amaun"] = input_amaun
             
             supabase.table('pendapatan_lain').update(data).eq('id', id).execute()
             flash('Rekod berjaya dikemaskini.', 'success')
@@ -950,7 +965,9 @@ def edit_pendapatan(id):
             year = data['tarikh'].split('-')[0]
             if sumber == 'Efeis':
                 return redirect(url_for('efeis_dashboard', year=year))
-            return redirect(url_for('petros_dashboard', year=year))
+            elif sumber == 'Petros':
+                return redirect(url_for('petros_dashboard', year=year))
+            return redirect(url_for('index'))
             
         except Exception as e:
             flash(f"Ralat kemaskini: {e}", "danger")
@@ -996,7 +1013,9 @@ def padam_pendapatan(id):
             
             if sumber == 'Efeis':
                 return redirect(url_for('efeis_dashboard', year=year))
-            return redirect(url_for('petros_dashboard', year=year))
+            elif sumber == 'Petros':
+                return redirect(url_for('petros_dashboard', year=year))
+            return redirect(url_for('index'))
             
     except Exception as e:
         flash(f"Ralat memadam: {e}", "danger")
