@@ -847,9 +847,9 @@ def add_income(source_name):
         }
 
         if source_name == 'Efeis':
-            bil = request.form.get('bil_penyertaan', 0)
-            yuran = float(request.form.get('kutipan_yuran', 0))
-            kos = float(request.form.get('kos_pengurusan', 0))
+            bil = request.form.get('bil_penyertaan')
+            yuran = float(request.form.get('kutipan_yuran') or 0)
+            kos = float(request.form.get('kos_pengurusan') or 0)
             
             # Kira keuntungan bersih secara automatik
             amaun = yuran - kos
@@ -901,14 +901,14 @@ def add_income(source_name):
             
             # Simpan Ringkasan Transaksi
             data.update({
-                "sales_debit": float(request.form.get('petros_total_debit', 0)),
-                "sales_ewallet": float(request.form.get('petros_total_ewallet', 0)),
-                "sales_cash": float(request.form.get('petros_total_cash', 0))
+                "sales_debit": float(request.form.get('petros_total_debit') or 0),
+                "sales_ewallet": float(request.form.get('petros_total_ewallet') or 0),
+                "sales_cash": float(request.form.get('petros_total_cash') or 0)
             })
             
         else:
             # Untuk Petros atau lain-lain, amaun dimasukkan terus
-            amaun = float(request.form.get('amaun', 0))
+            amaun = float(request.form.get('amaun') or 0)
             data["amaun"] = amaun
 
         res = supabase.table('pendapatan_lain').insert(data).execute()
@@ -940,7 +940,7 @@ def edit_pendapatan(id):
             sumber = request.form.get('sumber')
             tarikh = request.form.get('tarikh')
             nota = request.form.get('nota')
-            input_amaun = float(request.form.get('amaun', 0))
+            input_amaun = float(request.form.get('amaun') or 0)
             
             data = {
                 "tarikh": tarikh,
