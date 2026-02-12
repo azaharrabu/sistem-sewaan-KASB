@@ -107,10 +107,10 @@
                                     <td>{{ row.tarikh }}</td>
                                     <td>{{ row.nota or '-' }}</td>
                                     <!-- Total Profit (disimpan dalam kutipan_yuran) -->
-                                    <td class="text-end">{{ "{:,.2f}".format(row.kutipan_yuran) }}</td>
+                                    <td class="text-end">{{ "{:,.2f}".format(row.kutipan_yuran or 0) }}</td>
                                     
                                     <!-- Kira Kadar % untuk paparan -->
-                                    {% set rate = (row.amaun / row.kutipan_yuran * 100)|round|int if row.kutipan_yuran > 0 else 0 %}
+                                    {% set rate = (row.amaun / row.kutipan_yuran * 100)|round|int if (row.kutipan_yuran or 0) > 0 else 0 %}
                                     <td class="text-center"><span class="badge bg-secondary">{{ rate }}%</span></td>
                                     
                                     <!-- Bahagian KASB -->
