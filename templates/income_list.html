@@ -77,11 +77,18 @@
                                     <th class="text-end">Kutipan Yuran (RM)</th>
                                     <th class="text-end">Kos Pengurusan (RM)</th>
                                     <th class="text-end">Keuntungan Bersih (RM)</th>
+                                {% elif source == 'Petros' %}
+                                    <th>Tarikh</th>
+                                    <th>Nota / Keterangan</th>
+                                    <th class="text-end">Total Profit (RM)</th>
+                                    <th class="text-center">Kadar (%)</th>
+                                    <th class="text-end">KASB (RM)</th>
+                                    <th class="text-end">Gowpen (RM)</th>
+                                    <th class="text-center">Tindakan</th>
                                 {% else %}
                                     <th>Tarikh</th>
                                     <th>Nota / Keterangan</th>
                                     <th class="text-end">Amaun (RM)</th>
-                                    {% if source == 'Petros' %}<th class="text-center">Tindakan</th>{% endif %}
                                 {% endif %}
                             </tr>
                         </thead>
@@ -96,17 +103,31 @@
                                     <td class="text-end fw-bold text-success">
                                         + {{ "{:,.2f}".format(row.amaun) }}
                                     </td>
+                                {% elif source == 'Petros' %}
+                                    <td>{{ row.tarikh }}</td>
+                                    <td>{{ row.nota or '-' }}</td>
+                                    <!-- Total Profit (disimpan dalam kutipan_yuran) -->
+                                    <td class="text-end">{{ "{:,.2f}".format(row.kutipan_yuran) }}</td>
+                                    
+                                    <!-- Kira Kadar % untuk paparan -->
+                                    {% set rate = (row.amaun / row.kutipan_yuran * 100)|round|int if row.kutipan_yuran > 0 else 0 %}
+                                    <td class="text-center"><span class="badge bg-secondary">{{ rate }}%</span></td>
+                                    
+                                    <!-- Bahagian KASB -->
+                                    <td class="text-end fw-bold text-success">+ {{ "{:,.2f}".format(row.amaun) }}</td>
+                                    
+                                    <!-- Bahagian Gowpen (Total - KASB) -->
+                                    <td class="text-end text-muted">{{ "{:,.2f}".format(row.kutipan_yuran - row.amaun) }}</td>
+                                    
+                                    <td class="text-center">
+                                        <a href="{{ url_for('petros_detail_view', id=row.id) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
+                                    </td>
                                 {% else %}
                                     <td>{{ row.tarikh }}</td>
                                     <td>{{ row.nota or '-' }}</td>
                                     <td class="text-end fw-bold text-success">
                                         + {{ "{:,.2f}".format(row.amaun) }}
                                     </td>
-                                    {% if source == 'Petros' %}
-                                    <td class="text-center">
-                                        <a href="{{ url_for('petros_detail_view', id=row.id) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
-                                    </td>
-                                    {% endif %}
                                 {% endif %}
                             </tr>
                             {% else %}

@@ -890,8 +890,20 @@ def add_income(source_name):
                     "sales_cash": float(cash_list[i]) if cash_list[i] else 0.0
                 })
             
-            # Set amaun utama sebagai total profit
-            data["amaun"] = total_profit
+            # --- LOGIK PROFIT SHARING PETROS ---
+            # Tahun 1-3 (2025-2027): KASB 20%, Gowpen 80%
+            # Tahun 4+ (2028++): KASB 25%, Gowpen 75%
+            
+            rec_date = datetime.strptime(tarikh, "%Y-%m-%d").date()
+            start_date_25 = date(2028, 1, 1) # Tarikh mula kenaikan 25%
+            
+            rate = 0.25 if rec_date >= start_date_25 else 0.20
+            kasb_share = total_profit * rate
+            
+            # Simpan Total Profit dalam 'kutipan_yuran' (untuk rujukan)
+            # Simpan Bahagian KASB dalam 'amaun' (untuk Dashboard Utama)
+            data["kutipan_yuran"] = total_profit
+            data["amaun"] = kasb_share
             
         else:
             # Untuk Petros atau lain-lain, amaun dimasukkan terus

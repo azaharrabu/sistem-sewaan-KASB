@@ -13,7 +13,10 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold">⛽ Perincian Jualan Petros: {{ record.tarikh }}</h5>
-                <span class="badge bg-dark fs-6">Total Profit: RM {{ "{:,.2f}".format(record.amaun) }}</span>
+                <div class="text-end">
+                    <span class="badge bg-secondary fs-6 me-2">Total Profit: RM {{ "{:,.2f}".format(record.kutipan_yuran) }}</span>
+                    <span class="badge bg-success fs-6">KASB Share: RM {{ "{:,.2f}".format(record.amaun) }}</span>
+                </div>
             </div>
             <div class="card-body">
                 <p class="text-muted">{{ record.nota }}</p>
@@ -57,7 +60,7 @@
                                 <td>-</td>
                                 <td>-</td>
                                 <td>-</td>
-                                <td class="text-success">RM {{ "{:,.2f}".format(record.amaun) }}</td>
+                                <td class="text-success">RM {{ "{:,.2f}".format(record.kutipan_yuran) }}</td>
                             </tr>
                         </tfoot>
                     </table>
