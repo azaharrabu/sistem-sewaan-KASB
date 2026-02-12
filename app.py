@@ -532,6 +532,7 @@ def render_income_detail(source_name):
     try:
         current_year = datetime.now().year
         selected_year = request.args.get('year', current_year, type=int)
+        selected_month = request.args.get('month', type=int)
         
         # Dapatkan data dari table pendapatan_lain
         response = supabase.table('pendapatan_lain').select('*').eq('sumber', source_name).order('tarikh', desc=True).execute()
@@ -547,7 +548,7 @@ def render_income_detail(source_name):
             m = int(item['tarikh'].split('-')[1])
             monthly_breakdown[m] += float(item['amaun'])
 
-        return render_template('income_list.html', source=source_name, data=filtered_data, selected_year=selected_year, current_year=current_year, total_income=total_income, monthly_breakdown=monthly_breakdown)
+        return render_template('income_list.html', source=source_name, data=filtered_data, selected_year=selected_year, current_year=current_year, total_income=total_income, monthly_breakdown=monthly_breakdown, selected_month=selected_month)
         
     except Exception as e:
         return f"Ralat memuatkan data {source_name}: {e}"
@@ -921,11 +922,11 @@ def add_income(source_name):
             supabase.table('petros_details').insert(details_data).execute()
 
         # Redirect ke tahun tarikh tersebut supaya user nampak data yang baru dimasukkan
-        year = tarikh.split('-')[0]
+        year_str, month_str, _ = tarikh.split('-')
         if source_name == 'Efeis':
-            return redirect(url_for('efeis_dashboard', year=year))
+            return redirect(url_for('efeis_dashboard', year=year_str, month=month_str))
         elif source_name == 'Petros':
-            return redirect(url_for('petros_dashboard', year=year))
+            return redirect(url_for('petros_dashboard', year=year_str, month=month_str))
         else:
             return redirect(url_for('index'))
 
@@ -980,11 +981,11 @@ def edit_pendapatan(id):
             flash('Rekod berjaya dikemaskini.', 'success')
             
             # Redirect ke dashboard yang betul
-            year = data['tarikh'].split('-')[0]
+            year_str, month_str, _ = data['tarikh'].split('-')
             if sumber == 'Efeis':
-                return redirect(url_for('efeis_dashboard', year=year))
+                return redirect(url_for('efeis_dashboard', year=year_str, month=month_str))
             elif sumber == 'Petros':
-                return redirect(url_for('petros_dashboard', year=year))
+                return redirect(url_for('petros_dashboard', year=year_str, month=month_str))
             return redirect(url_for('index'))
             
         except Exception as e:
@@ -1031,15 +1032,15 @@ def padam_pendapatan(id):
         res = supabase.table('pendapatan_lain').select('sumber, tarikh').eq('id', id).single().execute()
         if res.data:
             sumber = res.data['sumber']
-            year = res.data['tarikh'].split('-')[0]
+            year_str, month_str, _ = res.data['tarikh'].split('-')
             
             supabase.table('pendapatan_lain').delete().eq('id', id).execute()
             flash('Rekod berjaya dipadam.', 'warning')
             
             if sumber == 'Efeis':
-                return redirect(url_for('efeis_dashboard', year=year))
+                return redirect(url_for('efeis_dashboard', year=year_str, month=month_str))
             elif sumber == 'Petros':
-                return redirect(url_for('petros_dashboard', year=year))
+                return redirect(url_for('petros_dashboard', year=year_str, month=month_str))
             return redirect(url_for('index'))
             
     except Exception as e:
