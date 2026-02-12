@@ -26,16 +26,21 @@
                             <label class="form-label fw-bold">Total Profit (RM)</label>
                             <input type="number" step="0.01" name="amaun" class="form-control" value="{{ record.kutipan_yuran }}" required>
                             <div class="form-text text-warning">Nota: Mengubah nilai ini akan mengira semula bahagian KASB (20%/25%).</div>
+                            
+                            <label class="form-label fw-bold mt-3">Kos (RM)</label>
+                            <input type="number" step="0.01" name="kos" class="form-control" value="{{ record.kos_pengurusan }}" placeholder="0.00">
                         {% else %}
                             <label class="form-label fw-bold">Amaun (RM)</label>
                             <input type="number" step="0.01" name="amaun" class="form-control" value="{{ record.amaun }}" required>
                         {% endif %}
                     </div>
                     
+                    {% if record.sumber != 'Petros' %}
                     <div class="mb-3">
                         <label class="form-label fw-bold">Nota / Keterangan</label>
                         <textarea name="nota" class="form-control" rows="3">{{ record.nota }}</textarea>
                     </div>
+                    {% endif %}
                     
                     <div class="d-flex justify-content-between">
                         <a href="javascript:history.back()" class="btn btn-secondary">Batal</a>

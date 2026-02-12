@@ -939,12 +939,10 @@ def edit_pendapatan(id):
         try:
             sumber = request.form.get('sumber')
             tarikh = request.form.get('tarikh')
-            nota = request.form.get('nota')
             input_amaun = float(request.form.get('amaun') or 0)
             
             data = {
-                "tarikh": tarikh,
-                "nota": nota
+                "tarikh": tarikh
             }
             
             if sumber == 'Petros':
@@ -954,10 +952,14 @@ def edit_pendapatan(id):
                 start_date_25 = date(2028, 1, 1)
                 rate = 0.25 if rec_date >= start_date_25 else 0.20
                 
+                input_kos = float(request.form.get('kos') or 0)
+                
                 data["kutipan_yuran"] = input_amaun
+                data["kos_pengurusan"] = input_kos
                 data["amaun"] = input_amaun * rate
             else:
                 data["amaun"] = input_amaun
+                data["nota"] = request.form.get('nota')
             
             supabase.table('pendapatan_lain').update(data).eq('id', id).execute()
             flash('Rekod berjaya dikemaskini.', 'success')
