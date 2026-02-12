@@ -867,9 +867,6 @@ def add_income(source_name):
             comm_list = request.form.getlist('petros_comm[]')
             kos_list = request.form.getlist('petros_kos[]')
             profit_list = request.form.getlist('petros_profit[]')
-            debit_list = request.form.getlist('petros_sales_debit[]')
-            ewallet_list = request.form.getlist('petros_sales_ewallet[]')
-            cash_list = request.form.getlist('petros_sales_cash[]')
             
             total_profit = 0.0
             details_data = []
@@ -884,10 +881,7 @@ def add_income(source_name):
                     "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0,
                     "earned_commission": float(comm_list[i]) if comm_list[i] else 0.0,
                     "kos": float(kos_list[i]) if kos_list[i] else 0.0,
-                    "profit": p_profit,
-                    "sales_debit": float(debit_list[i]) if debit_list[i] else 0.0,
-                    "sales_ewallet": float(ewallet_list[i]) if ewallet_list[i] else 0.0,
-                    "sales_cash": float(cash_list[i]) if cash_list[i] else 0.0
+                    "profit": p_profit
                 })
             
             # --- LOGIK PROFIT SHARING PETROS ---
@@ -904,6 +898,13 @@ def add_income(source_name):
             # Simpan Bahagian KASB dalam 'amaun' (untuk Dashboard Utama)
             data["kutipan_yuran"] = total_profit
             data["amaun"] = kasb_share
+            
+            # Simpan Ringkasan Transaksi
+            data.update({
+                "sales_debit": float(request.form.get('petros_total_debit', 0)),
+                "sales_ewallet": float(request.form.get('petros_total_ewallet', 0)),
+                "sales_cash": float(request.form.get('petros_total_cash', 0))
+            })
             
         else:
             # Untuk Petros atau lain-lain, amaun dimasukkan terus

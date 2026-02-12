@@ -199,40 +199,39 @@
                                         {% for jenis in ['PF95', 'UF97', 'E5 B20', 'E5 B7'] %}
                                         <tr>
                                             <td>
-                                                <button type="button" class="btn btn-sm btn-outline-primary w-100 fw-bold" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
-                                                    {{ jenis }} <span class="small">▼</span>
-                                                </button>
-                                                <input type="hidden" name="petros_jenis[]" value="{{ jenis }}">
+                                                <input type="text" name="petros_jenis[]" class="form-control form-control-sm fw-bold" value="{{ jenis }}" readonly>
                                             </td>
                                             <td><input type="number" step="0.01" name="petros_vol[]" class="form-control form-control-sm" placeholder="0"></td>
                                             <td><input type="number" step="0.01" name="petros_comm[]" class="form-control form-control-sm" placeholder="0.00"></td>
                                             <td><input type="number" step="0.01" name="petros_kos[]" class="form-control form-control-sm" placeholder="0.00"></td>
                                             <td><input type="number" step="0.01" name="petros_profit[]" class="form-control form-control-sm" placeholder="0.00"></td>
                                         </tr>
-                                        <!-- Table Details Kaedah Bayaran (Hidden by default) -->
-                                        <tr class="collapse bg-light" id="collapse{{ loop.index }}">
-                                            <td colspan="5" class="p-3 text-start">
-                                                <h6 class="small fw-bold text-muted mb-2">Perincian Kaedah Bayaran ({{ jenis }})</h6>
-                                                <div class="row g-2">
-                                                    <div class="col-md-4">
-                                                        <label class="small">Debit/Credit Card (RM)</label>
-                                                        <input type="number" step="0.01" name="petros_sales_debit[]" class="form-control form-control-sm" placeholder="0.00">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="small">E-Wallet (RM)</label>
-                                                        <input type="number" step="0.01" name="petros_sales_ewallet[]" class="form-control form-control-sm" placeholder="0.00">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="small">Cash (RM)</label>
-                                                        <input type="number" step="0.01" name="petros_sales_cash[]" class="form-control form-control-sm" placeholder="0.00">
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
+                            
+                            <!-- Ringkasan Transaksi (Summary) -->
+                            <div class="card bg-light border-0 mb-3 mt-2">
+                                <div class="card-body py-2">
+                                    <h6 class="fw-bold small mb-2 text-primary">Ringkasan Transaksi Harian (Semua Jenis Minyak)</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label class="small fw-bold">Total Debit/Credit Card (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_debit" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="small fw-bold">Total E-Wallet (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_ewallet" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="small fw-bold">Total Cash (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_cash" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="form-text text-primary small">
                                 * Jumlah Profit akan dikira secara automatik.<br>
                                 * <strong>Rujukan Pembahagian:</strong> KASB menerima <strong>20%</strong> (Tahun 1-3: 2025-2027) dan <strong>25%</strong> (Tahun 4+: 2028 ke atas).
