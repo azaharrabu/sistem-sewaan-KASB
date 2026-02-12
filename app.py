@@ -978,7 +978,14 @@ def edit_pendapatan(id):
 
     # GET Request: Paparkan borang edit
     try:
-        res = supabase.table('pendapatan_lain').select('*').eq('id', id).single().execute()
+        res = supabase.table('pendapatan_lain').select('*').eq('id', id).single().execute()        
+        if res.data['sumber'] == 'Petros':
+             detail_res = supabase.table('petros_details').select('*').eq('pendapatan_id', id).execute()
+             details = detail_res.data
+             res.data['details'] = details
+        else:
+            res.data['details'] = []
+
         return render_template('edit_income.html', record=res.data)
     except Exception as e:
         flash(f"Rekod tidak dijumpai: {e}", "danger")
