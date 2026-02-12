@@ -957,6 +957,21 @@ def edit_pendapatan(id):
                 data["kutipan_yuran"] = input_amaun
                 data["kos_pengurusan"] = input_kos
                 data["amaun"] = input_amaun * rate
+
+                # Kemaskini butiran minyak (Volume & Revenue)
+                jenis_list = request.form.getlist('petros_jenis[]')
+                vol_list = request.form.getlist('petros_vol[]')
+                comm_list = request.form.getlist('petros_comm[]')
+
+                for i in range(len(jenis_list)):
+                    jenis = jenis_list[i]
+                    vol = float(vol_list[i]) if vol_list[i] else 0.0
+                    comm = float(comm_list[i]) if comm_list[i] else 0.0
+                    
+                    supabase.table('petros_details').update({
+                        "daily_volume": vol,
+                        "earned_commission": comm
+                    }).eq('pendapatan_id', id).eq('jenis_minyak', jenis).execute()
             else:
                 data["amaun"] = input_amaun
                 data["nota"] = request.form.get('nota')
@@ -986,7 +1001,7 @@ def edit_pendapatan(id):
         else:
             res.data['details'] = []
 
-        return render_template('edit_income.html', record=res.data)
+        return render_template('edit_income.html', record=res.data, details=res.data.get('details'))
     except Exception as e:
         flash(f"Rekod tidak dijumpai: {e}", "danger")
         return redirect(url_for('index'))
