@@ -51,6 +51,10 @@ def seed_petros():
     print("Memasukkan data Petros...")
 
     for data in DATA_BULANAN:
+        # Kira pembahagian keuntungan (20% KASB untuk 2025)
+        total_profit = float(data['total_profit'])
+        kasb_share = total_profit * 0.20
+
         # 1. Masukkan/Update Rekod Utama di pendapatan_lain
         # Kita check kalau dah ada, kita update. Kalau belum, insert.
         existing = supabase.table('pendapatan_lain').select('id').eq('sumber', 'Petros').eq('tarikh', data['bulan']).execute()
@@ -60,7 +64,8 @@ def seed_petros():
         if existing.data:
             main_id = existing.data[0]['id']
             supabase.table('pendapatan_lain').update({
-                "amaun": data['total_profit'],
+                "kutipan_yuran": total_profit, # Total Profit
+                "amaun": kasb_share,           # Bahagian KASB (20%)
                 "nota": data['nota']
             }).eq('id', main_id).execute()
             print(f"Updated main record for {data['bulan']}")
@@ -68,7 +73,8 @@ def seed_petros():
             res = supabase.table('pendapatan_lain').insert({
                 "sumber": "Petros",
                 "tarikh": data['bulan'],
-                "amaun": data['total_profit'],
+                "kutipan_yuran": total_profit, # Total Profit
+                "amaun": kasb_share,           # Bahagian KASB (20%)
                 "nota": data['nota']
             }).execute()
             main_id = res.data[0]['id']
