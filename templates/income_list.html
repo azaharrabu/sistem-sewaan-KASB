@@ -58,7 +58,9 @@
                     <table class="table table-bordered table-sm text-center mb-0 bg-white">
                         <thead class="table-secondary">
                             <tr>
-                                <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th><th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
+                                {% for m_idx, m_name in [(1,'Jan'), (2,'Feb'), (3,'Mac'), (4,'Apr'), (5,'Mei'), (6,'Jun'), (7,'Jul'), (8,'Ogo'), (9,'Sep'), (10,'Okt'), (11,'Nov'), (12,'Dis')] %}
+                                <th><a href="javascript:void(0)" onclick="filterMonth({{ m_idx }})" class="text-decoration-none text-dark fw-bold">{{ m_name }}</a></th>
+                                {% endfor %}
                             </tr>
                         </thead>
                         <tbody>
@@ -79,6 +81,10 @@
 
         <div class="card">
             <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0" id="current-view-label">Semua Bulan</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="filterMonth('all')">Papar Semua</button>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover table-striped align-middle">
                         <thead class="table-dark">
@@ -105,7 +111,8 @@
                         </thead>
                         <tbody>
                             {% for row in data %}
-                            <tr>
+                            {% set m_num = row.tarikh.split('-')[1]|int %}
+                            <tr class="income-row month-{{ m_num }}">
                                 {% if source == 'Efeis' %}
                                     <td>{{ row.tarikh }}</td>
                                     <td class="text-center">{{ row.bil_penyertaan }}</td>
@@ -261,6 +268,28 @@
             &copy; 2026 KASB Properties.
         </footer>
     </div>
+
+    <script>
+        function filterMonth(month) {
+            var rows = document.querySelectorAll('.income-row');
+            var label = document.getElementById('current-view-label');
+            
+            if (month === 'all') {
+                rows.forEach(row => row.style.display = '');
+                label.innerText = 'Semua Bulan';
+            } else {
+                rows.forEach(row => {
+                    if (row.classList.contains('month-' + month)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                const monthNames = ["", "Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
+                label.innerText = 'Paparan: ' + monthNames[month];
+            }
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
