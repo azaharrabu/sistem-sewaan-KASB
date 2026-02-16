@@ -879,6 +879,7 @@ def calculate_petros_financials(details_data, other_expenses=0.0):
     
     # 3. Kemaskini details_data dengan nilai dikira
     total_gross_profit = 0.0
+    total_sedc_cost = 0.0
     
     for d in details_data:
         vol = d['daily_volume']
@@ -895,14 +896,16 @@ def calculate_petros_financials(details_data, other_expenses=0.0):
         else:
             d['kos'] = 0.0 # Minyak lain/Pelincir
             
-        # Gross Profit per item
-        d['profit'] = d['earned_commission'] - d['kos']
+        # Gross Profit per item (Kini hanya Komisyen, SEDC diasingkan ke expenses)
+        d['profit'] = d['earned_commission']
+        
         total_gross_profit += d['profit']
+        total_sedc_cost += d['kos']
         
     # 4. Keuntungan Bersih Akhir
-    net_profit = total_gross_profit - other_expenses
+    net_profit = total_gross_profit - (other_expenses + total_sedc_cost)
     
-    return net_profit, total_gross_profit
+    return net_profit, total_gross_profit, total_sedc_cost
 
 @app.route('/add_income/<source_name>', methods=['POST'])
 @login_required
@@ -975,7 +978,7 @@ def add_income(source_name):
                 })
             
             # Kira Automatik (Komisyen, SEDC, Profit)
-            net_profit, gross_profit = calculate_petros_financials(details_data, total_expenses)
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, total_expenses)
             
             # --- LOGIK PROFIT SHARING PETROS ---
             # Tahun 1-3 (2025-2027): KASB 20%, Gowpen 80%
@@ -987,11 +990,14 @@ def add_income(source_name):
             rate = 0.25 if rec_date >= start_date_25 else 0.20
             kasb_share = net_profit * rate
             
+            # Update breakdown to include SEDC
+            breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs, 'sedc': total_sedc}
+
             # Simpan Net Profit dalam 'kutipan_yuran' (sebagai rujukan untung bersih sebelum sharing)
             # Simpan Bahagian KASB dalam 'amaun' (untuk Dashboard Utama)
             data["kutipan_yuran"] = net_profit
             data["amaun"] = kasb_share
-            data["kos_pengurusan"] = total_expenses # Simpan total expenses untuk rujukan
+            data["kos_pengurusan"] = total_expenses + total_sedc # Simpan total expenses (termasuk SEDC)
             data["kos_breakdown"] = breakdown # Simpan detail JSON
             
             # Simpan Ringkasan Transaksi
@@ -1089,11 +1095,13 @@ def edit_pendapatan(id):
                     })
                 
                 # Kira Semula
-                net_profit, gross_profit = calculate_petros_financials(details_data, total_expenses)
+                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, total_expenses)
                 
+                breakdown['sedc'] = total_sedc
+
                 # Update Main Record
                 data["kutipan_yuran"] = net_profit
-                data["kos_pengurusan"] = total_expenses
+                data["kos_pengurusan"] = total_expenses + total_sedc
                 data["kos_breakdown"] = breakdown
                 data["amaun"] = net_profit * rate
                 

@@ -45,6 +45,14 @@
                                 </div>
                             </div>
 
+                            <!-- SEDC Cost Display -->
+                            {% if record.kos_breakdown.sedc %}
+                            <div class="alert alert-warning py-2 mb-2 small d-flex justify-content-between">
+                                <strong>SEDC License Fee (Auto-calculated):</strong>
+                                <span>RM {{ "{:,.2f}".format(record.kos_breakdown.sedc) }}</span>
+                            </div>
+                            {% endif %}
+
                             <div class="table-responsive mt-3">
                                 <table class="table table-bordered table-sm text-center align-middle">
                                     <thead class="table-light">

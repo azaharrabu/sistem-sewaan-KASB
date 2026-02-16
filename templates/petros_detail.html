@@ -28,9 +28,7 @@
                                 <th class="text-start">Fuel Type</th>
                                 <th>Daily Volume</th>
                                 <th>Sales (RM)</th>
-                                <th>Earned Commission (RM)</th>
-                                <th>Cost (RM)</th>
-                                <th class="bg-success text-white">Profit (RM)</th>
+                                <th class="bg-success text-white">Gross Commission (RM)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -39,9 +37,7 @@
                                 <td class="text-start fw-bold">{{ item.jenis_minyak }}</td>
                                 <td>{{ "{:,.0f}".format(item.daily_volume) }}</td>
                                 <td>{{ "{:,.2f}".format(item.sales_amount or 0) }}</td>
-                                <td>{{ "{:,.2f}".format(item.earned_commission) }}</td>
-                                <td class="text-danger">- {{ "{:,.2f}".format(item.kos) }}</td>
-                                <td class="fw-bold text-success bg-light">+ {{ "{:,.2f}".format(item.profit) }}</td>
+                                <td class="fw-bold text-success bg-light">+ {{ "{:,.2f}".format(item.earned_commission) }}</td>
                             </tr>
                             {% else %}
                             <tr>
@@ -54,9 +50,7 @@
                                 <td class="text-start">TOTAL</td>
                                 <td>-</td>
                                 <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td class="text-success">RM {{ "{:,.2f}".format(record.kutipan_yuran or 0) }}</td>
+                                <td class="text-success">RM {{ "{:,.2f}".format((record.kutipan_yuran or 0) + (record.kos_pengurusan or 0)) }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -92,6 +86,16 @@
                 <div class="mt-4">
                     <h6 class="fw-bold text-danger">📉 Operational Cost Details (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan) }})</h6>
                     <div class="row">
+                        <!-- SEDC License Fee -->
+                        {% if record.kos_breakdown.sedc and record.kos_breakdown.sedc > 0 %}
+                        <div class="col-md-12">
+                            <div class="alert alert-warning py-2 mb-2 d-flex justify-content-between align-items-center border-warning">
+                                <strong class="small"><i class="bi bi-exclamation-circle"></i> SEDC License Fee (Calculated based on Volume)</strong>
+                                <span class="fw-bold text-danger">- RM {{ "{:,.2f}".format(record.kos_breakdown.sedc) }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <!-- A. Monthly Expenses -->
                         <div class="col-md-6">
                             <div class="card card-body bg-light p-2 mb-2">
