@@ -12,7 +12,7 @@
         
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">⛽ Perincian Jualan Petros: {{ record.tarikh }}</h5>
+                <h5 class="mb-0 fw-bold">⛽ Petros Sales Details: {{ record.tarikh }}</h5>
                 <div class="text-end">
                     <span class="badge bg-secondary fs-6 me-2">Total Profit: RM {{ "{:,.2f}".format(record.kutipan_yuran or 0) }}</span>
                     <span class="badge bg-success fs-6">KASB Share: RM {{ "{:,.2f}".format(record.amaun) }}</span>
@@ -25,11 +25,11 @@
                     <table class="table table-bordered table-hover text-center align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th class="text-start">Jenis Minyak</th>
+                                <th class="text-start">Fuel Type</th>
                                 <th>Daily Volume</th>
-                                <th>Jualan (RM)</th>
+                                <th>Sales (RM)</th>
                                 <th>Earned Commission (RM)</th>
-                                <th>Kos (RM)</th>
+                                <th>Cost (RM)</th>
                                 <th class="bg-success text-white">Profit (RM)</th>
                             </tr>
                         </thead>
@@ -51,7 +51,7 @@
                         </tbody>
                         <tfoot class="table-secondary fw-bold">
                             <tr>
-                                <td class="text-start">JUMLAH</td>
+                                <td class="text-start">TOTAL</td>
                                 <td>-</td>
                                 <td>-</td>
                                 <td>-</td>
@@ -64,7 +64,7 @@
                 
                 <!-- Ringkasan Transaksi -->
                 <div class="mt-4">
-                    <h6 class="fw-bold text-primary">💳 Ringkasan Transaksi Harian</h6>
+                    <h6 class="fw-bold text-primary">💳 Daily Transaction Summary</h6>
                     <div class="table-responsive" style="max-width: 500px;">
                         <table class="table table-bordered table-sm">
                             <tr>
@@ -86,7 +86,7 @@
                 <!-- Perincian Kos Operasi -->
                 {% if record.kos_breakdown %}
                 <div class="mt-4">
-                    <h6 class="fw-bold text-danger">📉 Perincian Kos Operasi (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan) }})</h6>
+                    <h6 class="fw-bold text-danger">📉 Operational Cost Details (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan) }})</h6>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="card card-body bg-light p-2 mb-2">
@@ -110,14 +110,14 @@
                             <div class="card card-body bg-light p-2 mb-2">
                                 <strong class="small text-decoration-underline">C, D & E. Others</strong>
                                 <div class="small">
-                                    {% for k, v in record.kos_breakdown.fixed.items() if v > 0 and k not in ['salary','epf','socso','eis','levy','pcb','retails_system','rentokil','unifi','insurance','safe_guard','tnb','water'] %}
+                                    {% for k, v in record.kos_breakdown.fixed.items() if v > 0 and k not in ['salary','epf','socso','eis','levy','pcb','retails_system','rentokil','unifi','insurance','safe_guard','tnb','water', 'travel', 'sponsorship'] %}
                                     <div class="d-flex justify-content-between"><span>{{ k|replace('_',' ')|title }}</span><span>RM {{ "{:,.2f}".format(v) }}</span></div>
                                     {% endfor %}
                                 </div>
                             </div>
                             {% if record.kos_breakdown.dynamic %}
                             <div class="card card-body bg-light p-2 mb-2">
-                                <strong class="small text-decoration-underline">Lain-lain (Manual)</strong>
+                                <strong class="small text-decoration-underline">Others (Manual)</strong>
                                 <div class="small">
                                     {% for item in record.kos_breakdown.dynamic %}
                                     <div class="d-flex justify-content-between border-bottom pb-1 mb-1">

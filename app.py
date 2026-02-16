@@ -944,7 +944,6 @@ def add_income(source_name):
                 'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water', # Monthly Services
                 'first_aid', 'osh', 'typhoid', # Welfare
                 'ad_fee', 'pet_license', 'license_app', 'trade_license', # Docs
-                'travel', 'sponsorship' # Others
             ]
             
             total_expenses = 0.0
@@ -1055,7 +1054,6 @@ def edit_pendapatan(id):
                     'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water',
                     'first_aid', 'osh', 'typhoid',
                     'ad_fee', 'pet_license', 'license_app', 'trade_license',
-                    'travel', 'sponsorship'
                 ]
                 
                 total_expenses = 0.0
