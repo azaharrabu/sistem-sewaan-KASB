@@ -943,7 +943,7 @@ def add_income(source_name):
             keys = [
                 'salary', 'epf', 'socso', 'eis', 'levy', 'pcb', # A. Monthly Expenses
                 'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water', # B. Monthly Services
-                'ad_fee', 'pet_license', 'license_app', 'trade_license', # D. Documents Fees
+                'ad_fee', 'pet_license', 'license_app', 'trade_license', # C. Documents Fees
             ]
             
             total_expenses = 0.0
@@ -1052,7 +1052,7 @@ def edit_pendapatan(id):
                 keys = [
                     'salary', 'epf', 'socso', 'eis', 'levy', 'pcb',
                     'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water',
-                    'ad_fee', 'pet_license', 'license_app', 'trade_license',
+                    'ad_fee', 'pet_license', 'license_app', 'trade_license', # C. Documents Fees
                 ]
                 
                 total_expenses = 0.0

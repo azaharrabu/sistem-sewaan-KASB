@@ -110,10 +110,10 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- D. Documents Fees -->
+                        <!-- C. Documents Fees -->
                         <div class="col-md-6">
                             <div class="card card-body bg-light p-2 mb-2">
-                                <strong class="small text-decoration-underline">D. Documents Fees</strong>
+                                <strong class="small text-decoration-underline">C. Documents Fees</strong>
                                 <div class="small">
                                     {% if record.kos_breakdown.fixed.ad_fee > 0 %}
                                     <div class="d-flex justify-content-between"><span>Advertisement Fee</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.ad_fee) }}</span></div>
@@ -132,11 +132,11 @@
                         </div>
 
                         <!-- Group by Category -->
-                        {% set categories = ['C. Staff Welfare', 'E. Others'] %}
+                        {% set categories = ['D. Others'] %}
                         {% for cat in categories %}
                             {% set items_in_cat = [] %}
                             {% for item in record.kos_breakdown.dynamic %}
-                                {% if item.category == cat or (cat == 'E. Others' and item.category not in categories) %}
+                                {% if item.category == cat or item.category in ['E. Others', 'Other', 'C. Staff Welfare', 'Staff Welfare'] %}
                                     {% set _ = items_in_cat.append(item) %}
                                 {% endif %}
                             {% endfor %}

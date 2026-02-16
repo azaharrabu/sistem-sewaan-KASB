@@ -108,9 +108,9 @@
                                             </div>
                                         </div>
 
-                                        <!-- D. Documents Fees (Yearly) -->
+                                        <!-- C. Documents Fees (Yearly) -->
                                         <div class="col-md-6">
-                                            <h6 class="small fw-bold text-primary border-bottom pb-1">D. Documents Fees (Yearly)</h6>
+                                            <h6 class="small fw-bold text-primary border-bottom pb-1">C. Documents Fees (Yearly)</h6>
                                             <div class="row g-1">
                                                 <div class="col-md-3"><label class="small">Advertisement Fee</label><input type="number" step="0.01" name="cost_ad_fee" class="form-control form-control-sm" value="{{ fixed.ad_fee }}"></div>
                                                 <div class="col-md-3"><label class="small">Petroleum License</label><input type="number" step="0.01" name="cost_pet_license" class="form-control form-control-sm" value="{{ fixed.pet_license }}"></div>
@@ -119,9 +119,9 @@
                                             </div>
                                         </div>
 
-                                        <!-- C. Staff Welfare & E. Others -->
+                                        <!-- D. Others -->
                                         <div class="col-md-12">
-                                            <h6 class="small fw-bold text-primary border-bottom pb-1">C. Staff Welfare & E. Others</h6>
+                                            <h6 class="small fw-bold text-primary border-bottom pb-1">D. Others</h6>
                                             
                                             <!-- Dynamic Table -->
                                             <label class="small fw-bold mt-2">Other Costs (Manual Input)</label>
@@ -139,11 +139,10 @@
                                                     <tr>
                                                         <td>
                                                             <select name="other_category[]" class="form-select form-select-sm">
-                                                                <option value="Expenses" {% if dyn.category == 'Expenses' %}selected{% endif %}>Expenses</option>
-                                                                <option value="Services" {% if dyn.category == 'Services' %}selected{% endif %}>Services</option>
-                                                                <option value="Staff Welfare" {% if dyn.category == 'Staff Welfare' %}selected{% endif %}>Staff Welfare</option>
-                                                                <option value="Documents Fees" {% if dyn.category == 'Documents Fees' %}selected{% endif %}>Documents Fees</option>
-                                                                <option value="Other" {% if dyn.category == 'Other' %}selected{% endif %}>Other</option>
+                                                                <option value="A. Monthly Expenses" {% if dyn.category == 'A. Monthly Expenses' or dyn.category == 'Expenses' %}selected{% endif %}>A. Monthly Expenses</option>
+                                                                <option value="B. Monthly Services" {% if dyn.category == 'B. Monthly Services' or dyn.category == 'Services' %}selected{% endif %}>B. Monthly Services</option>
+                                                                <option value="C. Documents Fees" {% if dyn.category == 'C. Documents Fees' or dyn.category == 'D. Documents Fees' or dyn.category == 'Documents Fees' %}selected{% endif %}>C. Documents Fees</option>
+                                                                <option value="D. Others" {% if dyn.category == 'D. Others' or dyn.category == 'E. Others' or dyn.category == 'Other' or dyn.category == 'Staff Welfare' or dyn.category == 'C. Staff Welfare' %}selected{% endif %}>D. Others</option>
                                                             </select>
                                                         </td>
                                                         <td><input type="text" name="other_desc[]" class="form-control form-control-sm" value="{{ dyn.desc }}"></td>
@@ -193,11 +192,10 @@
         
         cell1.innerHTML = `
             <select name="other_category[]" class="form-select form-select-sm">
-                <option value="Expenses">Expenses</option>
-                <option value="Services">Services</option>
-                <option value="Staff Welfare">Staff Welfare</option>
-                <option value="Documents Fees">Documents Fees</option>
-                <option value="Other">Other</option>
+                <option value="A. Monthly Expenses">A. Monthly Expenses</option>
+                <option value="B. Monthly Services">B. Monthly Services</option>
+                <option value="C. Documents Fees">C. Documents Fees</option>
+                <option value="D. Others">D. Others</option>
             </select>`;
         cell2.innerHTML = '<input type="text" name="other_desc[]" class="form-control form-control-sm" placeholder="Keterangan...">';
         cell3.innerHTML = '<input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" placeholder="0.00">';
