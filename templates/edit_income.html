@@ -76,7 +76,7 @@
                             <!-- Input Kos Operasi (Edit) -->
                             <div class="card border-warning mb-3 mt-3">
                                 <div class="card-header bg-warning text-dark py-1">
-                                    <small class="fw-bold">Update Expenses (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan or 0) }})</small>
+                                    <small class="fw-bold">Update Cost Details (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan or 0) }})</small>
                                 </div>
                                 <div class="card-body p-2">
                                     {% set fixed = record.kos_breakdown.fixed if record.kos_breakdown else {} %}
@@ -109,7 +109,7 @@
                                         </div>
 
                                         <!-- D. Documents Fees (Yearly) -->
-                                        <div class="col-md-12">
+                                        <div class="col-md-6">
                                             <h6 class="small fw-bold text-primary border-bottom pb-1">D. Documents Fees (Yearly)</h6>
                                             <div class="row g-1">
                                                 <div class="col-md-3"><label class="small">Advertisement Fee</label><input type="number" step="0.01" name="cost_ad_fee" class="form-control form-control-sm" value="{{ fixed.ad_fee }}"></div>
@@ -119,9 +119,12 @@
                                             </div>
                                         </div>
 
-                                        <!-- C & E Manual Entry -->
+                                        <!-- E. Others -->
                                         <div class="col-md-12">
-                                            <h6 class="small fw-bold text-primary border-bottom pb-1">C. Staff Welfare & E. Others (Manual Input)</h6>
+                                            <h6 class="small fw-bold text-primary border-bottom pb-1">E. Others</h6>
+                                            
+                                            <!-- Dynamic Table -->
+                                            <label class="small fw-bold mt-2">Other Costs (Manual Input)</label>
                                             <table class="table table-bordered table-sm mb-0" id="dynamicCostTable">
                                                 <thead class="table-light">
                                                     <tr>
@@ -132,16 +135,15 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <!-- Render Existing Dynamic Costs -->
                                                     {% for dyn in record.kos_breakdown.dynamic if record.kos_breakdown and record.kos_breakdown.dynamic %}
                                                     <tr>
                                                         <td>
                                                             <select name="other_category[]" class="form-select form-select-sm">
-                                                                <option value="A. Monthly Expenses" {% if dyn.category == 'A. Monthly Expenses' or dyn.category == 'Expenses' %}selected{% endif %}>A. Monthly Expenses</option>
-                                                                <option value="B. Monthly Services" {% if dyn.category == 'B. Monthly Services' or dyn.category == 'Services' %}selected{% endif %}>B. Monthly Services</option>
-                                                                <option value="C. Staff Welfare" {% if dyn.category == 'C. Staff Welfare' or dyn.category == 'Staff Welfare' %}selected{% endif %}>C. Staff Welfare</option>
-                                                                <option value="D. Documents Fees" {% if dyn.category == 'D. Documents Fees' or dyn.category == 'Documents Fees' %}selected{% endif %}>D. Documents Fees</option>
-                                                                <option value="E. Others" {% if dyn.category == 'E. Others' or dyn.category == 'Other' %}selected{% endif %}>E. Others</option>
+                                                                <option value="Expenses" {% if dyn.category == 'Expenses' %}selected{% endif %}>Expenses</option>
+                                                                <option value="Services" {% if dyn.category == 'Services' %}selected{% endif %}>Services</option>
+                                                                <option value="Staff Welfare" {% if dyn.category == 'Staff Welfare' %}selected{% endif %}>Staff Welfare</option>
+                                                                <option value="Documents Fees" {% if dyn.category == 'Documents Fees' %}selected{% endif %}>Documents Fees</option>
+                                                                <option value="Other" {% if dyn.category == 'Other' %}selected{% endif %}>Other</option>
                                                             </select>
                                                         </td>
                                                         <td><input type="text" name="other_desc[]" class="form-control form-control-sm" value="{{ dyn.desc }}"></td>
@@ -151,9 +153,10 @@
                                                     {% endfor %}
                                                 </tbody>
                                             </table>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addCostRow()">+ Add Expense Row</button>
-                                </div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addCostRow()">+ Add Row</button>
+                                        </div>
                                     </div>
+                                </div>
                             </div>
 
                         {% else %}
@@ -190,11 +193,11 @@
         
         cell1.innerHTML = `
             <select name="other_category[]" class="form-select form-select-sm">
-                <option value="A. Monthly Expenses">A. Monthly Expenses</option>
-                <option value="B. Monthly Services">B. Monthly Services</option>
-                <option value="C. Staff Welfare">C. Staff Welfare</option>
-                <option value="D. Documents Fees">D. Documents Fees</option>
-                <option value="E. Others">E. Others</option>
+                <option value="Expenses">Expenses</option>
+                <option value="Services">Services</option>
+                <option value="Staff Welfare">Staff Welfare</option>
+                <option value="Documents Fees">Documents Fees</option>
+                <option value="Other">Other</option>
             </select>`;
         cell2.innerHTML = '<input type="text" name="other_desc[]" class="form-control form-control-sm" placeholder="Keterangan...">';
         cell3.innerHTML = '<input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" placeholder="0.00">';
