@@ -881,10 +881,11 @@ def upload_document(sewaan_id):
         return f"Ralat memuat naik dokumen: {e}"
 
 # --- HELPER: KIRA KOMISYEN & KOS PETROS ---
-def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0):
+def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, previous_vol_mogas=0.0):
     """
     Mengira komisyen, kos SEDC, dan keuntungan bersih berdasarkan logik bertingkat.
     details_data: list of dict [{'jenis_minyak': 'PF95', 'daily_volume': 1000}, ...]
+    previous_vol_mogas: Jumlah terkumpul volume Mogas bulan ini SEBELUM rekod ini (untuk tier SEDC).
     tarikh_str: 'YYYY-MM-DD'
     """
     try:
@@ -938,13 +939,22 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0):
 
     # --- 2. KIRA KOS SEDC ---
     # Blok Utama: Kurang 450k vs Lebih 450k (Berdasarkan Total Volume)
-    # Mogas: 0.015 (<450k) atau 0.01 (>450k)
+    # Mogas: 0.015 (First 450k) | 0.01 (Next >450k) - Cumulative Block
     # Diesel: 0.01 (Flat)
     
-    rate_mogas = 0.015 if total_vol < 450000 else 0.01
-    rate_diesel = 0.01
+    # Kira SEDC Mogas (Tiered)
+    sedc_mogas = 0.0
+    remaining_tier1 = max(0, 450000 - previous_vol_mogas)
     
-    total_sedc = (vol_mogas * rate_mogas) + (vol_diesel * rate_diesel)
+    if vol_mogas <= remaining_tier1:
+        sedc_mogas = vol_mogas * 0.015
+    else:
+        tier1_vol = remaining_tier1
+        tier2_vol = vol_mogas - remaining_tier1
+        sedc_mogas = (tier1_vol * 0.015) + (tier2_vol * 0.01)
+    
+    sedc_diesel = vol_diesel * 0.01
+    total_sedc = sedc_mogas + sedc_diesel
     
     # --- 3. AGIHAN KE DETAILS ---
     total_gross_profit = 0.0
@@ -953,6 +963,9 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0):
     # Kira purata rate Mogas untuk agihan per item (jika tiered)
     avg_rate_mogas = comm_mogas_total / vol_mogas if vol_mogas > 0 else 0
     
+    # Kira purata rate SEDC Mogas untuk agihan per item
+    avg_sedc_rate_mogas = sedc_mogas / vol_mogas if vol_mogas > 0 else 0.015
+
     for d in details_data:
         vol = d['daily_volume']
         jenis = d['jenis_minyak']
@@ -970,9 +983,9 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0):
         
         # Assign Kos SEDC
         if jenis in ['PF95', 'UF97']:
-            d['kos'] = vol * rate_mogas
+            d['kos'] = vol * avg_sedc_rate_mogas
         elif jenis in ['E5 B20', 'E5 B7']:
-            d['kos'] = vol * rate_diesel
+            d['kos'] = vol * 0.01
         else:
             d['kos'] = 0.0 # Minyak lain/Pelincir
             
@@ -1057,8 +1070,26 @@ def add_income(source_name):
                     "sales_amount": float(sales_list[i]) if sales_list[i] else 0.0
                 })
             
+            # --- KIRA CUMULATIVE VOLUME MOGAS SEBELUM TARIKH INI ---
+            # Dapatkan tahun dan bulan
+            y, m, _ = tarikh.split('-')
+            start_of_month = f"{y}-{m}-01"
+            
+            # Query semua rekod Petros bulan ini sebelum tarikh ini
+            prev_res = supabase.table('pendapatan_lain').select('id, petros_details(jenis_minyak, daily_volume)')\
+                .eq('sumber', 'Petros')\
+                .gte('tarikh', start_of_month)\
+                .lt('tarikh', tarikh)\
+                .execute()
+            
+            prev_mogas_vol = 0.0
+            for rec in prev_res.data:
+                for d in rec.get('petros_details', []):
+                    if d['jenis_minyak'] in ['PF95', 'UF97']:
+                        prev_mogas_vol += float(d['daily_volume'] or 0)
+
             # Kira Automatik (Komisyen, SEDC, Profit)
-            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses)
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol)
             
             # --- LOGIK PROFIT SHARING PETROS ---
             # Tahun 1-3 (2025-2027): KASB 20%, Gowpen 80%
@@ -1174,8 +1205,26 @@ def edit_pendapatan(id):
                         "sales_amount": float(sales_list[i]) if sales_list[i] else 0.0
                     })
                 
+                # --- KIRA CUMULATIVE VOLUME MOGAS SEBELUM TARIKH INI ---
+                y, m, _ = tarikh.split('-')
+                start_of_month = f"{y}-{m}-01"
+                
+                # Query bulan ini, sebelum tarikh ini ATAU (tarikh sama tapi ID < current ID - untuk susunan insert, tapi tarikh sama biasanya tak berlaku banyak kali. Kita guna < tarikh untuk selamat)
+                # Untuk edit, kita kecualikan ID sendiri.
+                prev_res = supabase.table('pendapatan_lain').select('id, petros_details(jenis_minyak, daily_volume)')\
+                    .eq('sumber', 'Petros')\
+                    .gte('tarikh', start_of_month)\
+                    .lt('tarikh', tarikh)\
+                    .execute()
+                
+                prev_mogas_vol = 0.0
+                for rec in prev_res.data:
+                    for d in rec.get('petros_details', []):
+                        if d['jenis_minyak'] in ['PF95', 'UF97']:
+                            prev_mogas_vol += float(d['daily_volume'] or 0)
+
                 # Kira Semula
-                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses)
+                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol)
                 
                 breakdown['sedc'] = total_sedc
 
@@ -1268,13 +1317,24 @@ def recalculate_petros():
     """
     try:
         # 1. Dapatkan semua rekod Petros
-        res = supabase.table('pendapatan_lain').select('*').eq('sumber', 'Petros').execute()
+        # Penting: Order by Tarikh ASC supaya cumulative volume dikira dengan betul
+        res = supabase.table('pendapatan_lain').select('*').eq('sumber', 'Petros').order('tarikh', desc=False).execute()
         records = res.data
         
+        # Dictionary untuk track cumulative Mogas volume per bulan: {'2025-08': 12000.00}
+        monthly_mogas_tracker = {}
+
         count = 0
         for rec in records:
             rec_id = rec['id']
             tarikh = rec['tarikh']
+            month_key = tarikh[:7] # YYYY-MM
+            
+            # Init tracker jika bulan baru
+            if month_key not in monthly_mogas_tracker:
+                monthly_mogas_tracker[month_key] = 0.0
+            
+            current_prev_mogas = monthly_mogas_tracker[month_key]
             
             # 2. Dapatkan details (volume minyak)
             det_res = supabase.table('petros_details').select('*').eq('pendapatan_id', rec_id).execute()
@@ -1304,7 +1364,11 @@ def recalculate_petros():
                 breakdown = {'fixed': {}, 'dynamic': []}
 
             # 4. Kira Semula Kewangan (Guna Formula Terkini)
-            net_profit, gross_profit, total_sedc = calculate_petros_financials(details, tarikh, other_expenses)
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details, tarikh, other_expenses, current_prev_mogas)
+            
+            # Update tracker untuk rekod seterusnya
+            vol_mogas_today = sum(d['daily_volume'] for d in details if d['jenis_minyak'] in ['PF95', 'UF97'])
+            monthly_mogas_tracker[month_key] += vol_mogas_today
             
             # 5. Update Breakdown dengan SEDC baru
             breakdown['sedc'] = total_sedc
