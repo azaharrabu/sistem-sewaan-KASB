@@ -126,17 +126,17 @@
                             <div class="card card-body bg-light p-2 mb-2">
                                 <strong class="small text-decoration-underline">C. Documents Fees</strong>
                                 <div class="small">
-                                    {% if record.kos_breakdown.fixed.ad_fee > 0 %}
-                                    <div class="d-flex justify-content-between"><span>Advertisement Fee</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.ad_fee) }}</span></div>
+                                    {% if record.kos_breakdown.fixed.get('ad_fee', 0) > 0 %}
+                                    <div class="d-flex justify-content-between"><span>Advertisement Fee</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.get('ad_fee', 0)) }}</span></div>
                                     {% endif %}
-                                    {% if record.kos_breakdown.fixed.pet_license > 0 %}
-                                    <div class="d-flex justify-content-between"><span>Petroleum License</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.pet_license) }}</span></div>
+                                    {% if record.kos_breakdown.fixed.get('pet_license', 0) > 0 %}
+                                    <div class="d-flex justify-content-between"><span>Petroleum License</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.get('pet_license', 0)) }}</span></div>
                                     {% endif %}
-                                    {% if record.kos_breakdown.fixed.license_app > 0 %}
-                                    <div class="d-flex justify-content-between"><span>License Application Fee</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.license_app) }}</span></div>
+                                    {% if record.kos_breakdown.fixed.get('license_app', 0) > 0 %}
+                                    <div class="d-flex justify-content-between"><span>License Application Fee</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.get('license_app', 0)) }}</span></div>
                                     {% endif %}
-                                    {% if record.kos_breakdown.fixed.trade_license > 0 %}
-                                    <div class="d-flex justify-content-between"><span>Trade License</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.trade_license) }}</span></div>
+                                    {% if record.kos_breakdown.fixed.get('trade_license', 0) > 0 %}
+                                    <div class="d-flex justify-content-between"><span>Trade License</span><span>RM {{ "{:,.2f}".format(record.kos_breakdown.fixed.get('trade_license', 0)) }}</span></div>
                                     {% endif %}
                                 </div>
                             </div>
