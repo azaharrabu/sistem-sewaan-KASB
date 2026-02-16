@@ -35,7 +35,7 @@
                             {% for item in details %}
                             <tr>
                                 <td class="text-start fw-bold">{{ item.jenis_minyak }}</td>
-                                <td>{{ "{:,.0f}".format(item.daily_volume) }}</td>
+                                <td>{{ "{:,.2f}".format(item.daily_volume) }}</td>
                                 <td>{{ "{:,.2f}".format(item.sales_amount or 0) }}</td>
                                 <td class="fw-bold text-success bg-light">+ {{ "{:,.2f}".format(item.earned_commission) }}</td>
                             </tr>
@@ -48,8 +48,8 @@
                         <tfoot class="table-secondary fw-bold">
                             <tr>
                                 <td class="text-start">TOTAL</td>
-                                <td>-</td>
-                                <td>-</td>
+                                <td>{{ "{:,.2f}".format(total_vol) }}</td>
+                                <td>{{ "{:,.2f}".format(total_sales) }}</td>
                                 <td class="text-success">RM {{ "{:,.2f}".format((record.kutipan_yuran or 0) + (record.kos_pengurusan or 0)) }}</td>
                             </tr>
                         </tfoot>

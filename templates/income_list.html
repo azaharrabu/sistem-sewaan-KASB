@@ -170,7 +170,7 @@
                                     </td>
                                 {% elif source == 'Petros' %}
                                     <td>{{ row.tarikh }}</td>
-                                    <td class="text-end">{{ "{:,.0f}".format(row.total_volume) }}</td>
+                                    <td class="text-end">{{ "{:,.2f}".format(row.total_volume) }}</td>
                                     <td class="text-end">{{ "{:,.2f}".format(row.total_sales) }}</td>
                                     
                                     <td class="text-center">
@@ -554,7 +554,7 @@
 
             // Update DOM Summary Card
             document.getElementById('summaryTitle').innerText = "📊 Monthly Summary: " + title;
-            document.getElementById('sumVol').innerText = vol.toLocaleString('en-US', {maximumFractionDigits: 0}) + " L";
+            document.getElementById('sumVol').innerText = vol.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " L";
             document.getElementById('sumSales').innerText = "RM " + sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumGross').innerText = "RM " + gross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumCosts').innerText = "RM " + costs.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -563,7 +563,7 @@
             document.getElementById('sumGowpen').innerText = "RM " + gowpen.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
             // Update Table Footer
-            document.getElementById('footerVol').innerText = vol.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('footerVol').innerText = vol.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('footerSales').innerText = sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
     </script>

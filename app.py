@@ -1215,7 +1215,11 @@ def petros_detail_view(id):
         detail_res = supabase.table('petros_details').select('*').eq('pendapatan_id', id).execute()
         details = detail_res.data
         
-        return render_template('petros_detail.html', record=main_record, details=details)
+        # Kira Total untuk Footer Jadual
+        total_vol = sum(float(d['daily_volume'] or 0) for d in details)
+        total_sales = sum(float(d['sales_amount'] or 0) for d in details)
+        
+        return render_template('petros_detail.html', record=main_record, details=details, total_vol=total_vol, total_sales=total_sales)
     except Exception as e:
         flash(f"Ralat memuatkan detail Petros: {e}", "danger")
         return redirect(url_for('petros_dashboard'))
