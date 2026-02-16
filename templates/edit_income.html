@@ -76,65 +76,12 @@
                             <!-- Input Kos Operasi (Edit) -->
                             <div class="card border-warning mb-3 mt-3">
                                 <div class="card-header bg-warning text-dark py-1">
-                                    <small class="fw-bold">Update Cost Details (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan or 0) }})</small>
+                                    <small class="fw-bold">Update Expenses (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan or 0) }})</small>
                                 </div>
                                 <div class="card-body p-2">
                                     {% set fixed = record.kos_breakdown.fixed if record.kos_breakdown else {} %}
-                                    <div class="row g-3">
-                                        <!-- A. Expenses (Monthly) -->
-                                        <div class="col-md-6">
-                                            <h6 class="small fw-bold text-primary border-bottom pb-1">A. Expenses (Monthly)</h6>
-                                            <div class="row g-1">
-                                                <div class="col-6"><label class="small">Staff Salary</label><input type="number" step="0.01" name="cost_salary" class="form-control form-control-sm" value="{{ fixed.salary }}"></div>
-                                                <div class="col-6"><label class="small">EPF</label><input type="number" step="0.01" name="cost_epf" class="form-control form-control-sm" value="{{ fixed.epf }}"></div>
-                                                <div class="col-6"><label class="small">SOCSO</label><input type="number" step="0.01" name="cost_socso" class="form-control form-control-sm" value="{{ fixed.socso }}"></div>
-                                                <div class="col-6"><label class="small">EIS</label><input type="number" step="0.01" name="cost_eis" class="form-control form-control-sm" value="{{ fixed.eis }}"></div>
-                                                <div class="col-6"><label class="small">Levy</label><input type="number" step="0.01" name="cost_levy" class="form-control form-control-sm" value="{{ fixed.levy }}"></div>
-                                                <div class="col-6"><label class="small">Tax Alloc (PCB)</label><input type="number" step="0.01" name="cost_pcb" class="form-control form-control-sm" value="{{ fixed.pcb }}"></div>
-                                            </div>
-                                        </div>
-
-                                        <!-- B. Services (Monthly) -->
-                                        <div class="col-md-6">
-                                            <h6 class="small fw-bold text-primary border-bottom pb-1">B. Services (Monthly)</h6>
-                                            <div class="row g-1">
-                                                <div class="col-6"><label class="small">Retails Auto Sys</label><input type="number" step="0.01" name="cost_retails_system" class="form-control form-control-sm" value="{{ fixed.retails_system }}"></div>
-                                                <div class="col-6"><label class="small">Rentokil</label><input type="number" step="0.01" name="cost_rentokil" class="form-control form-control-sm" value="{{ fixed.rentokil }}"></div>
-                                                <div class="col-6"><label class="small">Unifi</label><input type="number" step="0.01" name="cost_unifi" class="form-control form-control-sm" value="{{ fixed.unifi }}"></div>
-                                                <div class="col-6"><label class="small">Insurance</label><input type="number" step="0.01" name="cost_insurance" class="form-control form-control-sm" value="{{ fixed.insurance }}"></div>
-                                                <div class="col-6"><label class="small">Safe Guard</label><input type="number" step="0.01" name="cost_safe_guard" class="form-control form-control-sm" value="{{ fixed.safe_guard }}"></div>
-                                                <div class="col-6"><label class="small">TNB Bill</label><input type="number" step="0.01" name="cost_tnb" class="form-control form-control-sm" value="{{ fixed.tnb }}"></div>
-                                                <div class="col-6"><label class="small">Water Bill</label><input type="number" step="0.01" name="cost_water" class="form-control form-control-sm" value="{{ fixed.water }}"></div>
-                                            </div>
-                                        </div>
-
-                                        <!-- C. Staff Welfare (One Time) -->
-                                        <div class="col-md-6">
-                                            <h6 class="small fw-bold text-primary border-bottom pb-1">C. Staff Welfare (One Time)</h6>
-                                            <div class="row g-1">
-                                                <div class="col-4"><label class="small">First Aid</label><input type="number" step="0.01" name="cost_first_aid" class="form-control form-control-sm" value="{{ fixed.first_aid }}"></div>
-                                                <div class="col-4"><label class="small">OSH Coord</label><input type="number" step="0.01" name="cost_osh" class="form-control form-control-sm" value="{{ fixed.osh }}"></div>
-                                                <div class="col-4"><label class="small">Vaccine</label><input type="number" step="0.01" name="cost_typhoid" class="form-control form-control-sm" value="{{ fixed.typhoid }}"></div>
-                                            </div>
-                                        </div>
-
-                                        <!-- D. Documents Fees (Yearly) -->
-                                        <div class="col-md-6">
-                                            <h6 class="small fw-bold text-primary border-bottom pb-1">D. Documents Fees (Yearly)</h6>
-                                            <div class="row g-1">
-                                                <div class="col-6"><label class="small">Advert Fee</label><input type="number" step="0.01" name="cost_ad_fee" class="form-control form-control-sm" value="{{ fixed.ad_fee }}"></div>
-                                                <div class="col-6"><label class="small">Petroleum Lic</label><input type="number" step="0.01" name="cost_pet_license" class="form-control form-control-sm" value="{{ fixed.pet_license }}"></div>
-                                                <div class="col-6"><label class="small">License App</label><input type="number" step="0.01" name="cost_license_app" class="form-control form-control-sm" value="{{ fixed.license_app }}"></div>
-                                                <div class="col-6"><label class="small">Trade License</label><input type="number" step="0.01" name="cost_trade_license" class="form-control form-control-sm" value="{{ fixed.trade_license }}"></div>
-                                            </div>
-                                        </div>
-
-                                        <!-- E. Others -->
-                                        <div class="col-md-12">
-                                            <h6 class="small fw-bold text-primary border-bottom pb-1">E. Others</h6>
                                             
                                             <!-- Dynamic Table -->
-                                            <label class="small fw-bold mt-2">Other Costs (Manual Input)</label>
                                             <table class="table table-bordered table-sm mb-0" id="dynamicCostTable">
                                                 <thead class="table-light">
                                                     <tr>
@@ -145,15 +92,34 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
+                                                    <!-- Render Legacy Fixed Costs as Dynamic Rows -->
+                                                    {% for k, v in fixed.items() if v > 0 %}
+                                                    <tr>
+                                                        <td>
+                                                            <select name="other_category[]" class="form-select form-select-sm">
+                                                                <option value="A. Monthly Expenses" {% if k in ['salary','epf','socso','eis','levy','pcb'] %}selected{% endif %}>A. Monthly Expenses</option>
+                                                                <option value="B. Monthly Services" {% if k in ['retails_system','rentokil','unifi','insurance','safe_guard','tnb','water'] %}selected{% endif %}>B. Monthly Services</option>
+                                                                <option value="C. Staff Welfare" {% if k in ['first_aid','osh','typhoid'] %}selected{% endif %}>C. Staff Welfare</option>
+                                                                <option value="D. Documents Fees" {% if k in ['ad_fee','pet_license','license_app','trade_license'] %}selected{% endif %}>D. Documents Fees</option>
+                                                                <option value="E. Others">E. Others</option>
+                                                            </select>
+                                                        </td>
+                                                        <td><input type="text" name="other_desc[]" class="form-control form-control-sm" value="{{ k|replace('_',' ')|title }}"></td>
+                                                        <td><input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" value="{{ v }}"></td>
+                                                        <td><button type="button" class="btn btn-sm btn-danger py-0" onclick="this.closest('tr').remove()">x</button></td>
+                                                    </tr>
+                                                    {% endfor %}
+
+                                                    <!-- Render Existing Dynamic Costs -->
                                                     {% for dyn in record.kos_breakdown.dynamic if record.kos_breakdown and record.kos_breakdown.dynamic %}
                                                     <tr>
                                                         <td>
                                                             <select name="other_category[]" class="form-select form-select-sm">
-                                                                <option value="Expenses" {% if dyn.category == 'Expenses' %}selected{% endif %}>Expenses</option>
-                                                                <option value="Services" {% if dyn.category == 'Services' %}selected{% endif %}>Services</option>
-                                                                <option value="Staff Welfare" {% if dyn.category == 'Staff Welfare' %}selected{% endif %}>Staff Welfare</option>
-                                                                <option value="Documents Fees" {% if dyn.category == 'Documents Fees' %}selected{% endif %}>Documents Fees</option>
-                                                                <option value="Other" {% if dyn.category == 'Other' %}selected{% endif %}>Other</option>
+                                                                <option value="A. Monthly Expenses" {% if dyn.category == 'A. Monthly Expenses' or dyn.category == 'Expenses' %}selected{% endif %}>A. Monthly Expenses</option>
+                                                                <option value="B. Monthly Services" {% if dyn.category == 'B. Monthly Services' or dyn.category == 'Services' %}selected{% endif %}>B. Monthly Services</option>
+                                                                <option value="C. Staff Welfare" {% if dyn.category == 'C. Staff Welfare' or dyn.category == 'Staff Welfare' %}selected{% endif %}>C. Staff Welfare</option>
+                                                                <option value="D. Documents Fees" {% if dyn.category == 'D. Documents Fees' or dyn.category == 'Documents Fees' %}selected{% endif %}>D. Documents Fees</option>
+                                                                <option value="E. Others" {% if dyn.category == 'E. Others' or dyn.category == 'Other' %}selected{% endif %}>E. Others</option>
                                                             </select>
                                                         </td>
                                                         <td><input type="text" name="other_desc[]" class="form-control form-control-sm" value="{{ dyn.desc }}"></td>
@@ -163,9 +129,7 @@
                                                     {% endfor %}
                                                 </tbody>
                                             </table>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addCostRow()">+ Add Row</button>
-                                        </div>
-                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addCostRow()">+ Add Expense Row</button>
                                 </div>
                             </div>
 
@@ -203,11 +167,11 @@
         
         cell1.innerHTML = `
             <select name="other_category[]" class="form-select form-select-sm">
-                <option value="Expenses">Expenses</option>
-                <option value="Services">Services</option>
-                <option value="Staff Welfare">Staff Welfare</option>
-                <option value="Documents Fees">Documents Fees</option>
-                <option value="Other">Other</option>
+                <option value="A. Monthly Expenses">A. Monthly Expenses</option>
+                <option value="B. Monthly Services">B. Monthly Services</option>
+                <option value="C. Staff Welfare">C. Staff Welfare</option>
+                <option value="D. Documents Fees">D. Documents Fees</option>
+                <option value="E. Others">E. Others</option>
             </select>`;
         cell2.innerHTML = '<input type="text" name="other_desc[]" class="form-control form-control-sm" placeholder="Keterangan...">';
         cell3.innerHTML = '<input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" placeholder="0.00">';

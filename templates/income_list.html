@@ -305,9 +305,7 @@
                                                     <!-- Rows will be added here -->
                                                 </tbody>
                                             </table>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addCostRow()">+ Add Row</button>
-                                        </div>
-                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addCostRow()">+ Add Expense Row</button>
                                 </div>
                             </div>
                             
@@ -403,11 +401,11 @@
             
             cell1.innerHTML = `
                 <select name="other_category[]" class="form-select form-select-sm">
-                    <option value="Expenses">Expenses</option>
-                    <option value="Services">Services</option>
-                    <option value="Staff Welfare">Staff Welfare</option>
-                    <option value="Documents Fees">Documents Fees</option>
-                    <option value="Other">Other</option>
+                    <option value="A. Monthly Expenses">A. Monthly Expenses</option>
+                    <option value="B. Monthly Services">B. Monthly Services</option>
+                    <option value="C. Staff Welfare">C. Staff Welfare</option>
+                    <option value="D. Documents Fees">D. Documents Fees</option>
+                    <option value="E. Others">E. Others</option>
                 </select>`;
             cell2.innerHTML = '<input type="text" name="other_desc[]" class="form-control form-control-sm" placeholder="Keterangan...">';
             cell3.innerHTML = '<input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" placeholder="0.00">';
