@@ -327,17 +327,21 @@
                                 <div class="card-body py-2">
                                     <h6 class="fw-bold small mb-2 text-primary">Daily Transaction Summary (All Fuel Types)</h6>
                                     <div class="row g-2">
-                                        <div class="col-md-4">
-                                            <label class="small fw-bold">Total Debit/Credit Card (RM)</label>
-                                            <input type="number" step="0.01" name="petros_total_debit" class="form-control form-control-sm" placeholder="0.00">
+                                        <div class="col-md-3">
+                                            <label class="small fw-bold">Debit/Credit Card (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_debit" id="petros_total_debit" class="form-control form-control-sm" placeholder="0.00" oninput="calcTotalSummary()">
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="small fw-bold">Total E-Wallet (RM)</label>
-                                            <input type="number" step="0.01" name="petros_total_ewallet" class="form-control form-control-sm" placeholder="0.00">
+                                        <div class="col-md-3">
+                                            <label class="small fw-bold">E-Wallet (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_ewallet" id="petros_total_ewallet" class="form-control form-control-sm" placeholder="0.00" oninput="calcTotalSummary()">
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="small fw-bold">Total Cash (RM)</label>
-                                            <input type="number" step="0.01" name="petros_total_cash" class="form-control form-control-sm" placeholder="0.00">
+                                        <div class="col-md-3">
+                                            <label class="small fw-bold">Cash (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_cash" id="petros_total_cash" class="form-control form-control-sm" placeholder="0.00" oninput="calcTotalSummary()">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="small fw-bold text-success">Total Amount (RM)</label>
+                                            <input type="number" step="0.01" id="petros_total_amount" class="form-control form-control-sm bg-light fw-bold text-success" placeholder="0.00" readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -444,6 +448,15 @@
                 }
             }
         });
+
+        // Kira Total Summary
+        function calcTotalSummary() {
+            var debit = parseFloat(document.getElementById('petros_total_debit').value) || 0;
+            var ewallet = parseFloat(document.getElementById('petros_total_ewallet').value) || 0;
+            var cash = parseFloat(document.getElementById('petros_total_cash').value) || 0;
+            var total = debit + ewallet + cash;
+            document.getElementById('petros_total_amount').value = total.toFixed(2);
+        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

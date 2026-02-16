@@ -79,6 +79,10 @@
                                 <th class="bg-light">Cash</th>
                                 <td class="text-end">RM {{ "{:,.2f}".format(record.sales_cash or 0) }}</td>
                             </tr>
+                            <tr class="border-top border-dark">
+                                <th class="bg-secondary text-white">Total Daily Sales</th>
+                                <td class="text-end fw-bold">RM {{ "{:,.2f}".format((record.sales_debit or 0) + (record.sales_ewallet or 0) + (record.sales_cash or 0)) }}</td>
+                            </tr>
                         </table>
                     </div>
                 </div>
