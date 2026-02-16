@@ -905,7 +905,7 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0):
     comm_diesel_total = 0.0
     
     if rec_date < cutoff_date:
-        # LOGIK LAMA (Ogos - Okt 2025)
+        # LOGIK LAMA (Ogos - Oktober 2025)
         # Mogas: RM 0.150 flat
         # Diesel: RM 0.128 flat
         comm_mogas_total = vol_mogas * 0.150
