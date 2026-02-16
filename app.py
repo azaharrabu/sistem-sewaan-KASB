@@ -938,7 +938,19 @@ def add_income(source_name):
             sales_list = request.form.getlist('petros_sales[]')
             
             # --- PENGURUSAN KOS OPERASI TERPERINCI ---
+            fixed_costs = {}
+            # Keys for Fixed Inputs (A, B, D only)
+            keys = [
+                'salary', 'epf', 'socso', 'eis', 'levy', 'pcb', # A. Monthly Expenses
+                'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water', # B. Monthly Services
+                'ad_fee', 'pet_license', 'license_app', 'trade_license', # D. Documents Fees
+            ]
+            
             total_expenses = 0.0
+            for k in keys:
+                val = float(request.form.get(f'cost_{k}') or 0)
+                fixed_costs[k] = val
+                total_expenses += val
                 
             # Kos Dinamik (Lain-lain Table)
             other_category = request.form.getlist('other_category[]')
@@ -952,7 +964,7 @@ def add_income(source_name):
                     dynamic_costs.append({'category': cat, 'desc': other_desc[i], 'amount': amt})
                     total_expenses += amt
             
-            breakdown = {'fixed': {}, 'dynamic': dynamic_costs}
+            breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs}
             
             details_data = []
             for i in range(len(jenis_list)):
@@ -1036,7 +1048,18 @@ def edit_pendapatan(id):
                 rate = 0.25 if rec_date >= start_date_25 else 0.20
                 
                 # --- PENGURUSAN KOS OPERASI TERPERINCI (EDIT) ---
+                fixed_costs = {}
+                keys = [
+                    'salary', 'epf', 'socso', 'eis', 'levy', 'pcb',
+                    'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water',
+                    'ad_fee', 'pet_license', 'license_app', 'trade_license',
+                ]
+                
                 total_expenses = 0.0
+                for k in keys:
+                    val = float(request.form.get(f'cost_{k}') or 0)
+                    fixed_costs[k] = val
+                    total_expenses += val
                     
                 # Kos Dinamik
                 other_category = request.form.getlist('other_category[]')
@@ -1050,7 +1073,7 @@ def edit_pendapatan(id):
                         dynamic_costs.append({'category': cat, 'desc': other_desc[i], 'amount': amt})
                         total_expenses += amt
                 
-                breakdown = {'fixed': {}, 'dynamic': dynamic_costs}
+                breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs}
                 
                 # Proses Volume Baru
                 jenis_list = request.form.getlist('petros_jenis[]')
