@@ -941,7 +941,7 @@ def add_income(source_name):
             fixed_costs = {}
             # Keys for Fixed Inputs (A, B, D only)
             keys = [
-                'salary', 'epf', 'socso', 'eis', 'levy', 'pcb', # A. Monthly Expenses
+                'salary', 'epf', 'socso', 'eis', 'levy', 'pcb', 'stamping', # A. Monthly Expenses
                 'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water', # B. Monthly Services
                 'ad_fee', 'pet_license', 'license_app', 'trade_license', # C. Documents Fees
             ]
@@ -1050,7 +1050,7 @@ def edit_pendapatan(id):
                 # --- PENGURUSAN KOS OPERASI TERPERINCI (EDIT) ---
                 fixed_costs = {}
                 keys = [
-                    'salary', 'epf', 'socso', 'eis', 'levy', 'pcb',
+                    'salary', 'epf', 'socso', 'eis', 'levy', 'pcb', 'stamping',
                     'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water',
                     'ad_fee', 'pet_license', 'license_app', 'trade_license', # C. Documents Fees
                 ]

@@ -93,7 +93,7 @@
                             <div class="card card-body bg-light p-2 mb-2">
                                 <strong class="small text-decoration-underline">A. Monthly Expenses</strong>
                                 <div class="small">
-                                    {% for k, v in record.kos_breakdown.fixed.items() if v > 0 and k in ['salary','epf','socso','eis','levy','pcb'] %}
+                                    {% for k, v in record.kos_breakdown.fixed.items() if v > 0 and k in ['salary','epf','socso','eis','levy','pcb','stamping'] %}
                                     <div class="d-flex justify-content-between"><span>{{ k|upper }}</span><span>RM {{ "{:,.2f}".format(v) }}</span></div>
                                     {% endfor %}
                                 </div>
