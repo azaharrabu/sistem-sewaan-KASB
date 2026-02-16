@@ -935,6 +935,7 @@ def add_income(source_name):
             # Proses input array dari form Petros
             jenis_list = request.form.getlist('petros_jenis[]')
             vol_list = request.form.getlist('petros_vol[]')
+            sales_list = request.form.getlist('petros_sales[]')
             
             # --- PENGURUSAN KOS OPERASI TERPERINCI ---
             fixed_costs = {}
@@ -970,7 +971,8 @@ def add_income(source_name):
             for i in range(len(jenis_list)):
                 details_data.append({
                     "jenis_minyak": jenis_list[i],
-                    "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0
+                    "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0,
+                    "sales_amount": float(sales_list[i]) if sales_list[i] else 0.0
                 })
             
             # Kira Automatik (Komisyen, SEDC, Profit)
@@ -1079,12 +1081,14 @@ def edit_pendapatan(id):
                 # Proses Volume Baru
                 jenis_list = request.form.getlist('petros_jenis[]')
                 vol_list = request.form.getlist('petros_vol[]')
+                sales_list = request.form.getlist('petros_sales[]')
                 
                 details_data = []
                 for i in range(len(jenis_list)):
                     details_data.append({
                         "jenis_minyak": jenis_list[i],
-                        "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0
+                        "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0,
+                        "sales_amount": float(sales_list[i]) if sales_list[i] else 0.0
                     })
                 
                 # Kira Semula
@@ -1100,6 +1104,7 @@ def edit_pendapatan(id):
                 for d in details_data:
                     supabase.table('petros_details').update({
                         "daily_volume": d['daily_volume'],
+                        "sales_amount": d['sales_amount'],
                         "earned_commission": d['earned_commission'],
                         "kos": d['kos'],
                         "profit": d['profit']

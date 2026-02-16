@@ -27,6 +27,7 @@
                             <tr>
                                 <th class="text-start">Jenis Minyak</th>
                                 <th>Daily Volume</th>
+                                <th>Jualan (RM)</th>
                                 <th>Earned Commission (RM)</th>
                                 <th>Kos (RM)</th>
                                 <th class="bg-success text-white">Profit (RM)</th>
@@ -37,6 +38,7 @@
                             <tr>
                                 <td class="text-start fw-bold">{{ item.jenis_minyak }}</td>
                                 <td>{{ "{:,.0f}".format(item.daily_volume) }}</td>
+                                <td>{{ "{:,.2f}".format(item.sales_amount or 0) }}</td>
                                 <td>{{ "{:,.2f}".format(item.earned_commission) }}</td>
                                 <td class="text-danger">- {{ "{:,.2f}".format(item.kos) }}</td>
                                 <td class="fw-bold text-success bg-light">+ {{ "{:,.2f}".format(item.profit) }}</td>
@@ -50,6 +52,7 @@
                         <tfoot class="table-secondary fw-bold">
                             <tr>
                                 <td class="text-start">JUMLAH</td>
+                                <td>-</td>
                                 <td>-</td>
                                 <td>-</td>
                                 <td>-</td>

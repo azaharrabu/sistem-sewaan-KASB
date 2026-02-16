@@ -51,6 +51,7 @@
                                         <tr>
                                             <th style="width: 20%;">Jenis</th>
                                             <th>Volume (Liter)</th>
+                                            <th>Jualan (RM)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -62,6 +63,9 @@
                                             </td>
                                             <td>
                                                 <input type="number" step="0.01" name="petros_vol[]" class="form-control form-control-sm" value="{{ item.daily_volume }}">
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01" name="petros_sales[]" class="form-control form-control-sm" value="{{ item.sales_amount }}">
                                             </td>
                                         </tr>
                                         {% endfor %}
