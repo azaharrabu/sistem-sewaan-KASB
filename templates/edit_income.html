@@ -27,6 +27,24 @@
                             <input type="number" step="0.01" class="form-control bg-light" value="{{ record.kutipan_yuran }}" readonly>
                             <div class="form-text text-primary">Nilai ini dikira automatik dari Volume - Kos Operasi.</div>
 
+                            <!-- Info Formula -->
+                            <div class="alert alert-info py-2 mt-2 mb-2 small">
+                                <div class="fw-bold text-decoration-underline mb-1">Rujukan Formula Pengiraan:</div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>1. Komisyen Kerajaan (Ikut Jumlah Liter):</strong><br>
+                                        • 0 - 200,000 L: <strong>RM 0.18</strong><br>
+                                        • 200,001 - 500,000 L: <strong>RM 0.17</strong><br>
+                                        • > 500,000 L: <strong>RM 0.16</strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>2. Fi Lesen SEDC (Threshold 450,000 L):</strong><br>
+                                        • < 450k: Mogas (RM 0.015), Diesel (RM 0.01)<br>
+                                        • > 450k: Mogas (RM 0.01), Diesel (RM 0.01)
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="table-responsive mt-3">
                                 <table class="table table-bordered table-sm text-center align-middle">
                                     <thead class="table-light">
@@ -120,6 +138,7 @@
                                             <table class="table table-bordered table-sm mb-0" id="dynamicCostTable">
                                                 <thead class="table-light">
                                                     <tr>
+                                                        <th style="width: 150px;">Kategori</th>
                                                         <th>Keterangan Kos</th>
                                                         <th style="width: 120px;">Amaun (RM)</th>
                                                         <th style="width: 50px;"></th>
@@ -128,6 +147,15 @@
                                                 <tbody>
                                                     {% for dyn in record.kos_breakdown.dynamic if record.kos_breakdown and record.kos_breakdown.dynamic %}
                                                     <tr>
+                                                        <td>
+                                                            <select name="other_category[]" class="form-select form-select-sm">
+                                                                <option value="Expenses" {% if dyn.category == 'Expenses' %}selected{% endif %}>Expenses</option>
+                                                                <option value="Services" {% if dyn.category == 'Services' %}selected{% endif %}>Services</option>
+                                                                <option value="Staff Welfare" {% if dyn.category == 'Staff Welfare' %}selected{% endif %}>Staff Welfare</option>
+                                                                <option value="Documents Fees" {% if dyn.category == 'Documents Fees' %}selected{% endif %}>Documents Fees</option>
+                                                                <option value="Other" {% if dyn.category == 'Other' %}selected{% endif %}>Other</option>
+                                                            </select>
+                                                        </td>
                                                         <td><input type="text" name="other_desc[]" class="form-control form-control-sm" value="{{ dyn.desc }}"></td>
                                                         <td><input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" value="{{ dyn.amount }}"></td>
                                                         <td><button type="button" class="btn btn-sm btn-danger py-0" onclick="this.closest('tr').remove()">x</button></td>
@@ -171,10 +199,19 @@
         var cell1 = newRow.insertCell(0);
         var cell2 = newRow.insertCell(1);
         var cell3 = newRow.insertCell(2);
+        var cell4 = newRow.insertCell(3);
         
-        cell1.innerHTML = '<input type="text" name="other_desc[]" class="form-control form-control-sm" placeholder="Contoh: Pembaikan Paip">';
-        cell2.innerHTML = '<input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" placeholder="0.00">';
-        cell3.innerHTML = '<button type="button" class="btn btn-sm btn-danger py-0" onclick="this.closest(\'tr\').remove()">x</button>';
+        cell1.innerHTML = `
+            <select name="other_category[]" class="form-select form-select-sm">
+                <option value="Expenses">Expenses</option>
+                <option value="Services">Services</option>
+                <option value="Staff Welfare">Staff Welfare</option>
+                <option value="Documents Fees">Documents Fees</option>
+                <option value="Other">Other</option>
+            </select>`;
+        cell2.innerHTML = '<input type="text" name="other_desc[]" class="form-control form-control-sm" placeholder="Keterangan...">';
+        cell3.innerHTML = '<input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" placeholder="0.00">';
+        cell4.innerHTML = '<button type="button" class="btn btn-sm btn-danger py-0" onclick="this.closest(\'tr\').remove()">x</button>';
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

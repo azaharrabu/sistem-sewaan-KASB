@@ -117,7 +117,12 @@
                                 <strong class="small text-decoration-underline">Lain-lain (Manual)</strong>
                                 <div class="small">
                                     {% for item in record.kos_breakdown.dynamic %}
-                                    <div class="d-flex justify-content-between"><span>{{ item.desc }}</span><span>RM {{ "{:,.2f}".format(item.amount) }}</span></div>
+                                    <div class="d-flex justify-content-between border-bottom pb-1 mb-1">
+                                        <div>
+                                            <span class="badge bg-secondary" style="font-size: 0.65rem;">{{ item.category or 'Other' }}</span> {{ item.desc }}
+                                        </div>
+                                        <span>RM {{ "{:,.2f}".format(item.amount) }}</span>
+                                    </div>
                                     {% endfor %}
                                 </div>
                             </div>

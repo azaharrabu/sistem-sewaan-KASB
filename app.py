@@ -953,13 +953,15 @@ def add_income(source_name):
                 total_expenses += val
                 
             # Kos Dinamik (Lain-lain Table)
+            other_category = request.form.getlist('other_category[]')
             other_desc = request.form.getlist('other_desc[]')
             other_amt = request.form.getlist('other_amt[]')
             dynamic_costs = []
             for i in range(len(other_desc)):
                 if other_desc[i].strip():
+                    cat = other_category[i] if i < len(other_category) else 'Other'
                     amt = float(other_amt[i] or 0)
-                    dynamic_costs.append({'desc': other_desc[i], 'amount': amt})
+                    dynamic_costs.append({'category': cat, 'desc': other_desc[i], 'amount': amt})
                     total_expenses += amt
             
             breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs}
@@ -1061,13 +1063,15 @@ def edit_pendapatan(id):
                     total_expenses += val
                     
                 # Kos Dinamik
+                other_category = request.form.getlist('other_category[]')
                 other_desc = request.form.getlist('other_desc[]')
                 other_amt = request.form.getlist('other_amt[]')
                 dynamic_costs = []
                 for i in range(len(other_desc)):
                     if other_desc[i].strip():
+                        cat = other_category[i] if i < len(other_category) else 'Other'
                         amt = float(other_amt[i] or 0)
-                        dynamic_costs.append({'desc': other_desc[i], 'amount': amt})
+                        dynamic_costs.append({'category': cat, 'desc': other_desc[i], 'amount': amt})
                         total_expenses += amt
                 
                 breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs}
