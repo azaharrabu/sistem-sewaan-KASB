@@ -45,14 +45,6 @@
                                 </div>
                             </div>
 
-                            <!-- SEDC Cost Display -->
-                            {% if record.kos_breakdown.sedc %}
-                            <div class="alert alert-warning py-2 mb-2 small d-flex justify-content-between">
-                                <strong>SEDC License Fee (Auto-calculated):</strong>
-                                <span>RM {{ "{:,.2f}".format(record.kos_breakdown.sedc) }}</span>
-                            </div>
-                            {% endif %}
-
                             <div class="table-responsive mt-3">
                                 <table class="table table-bordered table-sm text-center align-middle">
                                     <thead class="table-light">
@@ -87,6 +79,14 @@
                                     <small class="fw-bold">Update Cost Details (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan or 0) }})</small>
                                 </div>
                                 <div class="card-body p-2">
+                                    <!-- SEDC Cost Display (Inside Card) -->
+                                    {% if record.kos_breakdown.sedc %}
+                                    <div class="alert alert-warning py-1 mb-3 small d-flex justify-content-between align-items-center border-warning">
+                                        <span><strong>SEDC License Fee</strong> (Auto-calculated)</span>
+                                        <span class="fw-bold">RM {{ "{:,.2f}".format(record.kos_breakdown.sedc) }}</span>
+                                    </div>
+                                    {% endif %}
+
                                     {% set fixed = record.kos_breakdown.fixed if record.kos_breakdown else {} %}
                                     <div class="row g-3">
                                         <!-- A. Expenses (Monthly) -->
