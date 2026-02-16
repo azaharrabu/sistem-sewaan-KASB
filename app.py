@@ -535,21 +535,66 @@ def render_income_detail(source_name):
         selected_year = request.args.get('year', current_year, type=int)
         selected_month = request.args.get('month', type=int)
         
-        # Dapatkan data dari table pendapatan_lain
-        response = supabase.table('pendapatan_lain').select('*').eq('sumber', source_name).order('tarikh', desc=True).execute()
+        # Dapatkan data dari table pendapatan_lain (Join details jika Petros untuk kira volume)
+        if source_name == 'Petros':
+            response = supabase.table('pendapatan_lain').select('*, petros_details(daily_volume)').eq('sumber', source_name).order('tarikh', desc=True).execute()
+        else:
+            response = supabase.table('pendapatan_lain').select('*').eq('sumber', source_name).order('tarikh', desc=True).execute()
+            
         data = response.data
         
         # Filter ikut tahun (Python side filtering untuk mudah)
         filtered_data = [d for d in data if d['tarikh'].startswith(str(selected_year))]
-        total_income = sum(float(d['amaun']) for d in filtered_data)
         
-        # Agregat bulanan untuk paparan jadual
+        # Init Aggregates
+        total_income = 0.0
         monthly_breakdown = {m: 0.0 for m in range(1, 13)}
+        monthly_aggregates = {m: {'vol': 0.0, 'sales': 0.0, 'gross_comm': 0.0, 'costs': 0.0, 'net_profit': 0.0, 'kasb': 0.0, 'gowpen': 0.0} for m in range(1, 13)}
+
         for item in filtered_data:
             m = int(item['tarikh'].split('-')[1])
-            monthly_breakdown[m] += float(item['amaun'])
+            
+            if source_name == 'Petros':
+                # Kira Volume dari details
+                vol = sum(d['daily_volume'] for d in item.get('petros_details', []))
+                item['total_volume'] = vol
+                
+                # Kira Sales dari column sales_debit/ewallet/cash
+                sales = (item.get('sales_debit') or 0) + (item.get('sales_ewallet') or 0) + (item.get('sales_cash') or 0)
+                item['total_sales'] = sales
+                
+                # Financials
+                net = float(item.get('kutipan_yuran') or 0)
+                costs = float(item.get('kos_pengurusan') or 0)
+                gross = net + costs
+                kasb = float(item.get('amaun') or 0)
+                gowpen = net - kasb
+                
+                # Aggregate
+                monthly_aggregates[m]['vol'] += vol
+                monthly_aggregates[m]['sales'] += sales
+                monthly_aggregates[m]['gross_comm'] += gross
+                monthly_aggregates[m]['costs'] += costs
+                monthly_aggregates[m]['net_profit'] += net
+                monthly_aggregates[m]['kasb'] += kasb
+                monthly_aggregates[m]['gowpen'] += gowpen
+                
+                monthly_breakdown[m] += kasb
+                total_income += kasb
+            else:
+                amt = float(item['amaun'])
+                monthly_breakdown[m] += amt
+                total_income += amt
 
-        return render_template('income_list.html', source=source_name, data=filtered_data, selected_year=selected_year, current_year=current_year, total_income=total_income, monthly_breakdown=monthly_breakdown, selected_month=selected_month)
+        return render_template('income_list.html', 
+                               source=source_name, 
+                               data=filtered_data, 
+                               selected_year=selected_year, 
+                               current_year=current_year, 
+                               total_income=total_income, 
+                               monthly_breakdown=monthly_breakdown, 
+                               selected_month=selected_month,
+                               monthly_aggregates=monthly_aggregates if source_name == 'Petros' else {})
         
     except Exception as e:
         return f"Ralat memuatkan data {source_name}: {e}"

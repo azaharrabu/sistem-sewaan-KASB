@@ -79,6 +79,55 @@
             </div>
         </div>
 
+        {% if source == 'Petros' %}
+        <!-- Petros Monthly Summary Card -->
+        <div class="card border-primary mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0" id="summaryTitle">📊 Monthly Summary: Semua Bulan</h5>
+            </div>
+            <div class="card-body bg-light">
+                <div class="row text-center g-3">
+                    <div class="col-md-2 border-end">
+                        <small class="text-muted fw-bold text-uppercase">Total Volume</small>
+                        <h5 class="fw-bold text-dark mt-1" id="sumVol">0 L</h5>
+                    </div>
+                    <div class="col-md-2 border-end">
+                        <small class="text-muted fw-bold text-uppercase">Total Sales</small>
+                        <h5 class="fw-bold text-dark mt-1" id="sumSales">RM 0.00</h5>
+                    </div>
+                    <div class="col-md-2 border-end">
+                        <small class="text-muted fw-bold text-uppercase">Gross Commission</small>
+                        <h5 class="fw-bold text-success mt-1" id="sumGross">RM 0.00</h5>
+                    </div>
+                    <div class="col-md-2 border-end">
+                        <small class="text-muted fw-bold text-uppercase">Total Expenses</small>
+                        <h5 class="fw-bold text-danger mt-1" id="sumCosts">RM 0.00</h5>
+                    </div>
+                    <div class="col-md-2 border-end">
+                        <small class="text-muted fw-bold text-uppercase">Net Profit</small>
+                        <h5 class="fw-bold text-primary mt-1" id="sumNet">RM 0.00</h5>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="row">
+                            <div class="col-12 border-bottom pb-1">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted fw-bold">KASB</small>
+                                    <small class="fw-bold text-success" id="sumKasb">RM 0.00</small>
+                                </div>
+                            </div>
+                            <div class="col-12 pt-1">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted fw-bold">Gowpen</small>
+                                    <small class="fw-bold text-secondary" id="sumGowpen">RM 0.00</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -97,11 +146,9 @@
                                     <th class="text-end">Keuntungan Bersih (RM)</th>
                                 {% elif source == 'Petros' %}
                                     <th>Tarikh</th>
-                                    <th class="text-end">Total Profit (RM)</th>
-                                    <th class="text-center">Kadar (%)</th>
-                                    <th class="text-end">KASB (RM)</th>
-                                    <th class="text-end">Gowpen (RM)</th>
-                                    <th class="text-center">Tindakan</th>
+                                    <th class="text-end">Daily Volume (Liter)</th>
+                                    <th class="text-end">Sales (RM)</th>
+                                    <th class="text-center" style="width: 150px;">Tindakan</th>
                                 {% else %}
                                     <th>Tarikh</th>
                                     <th>Nota / Keterangan</th>
@@ -123,18 +170,8 @@
                                     </td>
                                 {% elif source == 'Petros' %}
                                     <td>{{ row.tarikh }}</td>
-                                    <!-- Total Profit (disimpan dalam kutipan_yuran) -->
-                                    <td class="text-end">{{ "{:,.2f}".format(row.kutipan_yuran or 0) }}</td>
-                                    
-                                    <!-- Kira Kadar % untuk paparan -->
-                                    {% set rate = (row.amaun / row.kutipan_yuran * 100)|round|int if (row.kutipan_yuran or 0) > 0 else 0 %}
-                                    <td class="text-center"><span class="badge bg-secondary">{{ rate }}%</span></td>
-                                    
-                                    <!-- Bahagian KASB -->
-                                    <td class="text-end fw-bold text-success">+ {{ "{:,.2f}".format(row.amaun) }}</td>
-                                    
-                                    <!-- Bahagian Gowpen (Total - KASB) -->
-                                    <td class="text-end text-muted">{{ "{:,.2f}".format((row.kutipan_yuran or 0) - (row.amaun or 0)) }}</td>
+                                    <td class="text-end">{{ "{:,.0f}".format(row.total_volume) }}</td>
+                                    <td class="text-end">{{ "{:,.2f}".format(row.total_sales) }}</td>
                                     
                                     <td class="text-center">
                                         <a href="{{ url_for('petros_detail_view', id=row.id) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
@@ -155,6 +192,16 @@
                             </tr>
                             {% endfor %}
                         </tbody>
+                        {% if source == 'Petros' %}
+                        <tfoot class="table-secondary fw-bold">
+                            <tr>
+                                <td class="text-start">JUMLAH (Paparan)</td>
+                                <td class="text-end" id="footerVol">0</td>
+                                <td class="text-end" id="footerSales">0.00</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
                     </table>
                 </div>
             </div>
@@ -461,6 +508,66 @@
             document.getElementById('petros_total_amount').value = total.toFixed(2);
         }
     </script>
+
+    {% if source == 'Petros' %}
+    <script>
+        // Data Aggregates dari Backend
+        var petrosAggregates = {{ monthly_aggregates|tojson|safe }};
+        
+        // Override filterMonth untuk update summary Petros
+        var originalFilterMonth = filterMonth;
+        filterMonth = function(month) {
+            originalFilterMonth(month); // Panggil fungsi asal untuk filter table rows
+            updatePetrosSummary(month); // Update summary card & footer
+        };
+
+        function updatePetrosSummary(month) {
+            var vol = 0, sales = 0, gross = 0, costs = 0, net = 0, kasb = 0, gowpen = 0;
+            var title = "Semua Bulan";
+
+            if (month === 'all') {
+                // Sum semua bulan
+                for (var m in petrosAggregates) {
+                    vol += petrosAggregates[m].vol;
+                    sales += petrosAggregates[m].sales;
+                    gross += petrosAggregates[m].gross_comm;
+                    costs += petrosAggregates[m].costs;
+                    net += petrosAggregates[m].net_profit;
+                    kasb += petrosAggregates[m].kasb;
+                    gowpen += petrosAggregates[m].gowpen;
+                }
+            } else {
+                // Ambil bulan spesifik
+                if (petrosAggregates[month]) {
+                    var d = petrosAggregates[month];
+                    vol = d.vol;
+                    sales = d.sales;
+                    gross = d.gross_comm;
+                    costs = d.costs;
+                    net = d.net_profit;
+                    kasb = d.kasb;
+                    gowpen = d.gowpen;
+                }
+                const monthNames = ["", "Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
+                title = monthNames[month];
+            }
+
+            // Update DOM Summary Card
+            document.getElementById('summaryTitle').innerText = "📊 Monthly Summary: " + title;
+            document.getElementById('sumVol').innerText = vol.toLocaleString('en-US', {maximumFractionDigits: 0}) + " L";
+            document.getElementById('sumSales').innerText = "RM " + sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('sumGross').innerText = "RM " + gross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('sumCosts').innerText = "RM " + costs.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('sumNet').innerText = "RM " + net.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('sumKasb').innerText = "RM " + kasb.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('sumGowpen').innerText = "RM " + gowpen.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // Update Table Footer
+            document.getElementById('footerVol').innerText = vol.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('footerSales').innerText = sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    </script>
+    {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
