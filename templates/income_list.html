@@ -80,6 +80,11 @@
         </div>
 
         {% if source == 'Petros' %}
+        <div class="d-flex justify-content-end mb-3">
+            <a href="{{ url_for('recalculate_petros') }}" class="btn btn-warning btn-sm shadow-sm" onclick="return confirm('Adakah anda pasti mahu mengira semula semua rekod Petros dengan formula terkini?')">
+                🔄 Kira Semula Semua Rekod (Update Formula)
+            </a>
+        </div>
         <!-- Petros Monthly Summary Card -->
         <div class="card border-primary mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">

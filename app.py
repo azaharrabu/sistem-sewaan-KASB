@@ -1259,6 +1259,87 @@ def petros_detail_view(id):
         flash(f"Ralat memuatkan detail Petros: {e}", "danger")
         return redirect(url_for('petros_dashboard'))
 
+@app.route('/recalculate-petros')
+@login_required
+def recalculate_petros():
+    """
+    Fungsi khas untuk mengira semula semua rekod Petros menggunakan formula terkini.
+    Berguna apabila terdapat perubahan pada kadar komisyen atau yuran SEDC.
+    """
+    try:
+        # 1. Dapatkan semua rekod Petros
+        res = supabase.table('pendapatan_lain').select('*').eq('sumber', 'Petros').execute()
+        records = res.data
+        
+        count = 0
+        for rec in records:
+            rec_id = rec['id']
+            tarikh = rec['tarikh']
+            
+            # 2. Dapatkan details (volume minyak)
+            det_res = supabase.table('petros_details').select('*').eq('pendapatan_id', rec_id).execute()
+            details = det_res.data
+            
+            if not details:
+                continue
+                
+            # 3. Dapatkan Kos Operasi (Expenses) dari breakdown sedia ada
+            other_expenses = 0.0
+            breakdown = rec.get('kos_breakdown')
+            
+            if breakdown:
+                if isinstance(breakdown, str):
+                    breakdown = json.loads(breakdown)
+                
+                # Sum fixed and dynamic costs (exclude SEDC because it will be recalculated)
+                fixed = breakdown.get('fixed', {})
+                dynamic = breakdown.get('dynamic', [])
+                
+                for k, v in fixed.items():
+                    other_expenses += float(v or 0)
+                for item in dynamic:
+                    other_expenses += float(item.get('amount') or 0)
+            else:
+                # Fallback: Jika tiada breakdown, guna 0 (atau perlu manual check)
+                breakdown = {'fixed': {}, 'dynamic': []}
+
+            # 4. Kira Semula Kewangan (Guna Formula Terkini)
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details, tarikh, other_expenses)
+            
+            # 5. Update Breakdown dengan SEDC baru
+            breakdown['sedc'] = total_sedc
+            
+            # 6. Kira Profit Sharing
+            rec_date = datetime.strptime(tarikh, "%Y-%m-%d").date()
+            start_date_25 = date(2028, 1, 1)
+            rate = 0.25 if rec_date >= start_date_25 else 0.20
+            kasb_share = net_profit * rate
+            
+            # 7. Update Rekod Utama
+            supabase.table('pendapatan_lain').update({
+                "kutipan_yuran": net_profit,
+                "kos_pengurusan": other_expenses + total_sedc,
+                "amaun": kasb_share,
+                "kos_breakdown": breakdown
+            }).eq('id', rec_id).execute()
+            
+            # 8. Update Rekod Details (Commission & Profit per item)
+            for d in details:
+                supabase.table('petros_details').update({
+                    "earned_commission": d['earned_commission'],
+                    "kos": d['kos'],
+                    "profit": d['profit']
+                }).eq('id', d['id']).execute()
+                
+            count += 1
+            
+        flash(f"Berjaya mengira semula {count} rekod Petros dengan formula terkini.", "success")
+        return redirect(url_for('petros_dashboard'))
+        
+    except Exception as e:
+        flash(f"Ralat semasa kira semula: {e}", "danger")
+        return redirect(url_for('petros_dashboard'))
+
 @app.route('/padam-pendapatan/<int:id>')
 @login_required
 def padam_pendapatan(id):
