@@ -230,6 +230,27 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- Ringkasan Transaksi (Summary) -->
+                            <div class="card bg-light border-0 mb-3 mt-2">
+                                <div class="card-body py-2">
+                                    <h6 class="fw-bold small mb-2 text-primary">Daily Transaction Summary (All Fuel Types)</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label class="small fw-bold">Total Debit/Credit Card (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_debit" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="small fw-bold">Total E-Wallet (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_ewallet" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="small fw-bold">Total Cash (RM)</label>
+                                            <input type="number" step="0.01" name="petros_total_cash" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <!-- Input Kos Operasi -->
                             <div class="card border-warning mb-3 mt-3" id="expensesSection" style="display: none;">
