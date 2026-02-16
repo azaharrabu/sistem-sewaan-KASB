@@ -194,10 +194,7 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th style="width: 20%;">Jenis</th>
-                                            <th>Volume (Liter)</th>
-                                            <th>Revenue/Comm (RM)</th>
-                                            <th>Kos (RM)</th>
-                                            <th>Profit (RM)</th>
+                                            <th>Volume Jualan (Liter)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -207,13 +204,37 @@
                                                 <input type="text" name="petros_jenis[]" class="form-control form-control-sm fw-bold" value="{{ jenis }}" readonly>
                                             </td>
                                             <td><input type="number" step="0.01" name="petros_vol[]" class="form-control form-control-sm" placeholder="0"></td>
-                                            <td><input type="number" step="0.01" name="petros_comm[]" class="form-control form-control-sm" placeholder="0.00"></td>
-                                            <td><input type="number" step="0.01" name="petros_kos[]" class="form-control form-control-sm" placeholder="0.00"></td>
-                                            <td><input type="number" step="0.01" name="petros_profit[]" class="form-control form-control-sm" placeholder="0.00"></td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                            </div>
+                            
+                            <!-- Input Kos Operasi -->
+                            <div class="card border-warning mb-3 mt-2">
+                                <div class="card-header bg-warning text-dark py-1">
+                                    <small class="fw-bold">Tolak: Kos Operasi & Admin (Bulanan/Harian)</small>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold">Gaji Staf & Kebajikan (RM)</label>
+                                            <input type="number" step="0.01" name="kos_staf" class="form-control form-control-sm" placeholder="Gaji, EPF, SOCSO, EIS, PCB...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold">Utiliti & Servis (RM)</label>
+                                            <input type="number" step="0.01" name="kos_utiliti" class="form-control form-control-sm" placeholder="TNB, Air, Unifi, Rentokil, Sekuriti...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold">Yuran & Lesen (RM)</label>
+                                            <input type="number" step="0.01" name="kos_admin" class="form-control form-control-sm" placeholder="Lesen Petroleum, Iklan, Trade...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold">Lain-lain (RM)</label>
+                                            <input type="number" step="0.01" name="kos_lain" class="form-control form-control-sm" placeholder="Elaun Perjalanan, Tajaan dll...">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Ringkasan Transaksi (Summary) -->
@@ -238,7 +259,7 @@
                             </div>
 
                             <div class="form-text text-primary small">
-                                * Jumlah Profit akan dikira secara automatik.<br>
+                                * Komisyen, Kos SEDC & Keuntungan Bersih akan dikira secara automatik berdasarkan Volume.<br>
                                 * <strong>Rujukan Pembahagian:</strong> KASB menerima <strong>20%</strong> (Tahun 1-3: 2025-2027) dan <strong>25%</strong> (Tahun 4+: 2028 ke atas).
                             </div>
                         </div>

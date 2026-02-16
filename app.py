@@ -834,6 +834,75 @@ def upload_document(sewaan_id):
     except Exception as e:
         return f"Ralat memuat naik dokumen: {e}"
 
+# --- HELPER: KIRA KOMISYEN & KOS PETROS ---
+def calculate_petros_financials(details_data, other_expenses=0.0):
+    """
+    Mengira komisyen, kos SEDC, dan keuntungan bersih berdasarkan logik bertingkat.
+    details_data: list of dict [{'jenis_minyak': 'PF95', 'daily_volume': 1000}, ...]
+    """
+    # Asingkan volume mengikut kategori
+    vol_mogas = sum(d['daily_volume'] for d in details_data if d['jenis_minyak'] in ['PF95', 'UF97'])
+    vol_diesel = sum(d['daily_volume'] for d in details_data if d['jenis_minyak'] in ['E5 B20', 'E5 B7'])
+    total_vol = vol_mogas + vol_diesel
+    
+    # 1. Kira Komisyen (Tiered based on Total Volume)
+    # 0-200k: RM0.18 | 200k-500k: RM0.17 | >500k: RM0.16
+    comm = 0.0
+    remaining = total_vol
+    
+    # Tier 1 (0 - 200,000)
+    t1 = min(remaining, 200000)
+    comm += t1 * 0.18
+    remaining -= t1
+    
+    # Tier 2 (200,001 - 500,000) -> Max 300k
+    if remaining > 0:
+        t2 = min(remaining, 300000)
+        comm += t2 * 0.17
+        remaining -= t2
+        
+    # Tier 3 (> 500,000)
+    if remaining > 0:
+        comm += remaining * 0.16
+        
+    # Kadar purata komisyen per liter (untuk diagihkan semula ke detail)
+    avg_comm_rate = comm / total_vol if total_vol > 0 else 0
+
+    # 2. Kira Kos SEDC (Threshold 450,000)
+    # < 450k: Mogas 0.015, Diesel 0.01
+    # > 450k: Mogas 0.01, Diesel 0.01
+    rate_mogas = 0.015 if total_vol < 450000 else 0.01
+    rate_diesel = 0.01
+    
+    total_sedc = (vol_mogas * rate_mogas) + (vol_diesel * rate_diesel)
+    
+    # 3. Kemaskini details_data dengan nilai dikira
+    total_gross_profit = 0.0
+    
+    for d in details_data:
+        vol = d['daily_volume']
+        jenis = d['jenis_minyak']
+        
+        # Assign Commission (Guna purata atau logic lain? Kita guna purata rate tier tadi)
+        d['earned_commission'] = vol * avg_comm_rate
+        
+        # Assign Kos SEDC
+        if jenis in ['PF95', 'UF97']:
+            d['kos'] = vol * rate_mogas
+        elif jenis in ['E5 B20', 'E5 B7']:
+            d['kos'] = vol * rate_diesel
+        else:
+            d['kos'] = 0.0 # Minyak lain/Pelincir
+            
+        # Gross Profit per item
+        d['profit'] = d['earned_commission'] - d['kos']
+        total_gross_profit += d['profit']
+        
+    # 4. Keuntungan Bersih Akhir
+    net_profit = total_gross_profit - other_expenses
+    
+    return net_profit, total_gross_profit
+
 @app.route('/add_income/<source_name>', methods=['POST'])
 @login_required
 def add_income(source_name):
@@ -865,25 +934,23 @@ def add_income(source_name):
             # Proses input array dari form Petros
             jenis_list = request.form.getlist('petros_jenis[]')
             vol_list = request.form.getlist('petros_vol[]')
-            comm_list = request.form.getlist('petros_comm[]')
-            kos_list = request.form.getlist('petros_kos[]')
-            profit_list = request.form.getlist('petros_profit[]')
             
-            total_profit = 0.0
+            # Ambil Kos Operasi Tambahan
+            kos_staf = float(request.form.get('kos_staf') or 0)
+            kos_utiliti = float(request.form.get('kos_utiliti') or 0)
+            kos_admin = float(request.form.get('kos_admin') or 0)
+            kos_lain = float(request.form.get('kos_lain') or 0)
+            total_expenses = kos_staf + kos_utiliti + kos_admin + kos_lain
+            
             details_data = []
-            
-            # Loop setiap baris (RON95, RON97, dll)
             for i in range(len(jenis_list)):
-                p_profit = float(profit_list[i]) if profit_list[i] else 0.0
-                total_profit += p_profit
-                
                 details_data.append({
                     "jenis_minyak": jenis_list[i],
-                    "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0,
-                    "earned_commission": float(comm_list[i]) if comm_list[i] else 0.0,
-                    "kos": float(kos_list[i]) if kos_list[i] else 0.0,
-                    "profit": p_profit
+                    "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0
                 })
+            
+            # Kira Automatik (Komisyen, SEDC, Profit)
+            net_profit, gross_profit = calculate_petros_financials(details_data, total_expenses)
             
             # --- LOGIK PROFIT SHARING PETROS ---
             # Tahun 1-3 (2025-2027): KASB 20%, Gowpen 80%
@@ -893,12 +960,13 @@ def add_income(source_name):
             start_date_25 = date(2028, 1, 1) # Tarikh mula kenaikan 25%
             
             rate = 0.25 if rec_date >= start_date_25 else 0.20
-            kasb_share = total_profit * rate
+            kasb_share = net_profit * rate
             
-            # Simpan Total Profit dalam 'kutipan_yuran' (untuk rujukan)
+            # Simpan Net Profit dalam 'kutipan_yuran' (sebagai rujukan untung bersih sebelum sharing)
             # Simpan Bahagian KASB dalam 'amaun' (untuk Dashboard Utama)
-            data["kutipan_yuran"] = total_profit
+            data["kutipan_yuran"] = net_profit
             data["amaun"] = kasb_share
+            data["kos_pengurusan"] = total_expenses # Simpan total expenses untuk rujukan
             
             # Simpan Ringkasan Transaksi
             data.update({
@@ -953,26 +1021,40 @@ def edit_pendapatan(id):
                 start_date_25 = date(2028, 1, 1)
                 rate = 0.25 if rec_date >= start_date_25 else 0.20
                 
-                input_kos = float(request.form.get('kos') or 0)
+                # Ambil Kos Operasi dari form edit
+                kos_staf = float(request.form.get('kos_staf') or 0)
+                kos_utiliti = float(request.form.get('kos_utiliti') or 0)
+                kos_admin = float(request.form.get('kos_admin') or 0)
+                kos_lain = float(request.form.get('kos_lain') or 0)
+                total_expenses = kos_staf + kos_utiliti + kos_admin + kos_lain
                 
-                data["kutipan_yuran"] = input_amaun
-                data["kos_pengurusan"] = input_kos
-                data["amaun"] = input_amaun * rate
-
-                # Kemaskini butiran minyak (Volume & Revenue)
+                # Proses Volume Baru
                 jenis_list = request.form.getlist('petros_jenis[]')
                 vol_list = request.form.getlist('petros_vol[]')
-                comm_list = request.form.getlist('petros_comm[]')
-
+                
+                details_data = []
                 for i in range(len(jenis_list)):
-                    jenis = jenis_list[i]
-                    vol = float(vol_list[i]) if vol_list[i] else 0.0
-                    comm = float(comm_list[i]) if comm_list[i] else 0.0
-                    
+                    details_data.append({
+                        "jenis_minyak": jenis_list[i],
+                        "daily_volume": float(vol_list[i]) if vol_list[i] else 0.0
+                    })
+                
+                # Kira Semula
+                net_profit, gross_profit = calculate_petros_financials(details_data, total_expenses)
+                
+                # Update Main Record
+                data["kutipan_yuran"] = net_profit
+                data["kos_pengurusan"] = total_expenses
+                data["amaun"] = net_profit * rate
+                
+                # Update Details Record
+                for d in details_data:
                     supabase.table('petros_details').update({
-                        "daily_volume": vol,
-                        "earned_commission": comm
-                    }).eq('pendapatan_id', id).eq('jenis_minyak', jenis).execute()
+                        "daily_volume": d['daily_volume'],
+                        "earned_commission": d['earned_commission'],
+                        "kos": d['kos'],
+                        "profit": d['profit']
+                    }).eq('pendapatan_id', id).eq('jenis_minyak', d['jenis_minyak']).execute()
             else:
                 data["amaun"] = input_amaun
                 data["nota"] = request.form.get('nota')

@@ -23,9 +23,9 @@
                     
                     <div class="mb-3">
                         {% if record.sumber == 'Petros' %}
-                            <label class="form-label fw-bold">Total Profit (RM)</label>
-                            <input type="number" step="0.01" name="amaun" class="form-control" value="{{ record.kutipan_yuran }}" required>
-                            <div class="form-text text-warning">Nota: Mengubah nilai ini akan mengira semula bahagian KASB (20%/25%).</div>
+                            <label class="form-label fw-bold">Keuntungan Bersih (Auto-Kira)</label>
+                            <input type="number" step="0.01" class="form-control bg-light" value="{{ record.kutipan_yuran }}" readonly>
+                            <div class="form-text text-primary">Nilai ini dikira automatik dari Volume - Kos Operasi.</div>
 
                             <div class="table-responsive mt-3">
                                 <table class="table table-bordered table-sm text-center align-middle">
@@ -33,7 +33,6 @@
                                         <tr>
                                             <th style="width: 20%;">Jenis</th>
                                             <th>Volume (Liter)</th>
-                                            <th>Revenue/Comm (RM)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -46,19 +45,42 @@
                                             <td>
                                                 <input type="number" step="0.01" name="petros_vol[]" class="form-control form-control-sm" value="{{ item.daily_volume }}">
                                             </td>
-                                            <td>
-                                                <input type="number" step="0.01" name="petros_comm[]" class="form-control form-control-sm" value="{{ item.earned_commission }}">
-                                            </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
-
-
                             
-                            <label class="form-label fw-bold mt-3">Kos (RM)</label>
-                            <input type="number" step="0.01" name="kos" class="form-control" value="{{ record.kos_pengurusan }}" placeholder="0.00">
+                            <!-- Input Kos Operasi (Edit) -->
+                            <div class="card border-warning mb-3 mt-3">
+                                <div class="card-header bg-warning text-dark py-1">
+                                    <small class="fw-bold">Kemaskini Kos Operasi (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan or 0) }})</small>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="alert alert-info py-1 small mb-2">
+                                        Sila masukkan semula pecahan kos jika perlu dikemaskini. (Sistem hanya menyimpan jumlah besar sebelum ini).
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold">Gaji Staf & Kebajikan</label>
+                                            <input type="number" step="0.01" name="kos_staf" class="form-control form-control-sm" value="{{ record.kos_pengurusan }}" placeholder="Masukkan nilai baru...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold">Utiliti & Servis</label>
+                                            <input type="number" step="0.01" name="kos_utiliti" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold">Yuran & Lesen</label>
+                                            <input type="number" step="0.01" name="kos_admin" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold">Lain-lain</label>
+                                            <input type="number" step="0.01" name="kos_lain" class="form-control form-control-sm" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         {% else %}
                             <label class="form-label fw-bold">Amaun (RM)</label>
                             <input type="number" step="0.01" name="amaun" class="form-control" value="{{ record.amaun }}" required>
