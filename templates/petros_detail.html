@@ -80,6 +80,53 @@
                     </div>
                 </div>
 
+                <!-- Perincian Kos Operasi -->
+                {% if record.kos_breakdown %}
+                <div class="mt-4">
+                    <h6 class="fw-bold text-danger">📉 Perincian Kos Operasi (Total: RM {{ "{:,.2f}".format(record.kos_pengurusan) }})</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card card-body bg-light p-2 mb-2">
+                                <strong class="small text-decoration-underline">A. Monthly Expenses</strong>
+                                <div class="small">
+                                    {% for k, v in record.kos_breakdown.fixed.items() if v > 0 and k in ['salary','epf','socso','eis','levy','pcb'] %}
+                                    <div class="d-flex justify-content-between"><span>{{ k|upper }}</span><span>RM {{ "{:,.2f}".format(v) }}</span></div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="card card-body bg-light p-2 mb-2">
+                                <strong class="small text-decoration-underline">B. Monthly Services</strong>
+                                <div class="small">
+                                    {% for k, v in record.kos_breakdown.fixed.items() if v > 0 and k in ['retails_system','rentokil','unifi','insurance','safe_guard','tnb','water'] %}
+                                    <div class="d-flex justify-content-between"><span>{{ k|replace('_',' ')|title }}</span><span>RM {{ "{:,.2f}".format(v) }}</span></div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-body bg-light p-2 mb-2">
+                                <strong class="small text-decoration-underline">C, D & E. Others</strong>
+                                <div class="small">
+                                    {% for k, v in record.kos_breakdown.fixed.items() if v > 0 and k not in ['salary','epf','socso','eis','levy','pcb','retails_system','rentokil','unifi','insurance','safe_guard','tnb','water'] %}
+                                    <div class="d-flex justify-content-between"><span>{{ k|replace('_',' ')|title }}</span><span>RM {{ "{:,.2f}".format(v) }}</span></div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% if record.kos_breakdown.dynamic %}
+                            <div class="card card-body bg-light p-2 mb-2">
+                                <strong class="small text-decoration-underline">Lain-lain (Manual)</strong>
+                                <div class="small">
+                                    {% for item in record.kos_breakdown.dynamic %}
+                                    <div class="d-flex justify-content-between"><span>{{ item.desc }}</span><span>RM {{ "{:,.2f}".format(item.amount) }}</span></div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
             </div>
         </div>
     </div>

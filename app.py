@@ -1,4 +1,5 @@
 import os
+import json
 import calendar
 from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash, session
@@ -935,12 +936,33 @@ def add_income(source_name):
             jenis_list = request.form.getlist('petros_jenis[]')
             vol_list = request.form.getlist('petros_vol[]')
             
-            # Ambil Kos Operasi Tambahan
-            kos_staf = float(request.form.get('kos_staf') or 0)
-            kos_utiliti = float(request.form.get('kos_utiliti') or 0)
-            kos_admin = float(request.form.get('kos_admin') or 0)
-            kos_lain = float(request.form.get('kos_lain') or 0)
-            total_expenses = kos_staf + kos_utiliti + kos_admin + kos_lain
+            # --- PENGURUSAN KOS OPERASI TERPERINCI ---
+            fixed_costs = {}
+            keys = [
+                'salary', 'epf', 'socso', 'eis', 'levy', 'pcb', # Monthly Expenses
+                'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water', # Monthly Services
+                'first_aid', 'osh', 'typhoid', # Welfare
+                'ad_fee', 'pet_license', 'license_app', 'trade_license', # Docs
+                'travel', 'sponsorship' # Others
+            ]
+            
+            total_expenses = 0.0
+            for k in keys:
+                val = float(request.form.get(f'cost_{k}') or 0)
+                fixed_costs[k] = val
+                total_expenses += val
+                
+            # Kos Dinamik (Lain-lain Table)
+            other_desc = request.form.getlist('other_desc[]')
+            other_amt = request.form.getlist('other_amt[]')
+            dynamic_costs = []
+            for i in range(len(other_desc)):
+                if other_desc[i].strip():
+                    amt = float(other_amt[i] or 0)
+                    dynamic_costs.append({'desc': other_desc[i], 'amount': amt})
+                    total_expenses += amt
+            
+            breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs}
             
             details_data = []
             for i in range(len(jenis_list)):
@@ -967,6 +989,7 @@ def add_income(source_name):
             data["kutipan_yuran"] = net_profit
             data["amaun"] = kasb_share
             data["kos_pengurusan"] = total_expenses # Simpan total expenses untuk rujukan
+            data["kos_breakdown"] = breakdown # Simpan detail JSON
             
             # Simpan Ringkasan Transaksi
             data.update({
@@ -1021,12 +1044,33 @@ def edit_pendapatan(id):
                 start_date_25 = date(2028, 1, 1)
                 rate = 0.25 if rec_date >= start_date_25 else 0.20
                 
-                # Ambil Kos Operasi dari form edit
-                kos_staf = float(request.form.get('kos_staf') or 0)
-                kos_utiliti = float(request.form.get('kos_utiliti') or 0)
-                kos_admin = float(request.form.get('kos_admin') or 0)
-                kos_lain = float(request.form.get('kos_lain') or 0)
-                total_expenses = kos_staf + kos_utiliti + kos_admin + kos_lain
+                # --- PENGURUSAN KOS OPERASI TERPERINCI (EDIT) ---
+                fixed_costs = {}
+                keys = [
+                    'salary', 'epf', 'socso', 'eis', 'levy', 'pcb',
+                    'retails_system', 'rentokil', 'unifi', 'insurance', 'safe_guard', 'tnb', 'water',
+                    'first_aid', 'osh', 'typhoid',
+                    'ad_fee', 'pet_license', 'license_app', 'trade_license',
+                    'travel', 'sponsorship'
+                ]
+                
+                total_expenses = 0.0
+                for k in keys:
+                    val = float(request.form.get(f'cost_{k}') or 0)
+                    fixed_costs[k] = val
+                    total_expenses += val
+                    
+                # Kos Dinamik
+                other_desc = request.form.getlist('other_desc[]')
+                other_amt = request.form.getlist('other_amt[]')
+                dynamic_costs = []
+                for i in range(len(other_desc)):
+                    if other_desc[i].strip():
+                        amt = float(other_amt[i] or 0)
+                        dynamic_costs.append({'desc': other_desc[i], 'amount': amt})
+                        total_expenses += amt
+                
+                breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs}
                 
                 # Proses Volume Baru
                 jenis_list = request.form.getlist('petros_jenis[]')
@@ -1045,6 +1089,7 @@ def edit_pendapatan(id):
                 # Update Main Record
                 data["kutipan_yuran"] = net_profit
                 data["kos_pengurusan"] = total_expenses
+                data["kos_breakdown"] = breakdown
                 data["amaun"] = net_profit * rate
                 
                 # Update Details Record
@@ -1081,6 +1126,11 @@ def edit_pendapatan(id):
              detail_res = supabase.table('petros_details').select('*').eq('pendapatan_id', id).execute()
              details = detail_res.data
              res.data['details'] = details
+             
+             # Parse breakdown JSON jika ada
+             if res.data.get('kos_breakdown'):
+                 if isinstance(res.data['kos_breakdown'], str):
+                     res.data['kos_breakdown'] = json.loads(res.data['kos_breakdown'])
         else:
             res.data['details'] = []
 
@@ -1096,6 +1146,11 @@ def petros_detail_view(id):
         # Dapatkan rekod utama
         main_res = supabase.table('pendapatan_lain').select('*').eq('id', id).single().execute()
         main_record = main_res.data
+        
+        # Parse breakdown JSON
+        if main_record.get('kos_breakdown'):
+             if isinstance(main_record['kos_breakdown'], str):
+                 main_record['kos_breakdown'] = json.loads(main_record['kos_breakdown'])
         
         # Dapatkan pecahan detail
         detail_res = supabase.table('petros_details').select('*').eq('pendapatan_id', id).execute()

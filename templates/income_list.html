@@ -211,27 +211,83 @@
                             </div>
                             
                             <!-- Input Kos Operasi -->
-                            <div class="card border-warning mb-3 mt-2">
+                            <div class="card border-warning mb-3 mt-3">
                                 <div class="card-header bg-warning text-dark py-1">
-                                    <small class="fw-bold">Tolak: Kos Operasi & Admin (Bulanan/Harian)</small>
+                                    <small class="fw-bold">Tolak: Perincian Kos Operasi & Admin</small>
                                 </div>
-                                <div class="card-body py-2">
-                                    <div class="row g-2">
+                                <div class="card-body p-2">
+                                    <div class="row g-3">
+                                        <!-- A. Expenses (Monthly) -->
                                         <div class="col-md-6">
-                                            <label class="small fw-bold">Gaji Staf & Kebajikan (RM)</label>
-                                            <input type="number" step="0.01" name="kos_staf" class="form-control form-control-sm" placeholder="Gaji, EPF, SOCSO, EIS, PCB...">
+                                            <h6 class="small fw-bold text-primary border-bottom pb-1">A. Expenses (Monthly)</h6>
+                                            <div class="row g-1">
+                                                <div class="col-6"><label class="small">Staff Salary</label><input type="number" step="0.01" name="cost_salary" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">EPF</label><input type="number" step="0.01" name="cost_epf" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">SOCSO</label><input type="number" step="0.01" name="cost_socso" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">EIS</label><input type="number" step="0.01" name="cost_eis" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Levy</label><input type="number" step="0.01" name="cost_levy" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Tax Alloc (PCB)</label><input type="number" step="0.01" name="cost_pcb" class="form-control form-control-sm" placeholder="0.00"></div>
+                                            </div>
                                         </div>
+
+                                        <!-- B. Services (Monthly) -->
                                         <div class="col-md-6">
-                                            <label class="small fw-bold">Utiliti & Servis (RM)</label>
-                                            <input type="number" step="0.01" name="kos_utiliti" class="form-control form-control-sm" placeholder="TNB, Air, Unifi, Rentokil, Sekuriti...">
+                                            <h6 class="small fw-bold text-primary border-bottom pb-1">B. Services (Monthly)</h6>
+                                            <div class="row g-1">
+                                                <div class="col-6"><label class="small">Retails Auto Sys</label><input type="number" step="0.01" name="cost_retails_system" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Rentokil</label><input type="number" step="0.01" name="cost_rentokil" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Unifi</label><input type="number" step="0.01" name="cost_unifi" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Insurance</label><input type="number" step="0.01" name="cost_insurance" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Safe Guard</label><input type="number" step="0.01" name="cost_safe_guard" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">TNB Bill</label><input type="number" step="0.01" name="cost_tnb" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Water Bill</label><input type="number" step="0.01" name="cost_water" class="form-control form-control-sm" placeholder="0.00"></div>
+                                            </div>
                                         </div>
+
+                                        <!-- C. Staff Welfare (One Time) -->
                                         <div class="col-md-6">
-                                            <label class="small fw-bold">Yuran & Lesen (RM)</label>
-                                            <input type="number" step="0.01" name="kos_admin" class="form-control form-control-sm" placeholder="Lesen Petroleum, Iklan, Trade...">
+                                            <h6 class="small fw-bold text-primary border-bottom pb-1">C. Staff Welfare (One Time)</h6>
+                                            <div class="row g-1">
+                                                <div class="col-4"><label class="small">First Aid</label><input type="number" step="0.01" name="cost_first_aid" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-4"><label class="small">OSH Coord</label><input type="number" step="0.01" name="cost_osh" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-4"><label class="small">Vaccine</label><input type="number" step="0.01" name="cost_typhoid" class="form-control form-control-sm" placeholder="0.00"></div>
+                                            </div>
                                         </div>
+
+                                        <!-- D. Documents Fees (Yearly) -->
                                         <div class="col-md-6">
-                                            <label class="small fw-bold">Lain-lain (RM)</label>
-                                            <input type="number" step="0.01" name="kos_lain" class="form-control form-control-sm" placeholder="Elaun Perjalanan, Tajaan dll...">
+                                            <h6 class="small fw-bold text-primary border-bottom pb-1">D. Documents Fees (Yearly)</h6>
+                                            <div class="row g-1">
+                                                <div class="col-6"><label class="small">Advert Fee</label><input type="number" step="0.01" name="cost_ad_fee" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Petroleum Lic</label><input type="number" step="0.01" name="cost_pet_license" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">License App</label><input type="number" step="0.01" name="cost_license_app" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-6"><label class="small">Trade License</label><input type="number" step="0.01" name="cost_trade_license" class="form-control form-control-sm" placeholder="0.00"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- E. Others -->
+                                        <div class="col-md-12">
+                                            <h6 class="small fw-bold text-primary border-bottom pb-1">E. Others</h6>
+                                            <div class="row g-1 mb-2">
+                                                <div class="col-md-3"><label class="small">Traveling Allow</label><input type="number" step="0.01" name="cost_travel" class="form-control form-control-sm" placeholder="0.00"></div>
+                                                <div class="col-md-3"><label class="small">Sponsorship</label><input type="number" step="0.01" name="cost_sponsorship" class="form-control form-control-sm" placeholder="0.00"></div>
+                                            </div>
+                                            
+                                            <!-- Dynamic Table for Manual Entry -->
+                                            <label class="small fw-bold mt-2">Lain-lain Kos (Manual Input)</label>
+                                            <table class="table table-bordered table-sm mb-0" id="dynamicCostTable">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Keterangan Kos</th>
+                                                        <th style="width: 120px;">Amaun (RM)</th>
+                                                        <th style="width: 50px;"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Rows will be added here -->
+                                                </tbody>
+                                            </table>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addCostRow()">+ Tambah Baris</button>
                                         </div>
                                     </div>
                                 </div>
@@ -317,6 +373,19 @@
             var targetMonth = {{ selected_month if selected_month else "new Date().getMonth() + 1" }};
             filterMonth(targetMonth);
         });
+
+        function addCostRow() {
+            var table = document.getElementById("dynamicCostTable").getElementsByTagName('tbody')[0];
+            var newRow = table.insertRow();
+            
+            var cell1 = newRow.insertCell(0);
+            var cell2 = newRow.insertCell(1);
+            var cell3 = newRow.insertCell(2);
+            
+            cell1.innerHTML = '<input type="text" name="other_desc[]" class="form-control form-control-sm" placeholder="Contoh: Pembaikan Paip">';
+            cell2.innerHTML = '<input type="number" step="0.01" name="other_amt[]" class="form-control form-control-sm" placeholder="0.00">';
+            cell3.innerHTML = '<button type="button" class="btn btn-sm btn-danger py-0" onclick="this.closest(\'tr\').remove()">x</button>';
+        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
