@@ -881,57 +881,92 @@ def upload_document(sewaan_id):
         return f"Ralat memuat naik dokumen: {e}"
 
 # --- HELPER: KIRA KOMISYEN & KOS PETROS ---
-def calculate_petros_financials(details_data, other_expenses=0.0):
+def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0):
     """
     Mengira komisyen, kos SEDC, dan keuntungan bersih berdasarkan logik bertingkat.
     details_data: list of dict [{'jenis_minyak': 'PF95', 'daily_volume': 1000}, ...]
+    tarikh_str: 'YYYY-MM-DD'
     """
+    try:
+        rec_date = datetime.strptime(tarikh_str, "%Y-%m-%d").date()
+    except:
+        rec_date = date.today()
+
     # Asingkan volume mengikut kategori
     vol_mogas = sum(d['daily_volume'] for d in details_data if d['jenis_minyak'] in ['PF95', 'UF97'])
     vol_diesel = sum(d['daily_volume'] for d in details_data if d['jenis_minyak'] in ['E5 B20', 'E5 B7'])
     total_vol = vol_mogas + vol_diesel
     
-    # 1. Kira Komisyen (Tiered based on Total Volume)
-    # 0-200k: RM0.18 | 200k-500k: RM0.17 | >500k: RM0.16
-    comm = 0.0
-    remaining = total_vol
+    # --- 1. KIRA KOMISYEN ---
+    # Tarikh perubahan struktur: 1 November 2025
+    cutoff_date = date(2025, 11, 1)
     
-    # Tier 1 (0 - 200,000)
-    t1 = min(remaining, 200000)
-    comm += t1 * 0.18
-    remaining -= t1
+    comm_mogas_total = 0.0
+    comm_diesel_total = 0.0
     
-    # Tier 2 (200,001 - 500,000) -> Max 300k
-    if remaining > 0:
-        t2 = min(remaining, 300000)
-        comm += t2 * 0.17
-        remaining -= t2
+    if rec_date < cutoff_date:
+        # LOGIK LAMA (Ogos - Okt 2025)
+        # Mogas: RM 0.150 flat
+        # Diesel: RM 0.128 flat
+        comm_mogas_total = vol_mogas * 0.150
+        comm_diesel_total = vol_diesel * 0.128
+    else:
+        # LOGIK BARU (Nov 2025 ke atas)
+        # Mogas: Tiered (0-200k: 0.18, 200k-500k: 0.17, >500k: 0.16)
+        # Diesel: Kekal RM 0.128 (Flat)
         
-    # Tier 3 (> 500,000)
-    if remaining > 0:
-        comm += remaining * 0.16
+        # Kira Tier Mogas
+        rem_mogas = vol_mogas
         
-    # Kadar purata komisyen per liter (untuk diagihkan semula ke detail)
-    avg_comm_rate = comm / total_vol if total_vol > 0 else 0
+        # Tier 1: 0 - 200,000
+        t1 = min(rem_mogas, 200000)
+        comm_mogas_total += t1 * 0.18
+        rem_mogas -= t1
+        
+        # Tier 2: 200,001 - 500,000
+        if rem_mogas > 0:
+            t2 = min(rem_mogas, 300000)
+            comm_mogas_total += t2 * 0.17
+            rem_mogas -= t2
+            
+        # Tier 3: > 500,000
+        if rem_mogas > 0:
+            comm_mogas_total += rem_mogas * 0.16
+            
+        # Kira Diesel
+        comm_diesel_total = vol_diesel * 0.128
 
-    # 2. Kira Kos SEDC (Threshold 450,000)
-    # < 450k: Mogas 0.015, Diesel 0.01
-    # > 450k: Mogas 0.01, Diesel 0.01
+    # --- 2. KIRA KOS SEDC ---
+    # Blok Utama: Kurang 450k vs Lebih 450k (Berdasarkan Total Volume)
+    # Mogas: 0.015 (<450k) atau 0.01 (>450k)
+    # Diesel: 0.01 (Flat)
+    
     rate_mogas = 0.015 if total_vol < 450000 else 0.01
     rate_diesel = 0.01
     
     total_sedc = (vol_mogas * rate_mogas) + (vol_diesel * rate_diesel)
     
-    # 3. Kemaskini details_data dengan nilai dikira
+    # --- 3. AGIHAN KE DETAILS ---
     total_gross_profit = 0.0
     total_sedc_cost = 0.0
+    
+    # Kira purata rate Mogas untuk agihan per item (jika tiered)
+    avg_rate_mogas = comm_mogas_total / vol_mogas if vol_mogas > 0 else 0
     
     for d in details_data:
         vol = d['daily_volume']
         jenis = d['jenis_minyak']
         
-        # Assign Commission (Guna purata atau logic lain? Kita guna purata rate tier tadi)
-        d['earned_commission'] = vol * avg_comm_rate
+        # Assign Commission
+        if jenis in ['PF95', 'UF97']:
+            if rec_date < cutoff_date:
+                d['earned_commission'] = vol * 0.150
+            else:
+                d['earned_commission'] = vol * avg_rate_mogas
+        elif jenis in ['E5 B20', 'E5 B7']:
+            d['earned_commission'] = vol * 0.128
+        else:
+            d['earned_commission'] = 0.0
         
         # Assign Kos SEDC
         if jenis in ['PF95', 'UF97']:
@@ -1023,7 +1058,7 @@ def add_income(source_name):
                 })
             
             # Kira Automatik (Komisyen, SEDC, Profit)
-            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, total_expenses)
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses)
             
             # --- LOGIK PROFIT SHARING PETROS ---
             # Tahun 1-3 (2025-2027): KASB 20%, Gowpen 80%
@@ -1140,7 +1175,7 @@ def edit_pendapatan(id):
                     })
                 
                 # Kira Semula
-                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, total_expenses)
+                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses)
                 
                 breakdown['sedc'] = total_sedc
 
