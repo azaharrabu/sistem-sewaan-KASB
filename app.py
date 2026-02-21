@@ -1286,6 +1286,10 @@ def edit_pendapatan(id):
 @login_required
 def petros_detail_view(id):
     try:
+        # Dapatkan tahun & bulan dari URL untuk pautan 'Kembali'
+        year = request.args.get('year', type=int)
+        month = request.args.get('month', type=int)
+
         # Dapatkan rekod utama
         main_res = supabase.table('pendapatan_lain').select('*').eq('id', id).single().execute()
         main_record = main_res.data
@@ -1303,7 +1307,7 @@ def petros_detail_view(id):
         total_vol = sum(float(d['daily_volume'] or 0) for d in details)
         total_sales = sum(float(d['sales_amount'] or 0) for d in details)
         
-        return render_template('petros_detail.html', record=main_record, details=details, total_vol=total_vol, total_sales=total_sales)
+        return render_template('petros_detail.html', record=main_record, details=details, total_vol=total_vol, total_sales=total_sales, year=year, month=month)
     except Exception as e:
         flash(f"Ralat memuatkan detail Petros: {e}", "danger")
         return redirect(url_for('petros_dashboard'))

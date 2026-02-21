@@ -179,7 +179,7 @@
                                     <td class="text-end">{{ "{:,.2f}".format(row.total_sales) }}</td>
                                     
                                     <td class="text-center">
-                                        <a href="{{ url_for('petros_detail_view', id=row.id) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
+                                        <a href="{{ url_for('petros_detail_view', id=row.id, year=selected_year, month=row.tarikh.split('-')[1]|int) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
                                         <a href="{{ url_for('edit_pendapatan', id=row.id) }}" class="btn btn-sm btn-warning text-dark">Edit</a>
                                         <a href="{{ url_for('padam_pendapatan', id=row.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Adakah anda pasti mahu memadam rekod ini?')">Padam</a>
                                     </td>
