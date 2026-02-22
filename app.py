@@ -13,6 +13,10 @@ from decimal import Decimal, ROUND_HALF_UP
 # Load environment variables
 load_dotenv()
 
+# Constants for Fuel Types
+MOGAS_TYPES = ['PF95', 'UF97']
+DIESEL_TYPES = ['E5 B20', 'E5 B7']
+
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "rahsia_sementara_kasb") # Diperlukan untuk flash messages
