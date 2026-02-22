@@ -588,10 +588,10 @@ def render_income_detail(source_name):
                     monthly_aggregates[m]['sales_by_type'][j_minyak] += s
                     
                     # Aggregate Mogas vs Diesel
-                    if j_minyak in ['PF95', 'UF97']:
+                    if j_minyak in MOGAS_TYPES:
                         monthly_aggregates[m]['vol_mogas'] += v
                         monthly_aggregates[m]['sales_mogas'] += s
-                    elif j_minyak in ['E5 B20', 'E5 B7']:
+                    elif j_minyak in DIESEL_TYPES:
                         monthly_aggregates[m]['vol_diesel'] += v
                         monthly_aggregates[m]['sales_diesel'] += s
                 
@@ -957,8 +957,8 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         rec_date = date.today()
 
     # Asingkan volume mengikut kategori
-    vol_mogas = sum(d['daily_volume'] for d in details_data if d['jenis_minyak'] in ['PF95', 'UF97'])
-    vol_diesel = sum(d['daily_volume'] for d in details_data if d['jenis_minyak'] in ['E5 B20', 'E5 B7'])
+    vol_mogas = sum(d['daily_volume'] for d in details_data if d['jenis_minyak'] in MOGAS_TYPES)
+    vol_diesel = sum(d['daily_volume'] for d in details_data if d['jenis_minyak'] in DIESEL_TYPES)
     total_vol = vol_mogas + vol_diesel
     
     # --- 1. KIRA KOMISYEN ---
@@ -1048,12 +1048,12 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         jenis = d['jenis_minyak']
         
         # Assign Commission
-        if jenis in ['PF95', 'UF97']:
+        if jenis in MOGAS_TYPES:
             if rec_date < cutoff_date:
                 d['earned_commission'] = excel_round(vol * 0.150, 2)
             else:
                 d['earned_commission'] = excel_round(vol * avg_rate_mogas, 2)
-        elif jenis in ['E5 B20', 'E5 B7']:
+        elif jenis in DIESEL_TYPES:
             if rec_date < cutoff_date:
                 d['earned_commission'] = excel_round(vol * avg_rate_diesel, 2)
             else:
@@ -1062,9 +1062,9 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
             d['earned_commission'] = 0.0
         
         # Assign Kos SEDC
-        if jenis in ['PF95', 'UF97']:
+        if jenis in MOGAS_TYPES:
             d['kos'] = excel_round(vol * avg_sedc_rate_mogas, 2)
-        elif jenis in ['E5 B20', 'E5 B7']:
+        elif jenis in DIESEL_TYPES:
             d['kos'] = excel_round(vol * 0.01, 2) if apply_sedc else 0.0
         else:
             d['kos'] = 0.0 # Minyak lain/Pelincir
@@ -1170,9 +1170,9 @@ def add_income(source_name):
             prev_diesel_vol = 0.0
             for rec in prev_res.data:
                 for d in rec.get('petros_details', []):
-                    if d['jenis_minyak'] in ['PF95', 'UF97']:
+                    if d['jenis_minyak'] in MOGAS_TYPES:
                         prev_mogas_vol += float(d['daily_volume'] or 0)
-                    elif d['jenis_minyak'] in ['E5 B20', 'E5 B7']:
+                    elif d['jenis_minyak'] in DIESEL_TYPES:
                         prev_diesel_vol += float(d['daily_volume'] or 0)
 
             # Kira Automatik (Komisyen, SEDC, Profit)
@@ -1311,9 +1311,9 @@ def edit_pendapatan(id):
                 prev_diesel_vol = 0.0
                 for rec in prev_res.data:
                     for d in rec.get('petros_details', []):
-                        if d['jenis_minyak'] in ['PF95', 'UF97']:
+                        if d['jenis_minyak'] in MOGAS_TYPES:
                             prev_mogas_vol += float(d['daily_volume'] or 0)
-                        elif d['jenis_minyak'] in ['E5 B20', 'E5 B7']:
+                        elif d['jenis_minyak'] in DIESEL_TYPES:
                             prev_diesel_vol += float(d['daily_volume'] or 0)
 
                 # Kira Semula
@@ -1471,8 +1471,8 @@ def recalculate_petros():
             net_profit, gross_profit, total_sedc = calculate_petros_financials(details, tarikh, other_expenses, current_prev_mogas, current_prev_diesel, apply_sedc=should_calc_sedc)
             
             # Update tracker untuk rekod seterusnya
-            vol_mogas_today = sum(d['daily_volume'] for d in details if d['jenis_minyak'] in ['PF95', 'UF97'])
-            vol_diesel_today = sum(d['daily_volume'] for d in details if d['jenis_minyak'] in ['E5 B20', 'E5 B7'])
+            vol_mogas_today = sum(d['daily_volume'] for d in details if d['jenis_minyak'] in MOGAS_TYPES)
+            vol_diesel_today = sum(d['daily_volume'] for d in details if d['jenis_minyak'] in DIESEL_TYPES)
             monthly_mogas_tracker[month_key] += vol_mogas_today
             monthly_diesel_tracker[month_key] += vol_diesel_today
             
