@@ -550,15 +550,25 @@ def render_income_detail(source_name):
         # Init Aggregates
         total_income = 0.0
         monthly_breakdown = {m: 0.0 for m in range(1, 13)}
-        monthly_aggregates = {m: {'vol': 0.0, 'sales': 0.0, 'gross_comm': 0.0, 'costs': 0.0, 'net_profit': 0.0, 'kasb': 0.0, 'gowpen': 0.0} for m in range(1, 13)}
+        monthly_aggregates = {m: {'vol': 0.0, 'vol_by_type': {}, 'sales': 0.0, 'gross_comm': 0.0, 'costs': 0.0, 'sedc_cost': 0.0, 'net_profit': 0.0, 'kasb': 0.0, 'gowpen': 0.0} for m in range(1, 13)}
 
         for item in filtered_data:
             m = int(item['tarikh'].split('-')[1])
             
             if source_name == 'Petros':
                 # Kira Volume dari details
-                vol = sum(d['daily_volume'] for d in item.get('petros_details', []))
-                item['total_volume'] = vol
+                current_vol = 0.0
+                for d in item.get('petros_details', []):
+                    v = float(d['daily_volume'] or 0)
+                    current_vol += v
+                    
+                    # Aggregate Volume by Type (Pecahan ikut jenis minyak)
+                    j_minyak = d['jenis_minyak']
+                    if j_minyak not in monthly_aggregates[m]['vol_by_type']:
+                        monthly_aggregates[m]['vol_by_type'][j_minyak] = 0.0
+                    monthly_aggregates[m]['vol_by_type'][j_minyak] += v
+                
+                item['total_volume'] = current_vol
                 
                 # Kira Sales dari column sales_debit/ewallet/cash
                 sales = (item.get('sales_debit') or 0) + (item.get('sales_ewallet') or 0) + (item.get('sales_cash') or 0)
@@ -567,15 +577,29 @@ def render_income_detail(source_name):
                 # Financials
                 net = float(item.get('kutipan_yuran') or 0)
                 costs = float(item.get('kos_pengurusan') or 0)
+                
+                # Extract SEDC Cost dari breakdown JSON
+                sedc = 0.0
+                bd = item.get('kos_breakdown')
+                if bd:
+                    if isinstance(bd, str):
+                        try:
+                            bd = json.loads(bd)
+                        except:
+                            bd = {}
+                    if isinstance(bd, dict):
+                        sedc = float(bd.get('sedc') or 0)
+                
                 gross = net + costs
                 kasb = float(item.get('amaun') or 0)
                 gowpen = net - kasb
                 
                 # Aggregate
-                monthly_aggregates[m]['vol'] += vol
+                monthly_aggregates[m]['vol'] += current_vol
                 monthly_aggregates[m]['sales'] += sales
                 monthly_aggregates[m]['gross_comm'] += gross
                 monthly_aggregates[m]['costs'] += costs
+                monthly_aggregates[m]['sedc_cost'] += sedc
                 monthly_aggregates[m]['net_profit'] += net
                 monthly_aggregates[m]['kasb'] += kasb
                 monthly_aggregates[m]['gowpen'] += gowpen

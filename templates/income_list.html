@@ -129,6 +129,18 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Volume Breakdown Table -->
+                <div class="row mt-3 border-top pt-3" id="breakdownRow" style="display:none;">
+                    <div class="col-md-12">
+                        <h6 class="small fw-bold text-muted text-uppercase">Volume Breakdown by Type</h6>
+                        <div class="table-responsive d-flex justify-content-center">
+                            <table class="table table-sm table-bordered w-auto text-center mb-0" id="breakdownTable">
+                                <!-- JS will populate this -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         {% endif %}
@@ -250,7 +262,7 @@
                                         <strong>1. Commission (Nov 2025+):</strong><br>
                                         • Mogas (Tiered): 0-200k (0.18), 200k-500k (0.17), >500k (0.16)<br>
                                         • Diesel: <strong>RM 0.128</strong> (Flat)<br>
-                                        <small class="text-muted">*Aug-Oct 2025: Mogas RM0.150, Diesel RM0.128</small>
+                                        <small class="text-muted">*Aug-Oct 2025: Mogas RM0.150, Diesel Tiered (0.03, 0.02, 0.01)</small>
                                     </div>
                                     <div class="col-md-6">
                                         <strong>2. SEDC Fee (Block based on Total Vol):</strong><br>
@@ -529,6 +541,7 @@
         function updatePetrosSummary(month) {
             var vol = 0, sales = 0, gross = 0, costs = 0, net = 0, kasb = 0, gowpen = 0;
             var title = "Semua Bulan";
+            var volBreakdown = {};
 
             if (month === 'all') {
                 // Sum semua bulan
@@ -540,6 +553,12 @@
                     net += petrosAggregates[m].net_profit;
                     kasb += petrosAggregates[m].kasb;
                     gowpen += petrosAggregates[m].gowpen;
+                    
+                    // Sum breakdown
+                    for (var type in petrosAggregates[m].vol_by_type) {
+                        if (!volBreakdown[type]) volBreakdown[type] = 0;
+                        volBreakdown[type] += petrosAggregates[m].vol_by_type[type];
+                    }
                 }
             } else {
                 // Ambil bulan spesifik
@@ -552,6 +571,7 @@
                     net = d.net_profit;
                     kasb = d.kasb;
                     gowpen = d.gowpen;
+                    volBreakdown = d.vol_by_type;
                 }
                 const monthNames = ["", "Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
                 title = monthNames[month];
@@ -566,6 +586,26 @@
             document.getElementById('sumNet').innerText = "RM " + net.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumKasb').innerText = "RM " + kasb.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumGowpen').innerText = "RM " + gowpen.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            // Update Breakdown Table
+            var breakdownRow = document.getElementById('breakdownRow');
+            var breakdownTable = document.getElementById('breakdownTable');
+            breakdownTable.innerHTML = ""; // Clear existing
+            
+            var hasData = false;
+            var headerHtml = "<thead class='table-light'><tr>";
+            var bodyHtml = "<tbody><tr>";
+            
+            for (var type in volBreakdown) {
+                hasData = true;
+                headerHtml += "<th>" + type + "</th>";
+                bodyHtml += "<td>" + volBreakdown[type].toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "</td>";
+            }
+            headerHtml += "</tr></thead>";
+            bodyHtml += "</tr></tbody>";
+            
+            breakdownTable.innerHTML = headerHtml + bodyHtml;
+            breakdownRow.style.display = hasData ? 'block' : 'none';
 
             // Update Table Footer
             document.getElementById('footerVol').innerText = vol.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
