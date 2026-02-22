@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
+from decimal import Decimal, ROUND_HALF_UP
 
 # Load environment variables
 load_dotenv()
@@ -880,6 +881,13 @@ def upload_document(sewaan_id):
     except Exception as e:
         return f"Ralat memuat naik dokumen: {e}"
 
+# --- HELPER: EXCEL ROUNDING ---
+def excel_round(number, decimals=2):
+    """Membundar nombor mengikut kaedah Excel (Round Half Up)"""
+    if number is None: return 0.0
+    d = Decimal(str(number))
+    return float(d.quantize(Decimal(f"1.{'0'*decimals}"), rounding=ROUND_HALF_UP))
+
 # --- HELPER: KIRA KOMISYEN & KOS PETROS ---
 def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, previous_vol_mogas=0.0, previous_vol_diesel=0.0, apply_sedc=False):
     """
@@ -911,7 +919,7 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # Diesel: RM 0.128 flat
         # UPDATE (User Request): Diesel Tiered (0-200k: 0.03, 200k-500k: 0.02, >500k: 0.01)
         
-        comm_mogas_total = round(vol_mogas * 0.150, 2)
+        comm_mogas_total = excel_round(vol_mogas * 0.150, 2)
         
         # Kira Diesel Tiered (Aug-Oct)
         rem_diesel = vol_diesel
@@ -920,7 +928,7 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # Tier 1: 0 - 200,000 (Rate 0.03)
         available_t1 = max(0, 200000 - current_cumulative_diesel)
         t1 = min(rem_diesel, available_t1)
-        comm_diesel_total += round(t1 * 0.03, 2)
+        comm_diesel_total += excel_round(t1 * 0.03, 2)
         rem_diesel -= t1
         current_cumulative_diesel += t1
         
@@ -956,13 +964,13 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
             space_t2 = max(0, 500000 - current_cumulative_diesel)
             t2 = min(rem_diesel, space_t2)
             
-            comm_diesel_total += round(t2 * 0.02, 2)
+            comm_diesel_total += excel_round(t2 * 0.02, 2)
             rem_diesel -= t2
             current_cumulative_diesel += t2
             
         # Tier 3: > 500,000 (Rate 0.01)
         if rem_diesel > 0:
-            comm_diesel_total += round(rem_diesel * 0.01, 2)
+            comm_diesel_total += excel_round(rem_diesel * 0.01, 2)
 
     else:
         # LOGIK BARU (Nov 2025 ke atas)
@@ -976,21 +984,21 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # Nota: Tier dikira per transaksi harian dalam konteks ini, 
         # tetapi idealnya volume harian tidak melebihi tier ini.
         t1 = min(rem_mogas, 200000)
-        comm_mogas_total += round(t1 * 0.18, 2)
+        comm_mogas_total += excel_round(t1 * 0.18, 2)
         rem_mogas -= t1
         
         # Tier 2: 200,001 - 500,000
         if rem_mogas > 0:
             t2 = min(rem_mogas, 300000)
-            comm_mogas_total += round(t2 * 0.17, 2)
+            comm_mogas_total += excel_round(t2 * 0.17, 2)
             rem_mogas -= t2
             
         # Tier 3: > 500,000
         if rem_mogas > 0:
-            comm_mogas_total += round(rem_mogas * 0.16, 2)
+            comm_mogas_total += excel_round(rem_mogas * 0.16, 2)
             
         # Kira Diesel
-        comm_diesel_total = round(vol_diesel * 0.128, 2)
+        comm_diesel_total = excel_round(vol_diesel * 0.128, 2)
 
     # --- 2. KIRA KOS SEDC ---
     # Logik Baru: Hanya kira jika apply_sedc = True (biasanya pada rekod akhir bulan)
@@ -1006,11 +1014,11 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         
         # Kira SEDC Mogas (Tiered pada 450k)
         if total_month_mogas <= 450000:
-            sedc_mogas = round(total_month_mogas * 0.015, 2)
+            sedc_mogas = excel_round(total_month_mogas * 0.015, 2)
         else:
-            tier1_cost = round(450000 * 0.015, 2)
+            tier1_cost = excel_round(450000 * 0.015, 2)
             tier2_vol = total_month_mogas - 450000
-            tier2_cost = round(tier2_vol * 0.01, 2)
+            tier2_cost = excel_round(tier2_vol * 0.01, 2)
             sedc_mogas = tier1_cost + tier2_cost
             
         # Kira SEDC Diesel (Flat 0.01 pada Total Volume Diesel Bulan Ini?)
@@ -1041,10 +1049,10 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # SEDC Diesel terpaksa dikira pada (Curr) sahaja sebab tiada data Prev Diesel.
         # *NOTA PENTING:* Sila pastikan anda 'Recalculate' di dashboard untuk membetulkan data lama.
         
-        sedc_diesel = round(vol_diesel * 0.01, 2) 
+        sedc_diesel = excel_round(vol_diesel * 0.01, 2) 
         # (Nota: Diesel mungkin perlu manual adjustment jika nak lump sum sebenar dari hari sebelumnya)
 
-    total_sedc = round(sedc_mogas + sedc_diesel, 2)
+    total_sedc = excel_round(sedc_mogas + sedc_diesel, 2)
     
     # --- 3. AGIHAN KE DETAILS ---
     total_gross_profit = 0.0
@@ -1064,22 +1072,22 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # Assign Commission
         if jenis in ['PF95', 'UF97']:
             if rec_date < cutoff_date:
-                d['earned_commission'] = round(vol * 0.150, 2)
+                d['earned_commission'] = excel_round(vol * 0.150, 2)
             else:
-                d['earned_commission'] = round(vol * avg_rate_mogas, 2)
+                d['earned_commission'] = excel_round(vol * avg_rate_mogas, 2)
         elif jenis in ['E5 B20', 'E5 B7']:
             if rec_date < cutoff_date:
-                d['earned_commission'] = round(vol * avg_rate_diesel, 2)
+                d['earned_commission'] = excel_round(vol * avg_rate_diesel, 2)
             else:
-                d['earned_commission'] = round(vol * 0.128, 2)
+                d['earned_commission'] = excel_round(vol * 0.128, 2)
         else:
             d['earned_commission'] = 0.0
         
         # Assign Kos SEDC
         if jenis in ['PF95', 'UF97']:
-            d['kos'] = round(vol * avg_sedc_rate_mogas, 2)
+            d['kos'] = excel_round(vol * avg_sedc_rate_mogas, 2)
         elif jenis in ['E5 B20', 'E5 B7']:
-            d['kos'] = round(vol * 0.01, 2) if apply_sedc else 0.0
+            d['kos'] = excel_round(vol * 0.01, 2) if apply_sedc else 0.0
         else:
             d['kos'] = 0.0 # Minyak lain/Pelincir
             
@@ -1090,7 +1098,7 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         total_sedc_cost += d['kos']
         
     # 4. Keuntungan Bersih Akhir
-    net_profit = round(total_gross_profit - (other_expenses + total_sedc_cost), 2)
+    net_profit = excel_round(total_gross_profit - (other_expenses + total_sedc_cost), 2)
     
     return net_profit, total_gross_profit, total_sedc_cost
 
@@ -1199,7 +1207,7 @@ def add_income(source_name):
             start_date_25 = date(2028, 1, 1) # Tarikh mula kenaikan 25%
             
             rate = 0.25 if rec_date >= start_date_25 else 0.20
-            kasb_share = round(net_profit * rate, 2)
+            kasb_share = excel_round(net_profit * rate, 2)
             
             # Update breakdown to include SEDC
             breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs, 'sedc': total_sedc}
@@ -1337,7 +1345,7 @@ def edit_pendapatan(id):
                 data["kutipan_yuran"] = net_profit
                 data["kos_pengurusan"] = total_expenses + total_sedc
                 data["kos_breakdown"] = breakdown
-                data["amaun"] = round(net_profit * rate, 2)
+                data["amaun"] = excel_round(net_profit * rate, 2)
                 
                 # Update Details Record
                 for d in details_data:
@@ -1495,7 +1503,7 @@ def recalculate_petros():
             rec_date = datetime.strptime(tarikh, "%Y-%m-%d").date()
             start_date_25 = date(2028, 1, 1)
             rate = 0.25 if rec_date >= start_date_25 else 0.20
-            kasb_share = round(net_profit * rate, 2)
+            kasb_share = excel_round(net_profit * rate, 2)
             
             # 7. Update Rekod Utama
             supabase.table('pendapatan_lain').update({
