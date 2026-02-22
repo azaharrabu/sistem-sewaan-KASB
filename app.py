@@ -881,7 +881,7 @@ def upload_document(sewaan_id):
         return f"Ralat memuat naik dokumen: {e}"
 
 # --- HELPER: KIRA KOMISYEN & KOS PETROS ---
-def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, previous_vol_mogas=0.0, apply_sedc=False):
+def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, previous_vol_mogas=0.0, previous_vol_diesel=0.0, apply_sedc=False):
     """
     Mengira komisyen, kos SEDC, dan keuntungan bersih berdasarkan logik bertingkat.
     details_data: list of dict [{'jenis_minyak': 'PF95', 'daily_volume': 1000}, ...]
@@ -909,8 +909,61 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # LOGIK LAMA (Ogos - Oktober 2025)
         # Mogas: RM 0.150 flat
         # Diesel: RM 0.128 flat
+        # UPDATE (User Request): Diesel Tiered (0-200k: 0.03, 200k-500k: 0.02, >500k: 0.01)
+        
         comm_mogas_total = round(vol_mogas * 0.150, 2)
-        comm_diesel_total = round(vol_diesel * 0.128, 2)
+        
+        # Kira Diesel Tiered (Aug-Oct)
+        rem_diesel = vol_diesel
+        current_cumulative_diesel = previous_vol_diesel
+        
+        # Tier 1: 0 - 200,000 (Rate 0.03)
+        available_t1 = max(0, 200000 - current_cumulative_diesel)
+        t1 = min(rem_diesel, available_t1)
+        comm_diesel_total += round(t1 * 0.03, 2)
+        rem_diesel -= t1
+        current_cumulative_diesel += t1
+        
+        # Tier 2: 200,001 - 500,000 (Rate 0.02)
+        if rem_diesel > 0:
+            available_t2 = max(0, 500000 - current_cumulative_diesel) # Note: 500k limit total
+            # Logic check: if cumulative is already > 200k, available space in T2 is (500k - current).
+            # If cumulative < 200k, we already filled T1. Current is now 200k.
+            # So available T2 is 500k - 200k = 300k.
+            # Let's use simple logic:
+            # We need to know how much of the *current batch* falls into which tier.
+            # It's easier to calculate Total Commission for (Prev + Curr) then subtract Commission for (Prev).
+            pass # We will use the iterative approach below for clarity
+            
+            # Re-calculate using standard tier logic on the fly
+            # Tier 2 space
+            # We are at 'current_cumulative_diesel'. The next threshold is 500,000.
+            # But wait, the tier is 200,001 to 500,000.
+            # So the max volume in this tier is 300,000.
+            # My previous logic `available_t1` handles the start.
+            
+            # Let's simplify:
+            # Tier 2 starts at 200,000. Ends at 500,000.
+            # We are currently at `current_cumulative_diesel` (which is >= 200,000 because we exhausted T1 or started above it).
+            
+            # Actually, `current_cumulative_diesel` was updated above.
+            # If we filled T1, `current_cumulative_diesel` is at least 200,000 (or less if we finished the batch).
+            # If `rem_diesel > 0`, it means we are above 200,000.
+            
+            t2 = min(rem_diesel, 300000) # Max size of Tier 2 is 300k. 
+            # But we must respect the 500k total limit.
+            # Space remaining in Tier 2 = 500,000 - current_cumulative_diesel.
+            space_t2 = max(0, 500000 - current_cumulative_diesel)
+            t2 = min(rem_diesel, space_t2)
+            
+            comm_diesel_total += round(t2 * 0.02, 2)
+            rem_diesel -= t2
+            current_cumulative_diesel += t2
+            
+        # Tier 3: > 500,000 (Rate 0.01)
+        if rem_diesel > 0:
+            comm_diesel_total += round(rem_diesel * 0.01, 2)
+
     else:
         # LOGIK BARU (Nov 2025 ke atas)
         # Mogas: Tiered (0-200k: 0.18, 200k-500k: 0.17, >500k: 0.16)
@@ -999,6 +1052,7 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
     
     # Kira purata rate Mogas untuk agihan per item (jika tiered)
     avg_rate_mogas = comm_mogas_total / vol_mogas if vol_mogas > 0 else 0
+    avg_rate_diesel = comm_diesel_total / vol_diesel if vol_diesel > 0 else 0
     
     # Kira purata rate SEDC Mogas untuk agihan per item (Hanya jika ada SEDC)
     avg_sedc_rate_mogas = sedc_mogas / vol_mogas if (vol_mogas > 0 and apply_sedc) else 0.0
@@ -1014,7 +1068,10 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
             else:
                 d['earned_commission'] = round(vol * avg_rate_mogas, 2)
         elif jenis in ['E5 B20', 'E5 B7']:
-            d['earned_commission'] = round(vol * 0.128, 2)
+            if rec_date < cutoff_date:
+                d['earned_commission'] = round(vol * avg_rate_diesel, 2)
+            else:
+                d['earned_commission'] = round(vol * 0.128, 2)
         else:
             d['earned_commission'] = 0.0
         
@@ -1128,9 +1185,11 @@ def add_income(source_name):
                 for d in rec.get('petros_details', []):
                     if d['jenis_minyak'] in ['PF95', 'UF97']:
                         prev_mogas_vol += float(d['daily_volume'] or 0)
+                    elif d['jenis_minyak'] in ['E5 B20', 'E5 B7']:
+                        prev_diesel_vol += float(d['daily_volume'] or 0)
 
             # Kira Automatik (Komisyen, SEDC, Profit)
-            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol, apply_sedc=should_calc_sedc)
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol, prev_diesel_vol, apply_sedc=should_calc_sedc)
             
             # --- LOGIK PROFIT SHARING PETROS ---
             # Tahun 1-3 (2025-2027): KASB 20%, Gowpen 80%
@@ -1266,9 +1325,11 @@ def edit_pendapatan(id):
                     for d in rec.get('petros_details', []):
                         if d['jenis_minyak'] in ['PF95', 'UF97']:
                             prev_mogas_vol += float(d['daily_volume'] or 0)
+                        elif d['jenis_minyak'] in ['E5 B20', 'E5 B7']:
+                            prev_diesel_vol += float(d['daily_volume'] or 0)
 
                 # Kira Semula
-                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol, apply_sedc=should_calc_sedc)
+                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol, prev_diesel_vol, apply_sedc=should_calc_sedc)
                 
                 breakdown['sedc'] = total_sedc
 
@@ -1371,6 +1432,7 @@ def recalculate_petros():
         
         # Dictionary untuk track cumulative Mogas volume per bulan: {'2025-08': 12000.00}
         monthly_mogas_tracker = {}
+        monthly_diesel_tracker = {}
 
         count = 0
         for rec in records:
@@ -1381,8 +1443,11 @@ def recalculate_petros():
             # Init tracker jika bulan baru
             if month_key not in monthly_mogas_tracker:
                 monthly_mogas_tracker[month_key] = 0.0
+            if month_key not in monthly_diesel_tracker:
+                monthly_diesel_tracker[month_key] = 0.0
             
             current_prev_mogas = monthly_mogas_tracker[month_key]
+            current_prev_diesel = monthly_diesel_tracker[month_key]
             
             # 2. Dapatkan details (volume minyak)
             det_res = supabase.table('petros_details').select('*').eq('pendapatan_id', rec_id).execute()
@@ -1415,11 +1480,13 @@ def recalculate_petros():
             # Logik SEDC: Hanya kira jika ada expenses dalam rekod ini
             should_calc_sedc = (other_expenses > 0)
             
-            net_profit, gross_profit, total_sedc = calculate_petros_financials(details, tarikh, other_expenses, current_prev_mogas, apply_sedc=should_calc_sedc)
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details, tarikh, other_expenses, current_prev_mogas, current_prev_diesel, apply_sedc=should_calc_sedc)
             
             # Update tracker untuk rekod seterusnya
             vol_mogas_today = sum(d['daily_volume'] for d in details if d['jenis_minyak'] in ['PF95', 'UF97'])
+            vol_diesel_today = sum(d['daily_volume'] for d in details if d['jenis_minyak'] in ['E5 B20', 'E5 B7'])
             monthly_mogas_tracker[month_key] += vol_mogas_today
+            monthly_diesel_tracker[month_key] += vol_diesel_today
             
             # 5. Update Breakdown dengan SEDC baru
             breakdown['sedc'] = total_sedc
@@ -1525,6 +1592,79 @@ def daftar_kursus():
     # Dapatkan senarai semua peserta untuk kira kekosongan
     # (Nota: Untuk skala besar, count patut dibuat di DB level, tapi untuk sekarang ini memadai)
     p_res = supabase.table('peserta_kursus').select('kursus_dipilih').execute()
+    all_participants = p_res.data
+    
+    for slot in slots:
+        # Kira berapa orang dah daftar untuk slot ini
+        count = sum(1 for p in all_participants if p.get('kursus_dipilih') == slot['nama_slot'])
+        limit = slot.get('max_peserta') or 50
+        
+        slot['registered'] = count
+        slot['remaining'] = max(0, limit - count)
+        slot['is_full'] = count >= limit
+
+    return render_template('daftar_kursus.html', slots=slots)
+
+# --- ROUTES: PORTAL PESERTA (E-LEARNING) ---
+@app.route('/login-peserta', methods=['GET', 'POST'])
+def login_peserta():
+    if request.method == 'POST':
+        ic = request.form.get('ic')
+        password = request.form.get('password')
+        
+        # Cari peserta berdasarkan No. IC
+        res = supabase.table('peserta_kursus').select('*').eq('no_ic', ic).execute()
+        user = res.data[0] if res.data else None
+        
+        if user and check_password_hash(user['password_hash'], password):
+            session['peserta_id'] = user['id']
+            session['nama_peserta'] = user['nama_penuh']
+            return redirect(url_for('dashboard_peserta'))
+        else:
+            flash('No. Kad Pengenalan atau Kata Laluan salah.', 'danger')
+            
+    return render_template('login_peserta.html')
+
+@app.route('/dashboard-peserta')
+def dashboard_peserta():
+    if 'peserta_id' not in session:
+        return redirect(url_for('login_peserta'))
+    
+    user_id = session['peserta_id']
+    res = supabase.table('peserta_kursus').select('*').eq('id', user_id).single().execute()
+    peserta = res.data
+    
+    moduls = []
+    # Hanya tunjuk modul jika bayaran selesai
+    if peserta.get('status_bayaran') == 'Selesai':
+        mod_res = supabase.table('modul_kursus').select('*').order('created_at', desc=False).execute()
+        moduls = mod_res.data
+        
+    return render_template('dashboard_peserta.html', p=peserta, moduls=moduls)
+
+@app.route('/logout-peserta')
+def logout_peserta():
+    session.pop('peserta_id', None)
+    session.pop('nama_peserta', None)
+    return redirect(url_for('login_peserta'))
+
+@app.route('/senarai-peserta')
+@login_required
+def senarai_peserta():
+    """
+    Halaman admin untuk melihat senarai peserta yang mendaftar.
+    """
+    try:
+        response = supabase.table('peserta_kursus').select('*').order('tarikh_daftar', desc=True).execute()
+        return render_template('peserta_list.html', peserta=response.data)
+    except Exception as e:
+        return f"Ralat memuatkan senarai peserta: {e}"
+
+# This allows the app to be run directly from the command line
+if __name__ == '__main__':
+    # Using debug=True will auto-reload the server when you make changes
+    # Host='0.0.0.0' makes it accessible on your local network
+    app.run(debug=True, host='0.0.0.0')sus').select('kursus_dipilih').execute()
     all_participants = p_res.data
     
     for slot in slots:
