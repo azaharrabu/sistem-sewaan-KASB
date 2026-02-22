@@ -538,7 +538,7 @@ def render_income_detail(source_name):
         
         # Dapatkan data dari table pendapatan_lain (Join details jika Petros untuk kira volume)
         if source_name == 'Petros':
-            response = supabase.table('pendapatan_lain').select('*, petros_details(daily_volume)').eq('sumber', source_name).order('tarikh', desc=True).execute()
+            response = supabase.table('pendapatan_lain').select('*, petros_details(daily_volume, jenis_minyak)').eq('sumber', source_name).order('tarikh', desc=True).execute()
         else:
             response = supabase.table('pendapatan_lain').select('*').eq('sumber', source_name).order('tarikh', desc=True).execute()
             
