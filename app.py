@@ -538,7 +538,7 @@ def render_income_detail(source_name):
         
         # Dapatkan data dari table pendapatan_lain (Join details jika Petros untuk kira volume)
         if source_name == 'Petros':
-            response = supabase.table('pendapatan_lain').select('*, petros_details(daily_volume, jenis_minyak)').eq('sumber', source_name).order('tarikh', desc=True).execute()
+            response = supabase.table('pendapatan_lain').select('*, petros_details(daily_volume, jenis_minyak, sales_amount)').eq('sumber', source_name).order('tarikh', desc=True).execute()
         else:
             response = supabase.table('pendapatan_lain').select('*').eq('sumber', source_name).order('tarikh', desc=True).execute()
             
@@ -550,7 +550,23 @@ def render_income_detail(source_name):
         # Init Aggregates
         total_income = 0.0
         monthly_breakdown = {m: 0.0 for m in range(1, 13)}
-        monthly_aggregates = {m: {'vol': 0.0, 'vol_by_type': {}, 'sales': 0.0, 'gross_comm': 0.0, 'costs': 0.0, 'sedc_cost': 0.0, 'net_profit': 0.0, 'kasb': 0.0, 'gowpen': 0.0} for m in range(1, 13)}
+        monthly_aggregates = {m: {
+            'vol': 0.0, 
+            'vol_by_type': {}, 
+            'sales_by_type': {}, 
+            'vol_mogas': 0.0, 
+            'sales_mogas': 0.0, 
+            'vol_diesel': 0.0, 
+            'sales_diesel': 0.0,
+            'sales': 0.0, 
+            'gross_comm': 0.0, 
+            'costs': 0.0, 
+            'op_costs': 0.0, 
+            'sedc_cost': 0.0, 
+            'net_profit': 0.0, 
+            'kasb': 0.0, 
+            'gowpen': 0.0
+        } for m in range(1, 13)}
 
         for item in filtered_data:
             m = int(item['tarikh'].split('-')[1])
@@ -560,13 +576,24 @@ def render_income_detail(source_name):
                 current_vol = 0.0
                 for d in item.get('petros_details', []):
                     v = float(d['daily_volume'] or 0)
+                    s = float(d.get('sales_amount') or 0)
                     current_vol += v
                     
                     # Aggregate Volume by Type (Pecahan ikut jenis minyak)
                     j_minyak = d['jenis_minyak']
                     if j_minyak not in monthly_aggregates[m]['vol_by_type']:
                         monthly_aggregates[m]['vol_by_type'][j_minyak] = 0.0
+                        monthly_aggregates[m]['sales_by_type'][j_minyak] = 0.0
                     monthly_aggregates[m]['vol_by_type'][j_minyak] += v
+                    monthly_aggregates[m]['sales_by_type'][j_minyak] += s
+                    
+                    # Aggregate Mogas vs Diesel
+                    if j_minyak in ['PF95', 'UF97']:
+                        monthly_aggregates[m]['vol_mogas'] += v
+                        monthly_aggregates[m]['sales_mogas'] += s
+                    elif j_minyak in ['E5 B20', 'E5 B7']:
+                        monthly_aggregates[m]['vol_diesel'] += v
+                        monthly_aggregates[m]['sales_diesel'] += s
                 
                 item['total_volume'] = current_vol
                 
@@ -590,6 +617,9 @@ def render_income_detail(source_name):
                     if isinstance(bd, dict):
                         sedc = float(bd.get('sedc') or 0)
                 
+                # Op Costs = Total Expenses - SEDC
+                op_costs = costs - sedc
+                
                 gross = net + costs
                 kasb = float(item.get('amaun') or 0)
                 gowpen = net - kasb
@@ -599,6 +629,7 @@ def render_income_detail(source_name):
                 monthly_aggregates[m]['sales'] += sales
                 monthly_aggregates[m]['gross_comm'] += gross
                 monthly_aggregates[m]['costs'] += costs
+                monthly_aggregates[m]['op_costs'] += op_costs
                 monthly_aggregates[m]['sedc_cost'] += sedc
                 monthly_aggregates[m]['net_profit'] += net
                 monthly_aggregates[m]['kasb'] += kasb

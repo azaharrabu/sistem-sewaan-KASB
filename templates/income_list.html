@@ -92,39 +92,45 @@
             </div>
             <div class="card-body bg-light">
                 <div class="row text-center g-3">
-                    <div class="col-md-2 border-end">
+                    <div class="col-md-2 border-end border-secondary">
                         <small class="text-muted fw-bold text-uppercase">Total Volume</small>
                         <h5 class="fw-bold text-dark mt-1" id="sumVol">0 L</h5>
                     </div>
-                    <div class="col-md-2 border-end">
+                    <div class="col-md-2 border-end border-secondary">
                         <small class="text-muted fw-bold text-uppercase">Total Sales</small>
                         <h5 class="fw-bold text-dark mt-1" id="sumSales">RM 0.00</h5>
                     </div>
-                    <div class="col-md-2 border-end">
+                    <div class="col-md-2 border-end border-secondary">
                         <small class="text-muted fw-bold text-uppercase">Gross Commission</small>
                         <h5 class="fw-bold text-success mt-1" id="sumGross">RM 0.00</h5>
                     </div>
-                    <div class="col-md-2 border-end">
-                        <small class="text-muted fw-bold text-uppercase">Total Expenses</small>
-                        <h5 class="fw-bold text-danger mt-1" id="sumCosts">RM 0.00</h5>
+                    <div class="col-md-2 border-end border-secondary">
+                        <small class="text-muted fw-bold text-uppercase">Op. Costs (A-D)</small>
+                        <h5 class="fw-bold text-danger mt-1" id="sumOpCosts">RM 0.00</h5>
                     </div>
-                    <div class="col-md-2 border-end">
+                    <div class="col-md-2 border-end border-secondary">
+                        <small class="text-muted fw-bold text-uppercase">SEDC Fee</small>
+                        <h5 class="fw-bold text-warning mt-1" id="sumSEDC">RM 0.00</h5>
+                    </div>
+                    <div class="col-md-2">
                         <small class="text-muted fw-bold text-uppercase">Net Profit</small>
                         <h5 class="fw-bold text-primary mt-1" id="sumNet">RM 0.00</h5>
                     </div>
-                    <div class="col-md-2">
+                    
+                    <!-- Baris Bawah untuk Total Expenses & Shares -->
+                    <div class="col-md-12 border-top pt-2 mt-2">
                         <div class="row">
-                            <div class="col-12 border-bottom pb-1">
-                                <div class="d-flex justify-content-between">
-                                    <small class="text-muted fw-bold">KASB</small>
-                                    <small class="fw-bold text-success" id="sumKasb">RM 0.00</small>
-                                </div>
+                            <div class="col-md-4 border-end">
+                                <small class="text-muted fw-bold text-uppercase">Total Expenses (Op + SEDC)</small>
+                                <h6 class="fw-bold text-danger" id="sumCosts">RM 0.00</h6>
                             </div>
-                            <div class="col-12 pt-1">
-                                <div class="d-flex justify-content-between">
-                                    <small class="text-muted fw-bold">Gowpen</small>
-                                    <small class="fw-bold text-secondary" id="sumGowpen">RM 0.00</small>
-                                </div>
+                            <div class="col-md-4 border-end">
+                                <small class="text-muted fw-bold text-uppercase">KASB Share</small>
+                                <h6 class="fw-bold text-success" id="sumKasb">RM 0.00</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted fw-bold text-uppercase">Gowpen Share</small>
+                                <h6 class="fw-bold text-secondary" id="sumGowpen">RM 0.00</h6>
                             </div>
                         </div>
                     </div>
@@ -133,9 +139,9 @@
                 <!-- Volume Breakdown Table -->
                 <div class="row mt-3 border-top pt-3" id="breakdownRow" style="display:none;">
                     <div class="col-md-12">
-                        <h6 class="small fw-bold text-muted text-uppercase">Volume Breakdown by Type</h6>
+                        <h6 class="small fw-bold text-muted text-uppercase">Total Breakdown by Type</h6>
                         <div class="table-responsive d-flex justify-content-center">
-                            <table class="table table-sm table-bordered w-auto text-center mb-0" id="breakdownTable">
+                            <table class="table table-sm table-bordered w-100 text-center mb-0 align-middle" id="breakdownTable">
                                 <!-- JS will populate this -->
                             </table>
                         </div>
@@ -539,9 +545,12 @@
         };
 
         function updatePetrosSummary(month) {
-            var vol = 0, sales = 0, gross = 0, costs = 0, net = 0, kasb = 0, gowpen = 0;
+            var vol = 0, sales = 0, gross = 0, costs = 0, op_costs = 0, sedc = 0, net = 0, kasb = 0, gowpen = 0;
             var title = "Semua Bulan";
             var volBreakdown = {};
+            var salesBreakdown = {};
+            var mogas = {vol: 0, sales: 0};
+            var diesel = {vol: 0, sales: 0};
 
             if (month === 'all') {
                 // Sum semua bulan
@@ -550,14 +559,23 @@
                     sales += petrosAggregates[m].sales;
                     gross += petrosAggregates[m].gross_comm;
                     costs += petrosAggregates[m].costs;
+                    op_costs += petrosAggregates[m].op_costs;
+                    sedc += petrosAggregates[m].sedc_cost;
                     net += petrosAggregates[m].net_profit;
                     kasb += petrosAggregates[m].kasb;
                     gowpen += petrosAggregates[m].gowpen;
                     
+                    mogas.vol += petrosAggregates[m].vol_mogas;
+                    mogas.sales += petrosAggregates[m].sales_mogas;
+                    diesel.vol += petrosAggregates[m].vol_diesel;
+                    diesel.sales += petrosAggregates[m].sales_diesel;
+
                     // Sum breakdown
                     for (var type in petrosAggregates[m].vol_by_type) {
                         if (!volBreakdown[type]) volBreakdown[type] = 0;
+                        if (!salesBreakdown[type]) salesBreakdown[type] = 0;
                         volBreakdown[type] += petrosAggregates[m].vol_by_type[type];
+                        salesBreakdown[type] += petrosAggregates[m].sales_by_type[type];
                     }
                 }
             } else {
@@ -568,10 +586,17 @@
                     sales = d.sales;
                     gross = d.gross_comm;
                     costs = d.costs;
+                    op_costs = d.op_costs;
+                    sedc = d.sedc_cost;
                     net = d.net_profit;
                     kasb = d.kasb;
                     gowpen = d.gowpen;
                     volBreakdown = d.vol_by_type;
+                    salesBreakdown = d.sales_by_type;
+                    mogas.vol = d.vol_mogas;
+                    mogas.sales = d.sales_mogas;
+                    diesel.vol = d.vol_diesel;
+                    diesel.sales = d.sales_diesel;
                 }
                 const monthNames = ["", "Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
                 title = monthNames[month];
@@ -583,6 +608,8 @@
             document.getElementById('sumSales').innerText = "RM " + sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumGross').innerText = "RM " + gross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumCosts').innerText = "RM " + costs.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('sumOpCosts').innerText = "RM " + op_costs.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('sumSEDC').innerText = "RM " + sedc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumNet').innerText = "RM " + net.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumKasb').innerText = "RM " + kasb.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('sumGowpen').innerText = "RM " + gowpen.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -593,18 +620,35 @@
             breakdownTable.innerHTML = ""; // Clear existing
             
             var hasData = false;
-            var headerHtml = "<thead class='table-light'><tr>";
-            var bodyHtml = "<tbody><tr>";
+            var headerHtml = "<thead class='table-light'><tr><th class='text-start'>Metric</th>";
+            var rowVol = "<tbody><tr><td class='text-start fw-bold'>Volume (L)</td>";
+            var rowSales = "<tr><td class='text-start fw-bold'>Sales (RM)</td>";
             
-            for (var type in volBreakdown) {
+            // Define specific order for fuel types
+            var fuelTypes = ['PF95', 'UF97', 'E5 B20', 'E5 B7'];
+            
+            fuelTypes.forEach(function(type) {
                 hasData = true;
+                var v = volBreakdown[type] || 0;
+                var s = salesBreakdown[type] || 0;
                 headerHtml += "<th>" + type + "</th>";
-                bodyHtml += "<td>" + volBreakdown[type].toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "</td>";
-            }
-            headerHtml += "</tr></thead>";
-            bodyHtml += "</tr></tbody>";
+                rowVol += "<td>" + v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "</td>";
+                rowSales += "<td>" + s.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "</td>";
+            });
+
+            // Add Total Mogas & Diesel Columns
+            headerHtml += "<th class='table-primary'>TOTAL MOGAS</th><th class='table-warning'>TOTAL DIESEL</th>";
+            rowVol += "<td class='table-primary fw-bold'>" + mogas.vol.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "</td>";
+            rowVol += "<td class='table-warning fw-bold'>" + diesel.vol.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "</td>";
             
-            breakdownTable.innerHTML = headerHtml + bodyHtml;
+            rowSales += "<td class='table-primary fw-bold'>" + mogas.sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "</td>";
+            rowSales += "<td class='table-warning fw-bold'>" + diesel.sales.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "</td>";
+
+            headerHtml += "</tr></thead>";
+            rowVol += "</tr>";
+            rowSales += "</tr></tbody>";
+            
+            breakdownTable.innerHTML = headerHtml + rowVol + rowSales;
             breakdownRow.style.display = hasData ? 'block' : 'none';
 
             // Update Table Footer
