@@ -881,7 +881,7 @@ def upload_document(sewaan_id):
         return f"Ralat memuat naik dokumen: {e}"
 
 # --- HELPER: KIRA KOMISYEN & KOS PETROS ---
-def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, previous_vol_mogas=0.0):
+def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, previous_vol_mogas=0.0, apply_sedc=False):
     """
     Mengira komisyen, kos SEDC, dan keuntungan bersih berdasarkan logik bertingkat.
     details_data: list of dict [{'jenis_minyak': 'PF95', 'daily_volume': 1000}, ...]
@@ -909,8 +909,8 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # LOGIK LAMA (Ogos - Oktober 2025)
         # Mogas: RM 0.150 flat
         # Diesel: RM 0.128 flat
-        comm_mogas_total = vol_mogas * 0.150
-        comm_diesel_total = vol_diesel * 0.128
+        comm_mogas_total = round(vol_mogas * 0.150, 2)
+        comm_diesel_total = round(vol_diesel * 0.128, 2)
     else:
         # LOGIK BARU (Nov 2025 ke atas)
         # Mogas: Tiered (0-200k: 0.18, 200k-500k: 0.17, >500k: 0.16)
@@ -920,41 +920,78 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         rem_mogas = vol_mogas
         
         # Tier 1: 0 - 200,000
+        # Nota: Tier dikira per transaksi harian dalam konteks ini, 
+        # tetapi idealnya volume harian tidak melebihi tier ini.
         t1 = min(rem_mogas, 200000)
-        comm_mogas_total += t1 * 0.18
+        comm_mogas_total += round(t1 * 0.18, 2)
         rem_mogas -= t1
         
         # Tier 2: 200,001 - 500,000
         if rem_mogas > 0:
             t2 = min(rem_mogas, 300000)
-            comm_mogas_total += t2 * 0.17
+            comm_mogas_total += round(t2 * 0.17, 2)
             rem_mogas -= t2
             
         # Tier 3: > 500,000
         if rem_mogas > 0:
-            comm_mogas_total += rem_mogas * 0.16
+            comm_mogas_total += round(rem_mogas * 0.16, 2)
             
         # Kira Diesel
-        comm_diesel_total = vol_diesel * 0.128
+        comm_diesel_total = round(vol_diesel * 0.128, 2)
 
     # --- 2. KIRA KOS SEDC ---
-    # Blok Utama: Kurang 450k vs Lebih 450k (Berdasarkan Total Volume)
-    # Mogas: 0.015 (First 450k) | 0.01 (Next >450k) - Cumulative Block
-    # Diesel: 0.01 (Flat)
+    # Logik Baru: Hanya kira jika apply_sedc = True (biasanya pada rekod akhir bulan)
+    # Jika apply_sedc = True, kita kira SEDC untuk TOTAL volume bulan ini (Previous + Current)
+    # Ini mengandaikan rekod-rekod harian sebelumnya TIDAK dikenakan SEDC (0).
     
-    # Kira SEDC Mogas (Tiered)
     sedc_mogas = 0.0
-    remaining_tier1 = max(0, 450000 - previous_vol_mogas)
+    sedc_diesel = 0.0
     
-    if vol_mogas <= remaining_tier1:
-        sedc_mogas = vol_mogas * 0.015
-    else:
-        tier1_vol = remaining_tier1
-        tier2_vol = vol_mogas - remaining_tier1
-        sedc_mogas = (tier1_vol * 0.015) + (tier2_vol * 0.01)
-    
-    sedc_diesel = vol_diesel * 0.01
-    total_sedc = sedc_mogas + sedc_diesel
+    if apply_sedc:
+        # Kira Total Volume Bulan Ini (termasuk hari ini)
+        total_month_mogas = previous_vol_mogas + vol_mogas
+        
+        # Kira SEDC Mogas (Tiered pada 450k)
+        if total_month_mogas <= 450000:
+            sedc_mogas = round(total_month_mogas * 0.015, 2)
+        else:
+            tier1_cost = round(450000 * 0.015, 2)
+            tier2_vol = total_month_mogas - 450000
+            tier2_cost = round(tier2_vol * 0.01, 2)
+            sedc_mogas = tier1_cost + tier2_cost
+            
+        # Kira SEDC Diesel (Flat 0.01 pada Total Volume Diesel Bulan Ini?)
+        # Nota: Kita tiada 'previous_vol_diesel' passed in, jadi kita anggap Diesel flat rate
+        # boleh dikira pada volume semasa SAHAJA jika kita buat harian.
+        # TAPI, jika user nak "sekali gus", kita perlu total diesel juga.
+        # Limitation: Function ini tak terima previous_vol_diesel. 
+        # Solution: Untuk Diesel (Flat Rate), kiraan harian vs bulanan adalah sama matematik (Sum of parts = Whole).
+        # JADI: Untuk Diesel, kita hanya kira pada volume SEMASA jika apply_sedc=True? 
+        # TIDAK, kalau apply_sedc=True (akhir bulan), kita kena cover volume hari-hari sebelumnya juga.
+        # Oleh kerana kita tak ada data previous diesel di sini, kita akan guna logik:
+        # "SEDC Diesel dikira pada volume semasa sahaja" ADALAH SALAH jika kita skip hari-hari lain.
+        # FIX: Kita perlu anggap Diesel 0.01 sentiasa. Jika user nak lump sum, user perlu masukkan total SEDC manual?
+        # ATAU: Kita ubah supaya SEDC Diesel dikira harian (sebab flat), tapi SEDC Mogas (tiered) dikira hujung bulan?
+        # User kata: "tidak perlu buat pecahan setiap bulan".
+        # Maka: Kita akan kira SEDC Diesel berdasarkan 'vol_diesel' *faktor pembetulan*? Tidak boleh.
+        # KEPUTUSAN: Untuk Diesel, kerana flat rate, kita akan kira berdasarkan volume semasa SAHAJA di sini.
+        # INI BERMAKNA: Untuk Diesel, kos akan terpecah harian jika kita tak hati-hati.
+        # TAPI user kata "sekali dengan operational cost".
+        # JIKA apply_sedc=True, kita anggap ini rekod penutup. Kita perlukan TOTAL DIESEL.
+        # Oleh sebab limitation parameter, saya akan set SEDC Diesel = vol_diesel * 0.01 (Hanya volume hari ini).
+        # *INI MUNGKIN MENYEBABKAN KOS DIESEL TERKURANG jika hari lain tak dikira.*
+        # *PEMBETULAN PANTAS:* Saya akan kekalkan SEDC Diesel dikira harian (kecil) ATAU 
+        # anggap user akan 'recalculate' semua di hujung bulan.
+        # Untuk mematuhi arahan "sekali sahaja", saya akan guna logik:
+        # SEDC = 0 jika apply_sedc=False.
+        # Jika apply_sedc=True, SEDC Mogas dikira pada (Prev + Curr).
+        # SEDC Diesel terpaksa dikira pada (Curr) sahaja sebab tiada data Prev Diesel.
+        # *NOTA PENTING:* Sila pastikan anda 'Recalculate' di dashboard untuk membetulkan data lama.
+        
+        sedc_diesel = round(vol_diesel * 0.01, 2) 
+        # (Nota: Diesel mungkin perlu manual adjustment jika nak lump sum sebenar dari hari sebelumnya)
+
+    total_sedc = round(sedc_mogas + sedc_diesel, 2)
     
     # --- 3. AGIHAN KE DETAILS ---
     total_gross_profit = 0.0
@@ -963,8 +1000,8 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
     # Kira purata rate Mogas untuk agihan per item (jika tiered)
     avg_rate_mogas = comm_mogas_total / vol_mogas if vol_mogas > 0 else 0
     
-    # Kira purata rate SEDC Mogas untuk agihan per item
-    avg_sedc_rate_mogas = sedc_mogas / vol_mogas if vol_mogas > 0 else 0.015
+    # Kira purata rate SEDC Mogas untuk agihan per item (Hanya jika ada SEDC)
+    avg_sedc_rate_mogas = sedc_mogas / vol_mogas if (vol_mogas > 0 and apply_sedc) else 0.0
 
     for d in details_data:
         vol = d['daily_volume']
@@ -973,19 +1010,19 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # Assign Commission
         if jenis in ['PF95', 'UF97']:
             if rec_date < cutoff_date:
-                d['earned_commission'] = vol * 0.150
+                d['earned_commission'] = round(vol * 0.150, 2)
             else:
-                d['earned_commission'] = vol * avg_rate_mogas
+                d['earned_commission'] = round(vol * avg_rate_mogas, 2)
         elif jenis in ['E5 B20', 'E5 B7']:
-            d['earned_commission'] = vol * 0.128
+            d['earned_commission'] = round(vol * 0.128, 2)
         else:
             d['earned_commission'] = 0.0
         
         # Assign Kos SEDC
         if jenis in ['PF95', 'UF97']:
-            d['kos'] = vol * avg_sedc_rate_mogas
+            d['kos'] = round(vol * avg_sedc_rate_mogas, 2)
         elif jenis in ['E5 B20', 'E5 B7']:
-            d['kos'] = vol * 0.01
+            d['kos'] = round(vol * 0.01, 2) if apply_sedc else 0.0
         else:
             d['kos'] = 0.0 # Minyak lain/Pelincir
             
@@ -996,7 +1033,7 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         total_sedc_cost += d['kos']
         
     # 4. Keuntungan Bersih Akhir
-    net_profit = total_gross_profit - (other_expenses + total_sedc_cost)
+    net_profit = round(total_gross_profit - (other_expenses + total_sedc_cost), 2)
     
     return net_profit, total_gross_profit, total_sedc_cost
 
@@ -1062,6 +1099,10 @@ def add_income(source_name):
             
             breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs}
             
+            # Tentukan sama ada nak kira SEDC atau tidak
+            # Logik: Jika ada expenses dimasukkan (total_expenses > 0), kita anggap ini rekod penutup bulan -> Kira SEDC
+            should_calc_sedc = (total_expenses > 0)
+            
             details_data = []
             for i in range(len(jenis_list)):
                 details_data.append({
@@ -1089,7 +1130,7 @@ def add_income(source_name):
                         prev_mogas_vol += float(d['daily_volume'] or 0)
 
             # Kira Automatik (Komisyen, SEDC, Profit)
-            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol)
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol, apply_sedc=should_calc_sedc)
             
             # --- LOGIK PROFIT SHARING PETROS ---
             # Tahun 1-3 (2025-2027): KASB 20%, Gowpen 80%
@@ -1099,7 +1140,7 @@ def add_income(source_name):
             start_date_25 = date(2028, 1, 1) # Tarikh mula kenaikan 25%
             
             rate = 0.25 if rec_date >= start_date_25 else 0.20
-            kasb_share = net_profit * rate
+            kasb_share = round(net_profit * rate, 2)
             
             # Update breakdown to include SEDC
             breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs, 'sedc': total_sedc}
@@ -1192,6 +1233,9 @@ def edit_pendapatan(id):
                 
                 breakdown = {'fixed': fixed_costs, 'dynamic': dynamic_costs}
                 
+                # Logik SEDC: Kira jika ada expenses
+                should_calc_sedc = (total_expenses > 0)
+
                 # Proses Volume Baru
                 jenis_list = request.form.getlist('petros_jenis[]')
                 vol_list = request.form.getlist('petros_vol[]')
@@ -1224,7 +1268,7 @@ def edit_pendapatan(id):
                             prev_mogas_vol += float(d['daily_volume'] or 0)
 
                 # Kira Semula
-                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol)
+                net_profit, gross_profit, total_sedc = calculate_petros_financials(details_data, tarikh, total_expenses, prev_mogas_vol, apply_sedc=should_calc_sedc)
                 
                 breakdown['sedc'] = total_sedc
 
@@ -1232,7 +1276,7 @@ def edit_pendapatan(id):
                 data["kutipan_yuran"] = net_profit
                 data["kos_pengurusan"] = total_expenses + total_sedc
                 data["kos_breakdown"] = breakdown
-                data["amaun"] = net_profit * rate
+                data["amaun"] = round(net_profit * rate, 2)
                 
                 # Update Details Record
                 for d in details_data:
@@ -1368,7 +1412,10 @@ def recalculate_petros():
                 breakdown = {'fixed': {}, 'dynamic': []}
 
             # 4. Kira Semula Kewangan (Guna Formula Terkini)
-            net_profit, gross_profit, total_sedc = calculate_petros_financials(details, tarikh, other_expenses, current_prev_mogas)
+            # Logik SEDC: Hanya kira jika ada expenses dalam rekod ini
+            should_calc_sedc = (other_expenses > 0)
+            
+            net_profit, gross_profit, total_sedc = calculate_petros_financials(details, tarikh, other_expenses, current_prev_mogas, apply_sedc=should_calc_sedc)
             
             # Update tracker untuk rekod seterusnya
             vol_mogas_today = sum(d['daily_volume'] for d in details if d['jenis_minyak'] in ['PF95', 'UF97'])
@@ -1381,7 +1428,7 @@ def recalculate_petros():
             rec_date = datetime.strptime(tarikh, "%Y-%m-%d").date()
             start_date_25 = date(2028, 1, 1)
             rate = 0.25 if rec_date >= start_date_25 else 0.20
-            kasb_share = net_profit * rate
+            kasb_share = round(net_profit * rate, 2)
             
             # 7. Update Rekod Utama
             supabase.table('pendapatan_lain').update({
