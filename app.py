@@ -918,55 +918,29 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
         # Mogas: RM 0.150 flat
         # Diesel: RM 0.128 flat
         # UPDATE (User Request): Diesel Tiered (0-200k: 0.03, 200k-500k: 0.02, >500k: 0.01)
+        # Diesel: Tiered (0-200k: 0.03, 200k-500k: 0.02, >500k: 0.01)
         
         comm_mogas_total = excel_round(vol_mogas * 0.150, 2)
         
         # Kira Diesel Tiered (Aug-Oct)
+        comm_diesel_total = 0.0
         rem_diesel = vol_diesel
-        current_cumulative_diesel = previous_vol_diesel
+        curr_cum_diesel = previous_vol_diesel
         
         # Tier 1: 0 - 200,000 (Rate 0.03)
-        available_t1 = max(0, 200000 - current_cumulative_diesel)
-        t1 = min(rem_diesel, available_t1)
+        space_t1 = max(0, 200000 - curr_cum_diesel)
+        t1 = min(rem_diesel, space_t1)
         comm_diesel_total += excel_round(t1 * 0.03, 2)
         rem_diesel -= t1
-        current_cumulative_diesel += t1
+        curr_cum_diesel += t1
         
         # Tier 2: 200,001 - 500,000 (Rate 0.02)
         if rem_diesel > 0:
-            available_t2 = max(0, 500000 - current_cumulative_diesel) # Note: 500k limit total
-            # Logic check: if cumulative is already > 200k, available space in T2 is (500k - current).
-            # If cumulative < 200k, we already filled T1. Current is now 200k.
-            # So available T2 is 500k - 200k = 300k.
-            # Let's use simple logic:
-            # We need to know how much of the *current batch* falls into which tier.
-            # It's easier to calculate Total Commission for (Prev + Curr) then subtract Commission for (Prev).
-            pass # We will use the iterative approach below for clarity
-            
-            # Re-calculate using standard tier logic on the fly
-            # Tier 2 space
-            # We are at 'current_cumulative_diesel'. The next threshold is 500,000.
-            # But wait, the tier is 200,001 to 500,000.
-            # So the max volume in this tier is 300,000.
-            # My previous logic `available_t1` handles the start.
-            
-            # Let's simplify:
-            # Tier 2 starts at 200,000. Ends at 500,000.
-            # We are currently at `current_cumulative_diesel` (which is >= 200,000 because we exhausted T1 or started above it).
-            
-            # Actually, `current_cumulative_diesel` was updated above.
-            # If we filled T1, `current_cumulative_diesel` is at least 200,000 (or less if we finished the batch).
-            # If `rem_diesel > 0`, it means we are above 200,000.
-            
-            t2 = min(rem_diesel, 300000) # Max size of Tier 2 is 300k. 
-            # But we must respect the 500k total limit.
-            # Space remaining in Tier 2 = 500,000 - current_cumulative_diesel.
-            space_t2 = max(0, 500000 - current_cumulative_diesel)
+            space_t2 = max(0, 500000 - curr_cum_diesel)
             t2 = min(rem_diesel, space_t2)
-            
             comm_diesel_total += excel_round(t2 * 0.02, 2)
             rem_diesel -= t2
-            current_cumulative_diesel += t2
+            curr_cum_diesel += t2
             
         # Tier 3: > 500,000 (Rate 0.01)
         if rem_diesel > 0:
@@ -1022,35 +996,9 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
             sedc_mogas = tier1_cost + tier2_cost
             
         # Kira SEDC Diesel (Flat 0.01 pada Total Volume Diesel Bulan Ini?)
-        # Nota: Kita tiada 'previous_vol_diesel' passed in, jadi kita anggap Diesel flat rate
-        # boleh dikira pada volume semasa SAHAJA jika kita buat harian.
-        # TAPI, jika user nak "sekali gus", kita perlu total diesel juga.
-        # Limitation: Function ini tak terima previous_vol_diesel. 
-        # Solution: Untuk Diesel (Flat Rate), kiraan harian vs bulanan adalah sama matematik (Sum of parts = Whole).
-        # JADI: Untuk Diesel, kita hanya kira pada volume SEMASA jika apply_sedc=True? 
-        # TIDAK, kalau apply_sedc=True (akhir bulan), kita kena cover volume hari-hari sebelumnya juga.
-        # Oleh kerana kita tak ada data previous diesel di sini, kita akan guna logik:
-        # "SEDC Diesel dikira pada volume semasa sahaja" ADALAH SALAH jika kita skip hari-hari lain.
-        # FIX: Kita perlu anggap Diesel 0.01 sentiasa. Jika user nak lump sum, user perlu masukkan total SEDC manual?
-        # ATAU: Kita ubah supaya SEDC Diesel dikira harian (sebab flat), tapi SEDC Mogas (tiered) dikira hujung bulan?
-        # User kata: "tidak perlu buat pecahan setiap bulan".
-        # Maka: Kita akan kira SEDC Diesel berdasarkan 'vol_diesel' *faktor pembetulan*? Tidak boleh.
-        # KEPUTUSAN: Untuk Diesel, kerana flat rate, kita akan kira berdasarkan volume semasa SAHAJA di sini.
-        # INI BERMAKNA: Untuk Diesel, kos akan terpecah harian jika kita tak hati-hati.
-        # TAPI user kata "sekali dengan operational cost".
-        # JIKA apply_sedc=True, kita anggap ini rekod penutup. Kita perlukan TOTAL DIESEL.
-        # Oleh sebab limitation parameter, saya akan set SEDC Diesel = vol_diesel * 0.01 (Hanya volume hari ini).
-        # *INI MUNGKIN MENYEBABKAN KOS DIESEL TERKURANG jika hari lain tak dikira.*
-        # *PEMBETULAN PANTAS:* Saya akan kekalkan SEDC Diesel dikira harian (kecil) ATAU 
-        # anggap user akan 'recalculate' semua di hujung bulan.
-        # Untuk mematuhi arahan "sekali sahaja", saya akan guna logik:
-        # SEDC = 0 jika apply_sedc=False.
-        # Jika apply_sedc=True, SEDC Mogas dikira pada (Prev + Curr).
-        # SEDC Diesel terpaksa dikira pada (Curr) sahaja sebab tiada data Prev Diesel.
-        # *NOTA PENTING:* Sila pastikan anda 'Recalculate' di dashboard untuk membetulkan data lama.
-        
-        sedc_diesel = excel_round(vol_diesel * 0.01, 2) 
-        # (Nota: Diesel mungkin perlu manual adjustment jika nak lump sum sebenar dari hari sebelumnya)
+        # Jika apply_sedc=True, kita guna Total Volume Bulan Ini (Previous + Current)
+        total_month_diesel = previous_vol_diesel + vol_diesel
+        sedc_diesel = excel_round(total_month_diesel * 0.01, 2) 
 
     total_sedc = excel_round(sedc_mogas + sedc_diesel, 2)
     
@@ -1189,6 +1137,7 @@ def add_income(source_name):
                 .execute()
             
             prev_mogas_vol = 0.0
+            prev_diesel_vol = 0.0
             for rec in prev_res.data:
                 for d in rec.get('petros_details', []):
                     if d['jenis_minyak'] in ['PF95', 'UF97']:
@@ -1329,6 +1278,7 @@ def edit_pendapatan(id):
                     .execute()
                 
                 prev_mogas_vol = 0.0
+                prev_diesel_vol = 0.0
                 for rec in prev_res.data:
                     for d in rec.get('petros_details', []):
                         if d['jenis_minyak'] in ['PF95', 'UF97']:
