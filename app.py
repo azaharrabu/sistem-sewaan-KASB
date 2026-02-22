@@ -971,35 +971,10 @@ def calculate_petros_financials(details_data, tarikh_str, other_expenses=0.0, pr
     if rec_date < cutoff_date:
         # LOGIK LAMA (Ogos - Oktober 2025)
         # Mogas: RM 0.150 flat
-        # Diesel: RM 0.128 flat
-        # UPDATE (User Request): Diesel Tiered (0-200k: 0.03, 200k-500k: 0.02, >500k: 0.01)
-        # Diesel: Tiered (0-200k: 0.03, 200k-500k: 0.02, >500k: 0.01)
+        # Diesel: RM 0.128 flat (Fixed)
         
         comm_mogas_total = excel_round(vol_mogas * 0.150, 2)
-        
-        # Kira Diesel Tiered (Aug-Oct)
-        comm_diesel_total = 0.0
-        rem_diesel = vol_diesel
-        curr_cum_diesel = previous_vol_diesel
-        
-        # Tier 1: 0 - 200,000 (Rate 0.03)
-        space_t1 = max(0, 200000 - curr_cum_diesel)
-        t1 = min(rem_diesel, space_t1)
-        comm_diesel_total += excel_round(t1 * 0.03, 2)
-        rem_diesel -= t1
-        curr_cum_diesel += t1
-        
-        # Tier 2: 200,001 - 500,000 (Rate 0.02)
-        if rem_diesel > 0:
-            space_t2 = max(0, 500000 - curr_cum_diesel)
-            t2 = min(rem_diesel, space_t2)
-            comm_diesel_total += excel_round(t2 * 0.02, 2)
-            rem_diesel -= t2
-            curr_cum_diesel += t2
-            
-        # Tier 3: > 500,000 (Rate 0.01)
-        if rem_diesel > 0:
-            comm_diesel_total += excel_round(rem_diesel * 0.01, 2)
+        comm_diesel_total = excel_round(vol_diesel * 0.128, 2)
 
     else:
         # LOGIK BARU (Nov 2025 ke atas)
