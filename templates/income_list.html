@@ -185,7 +185,9 @@
                             <tr class="income-row month-{{ m_num }}">
                                 {% if source == 'Efeis' %}
                                     <td>{{ row.tarikh }}</td>
-                                    <td class="text-center">{{ row.bil_penyertaan }}</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('efeis_detail_view', id=row.id) }}" class="btn btn-sm btn-outline-primary fw-bold">{{ row.bil_penyertaan }} Peserta &rarr;</a>
+                                    </td>
                                     <td class="text-end">{{ "{:,.2f}".format(row.kutipan_yuran) }}</td>
                                     <td class="text-end text-danger">- {{ "{:,.2f}".format(row.kos_pengurusan) }}</td>
                                     <td class="text-end fw-bold text-success">

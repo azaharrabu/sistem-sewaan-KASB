@@ -2,6 +2,7 @@ import os
 import json
 import calendar
 from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -533,6 +534,107 @@ def efeis_dashboard():
 @login_required
 def petros_dashboard():
     return render_income_detail('Petros')
+
+# --- ROUTES: EFEIS DETAIL & PESERTA ---
+@app.route('/efeis/detail/<int:id>')
+@login_required
+def efeis_detail_view(id):
+    try:
+        # Dapatkan maklumat sesi kursus (Parent Record)
+        res = supabase.table('pendapatan_lain').select('*').eq('id', id).single().execute()
+        kursus = res.data
+        
+        if kursus['sumber'] != 'Efeis':
+            flash("Rekod ini bukan kursus Efeis.", "warning")
+            return redirect(url_for('index'))
+
+        # Dapatkan senarai peserta
+        p_res = supabase.table('peserta_efeis').select('*').eq('pendapatan_id', id).order('nama_peserta').execute()
+        peserta_list = p_res.data
+
+        # Statistik Ringkas
+        total_yuran = sum(float(p['yuran_dikenakan'] or 0) for p in peserta_list)
+        lulus_count = sum(1 for p in peserta_list if p['status_teori'] == 'Lulus' and p['status_praktikal'] == 'Lulus')
+
+        return render_template('efeis_detail.html', kursus=kursus, peserta_list=peserta_list, total_yuran=total_yuran, lulus_count=lulus_count)
+
+    except Exception as e:
+        flash(f"Ralat memuatkan perincian Efeis: {e}", "danger")
+        return redirect(url_for('efeis_dashboard'))
+
+@app.route('/tambah-peserta-efeis/<int:kursus_id>', methods=['POST'])
+@login_required
+def tambah_peserta_efeis(kursus_id):
+    try:
+        # Dapatkan tarikh kursus untuk kira expiry date
+        res = supabase.table('pendapatan_lain').select('tarikh').eq('id', kursus_id).single().execute()
+        tarikh_kursus = datetime.strptime(res.data['tarikh'], '%Y-%m-%d').date()
+
+        nama = request.form.get('nama_peserta')
+        ic = request.form.get('no_ic')
+        kategori = request.form.get('kategori_peserta') # Individu / Syarikat
+        syarikat = request.form.get('nama_syarikat')
+        jenis = request.form.get('jenis_kursus') # Basic / Refresher / Ulangan
+        s_teori = request.form.get('status_teori')
+        s_praktikal = request.form.get('status_praktikal')
+        yuran = float(request.form.get('yuran_dikenakan') or 0)
+
+        # --- LOGIK PENGIRAAN TARIKH LUPUT SIJIL ---
+        tarikh_tamat = None
+        
+        # Hanya kira jika Lulus Teori DAN Praktikal (Atau N/A bagi kes khas)
+        if s_teori == 'Lulus' and s_praktikal == 'Lulus':
+            if jenis == 'Basic':
+                if kategori == 'Individu':
+                    # Individu: Valid 2 Tahun
+                    tarikh_tamat = tarikh_kursus + relativedelta(years=2)
+                else:
+                    # Syarikat: Valid 5 Tahun
+                    tarikh_tamat = tarikh_kursus + relativedelta(years=5)
+            elif jenis == 'Refresher':
+                # Refresher: Valid 5 Tahun (Circle baru)
+                tarikh_tamat = tarikh_kursus + relativedelta(years=5)
+            # Ulangan: Mengikut kategori asal
+            elif 'Ulangan' in jenis:
+                 if kategori == 'Individu':
+                    tarikh_tamat = tarikh_kursus + relativedelta(years=2)
+                 else:
+                    tarikh_tamat = tarikh_kursus + relativedelta(years=5)
+
+        data = {
+            "pendapatan_id": kursus_id,
+            "nama_peserta": nama,
+            "no_ic": ic,
+            "kategori_peserta": kategori,
+            "nama_syarikat": syarikat if kategori == 'Syarikat' else None,
+            "jenis_kursus": jenis,
+            "status_teori": s_teori,
+            "status_praktikal": s_praktikal,
+            "yuran_dikenakan": yuran,
+            "tarikh_tamat_sijil": tarikh_tamat.isoformat() if tarikh_tamat else None
+        }
+
+        supabase.table('peserta_efeis').insert(data).execute()
+        flash("Peserta berjaya ditambah.", "success")
+        
+    except Exception as e:
+        flash(f"Ralat menambah peserta: {e}", "danger")
+
+    return redirect(url_for('efeis_detail_view', id=kursus_id))
+
+@app.route('/padam-peserta-efeis/<int:id>')
+@login_required
+def padam_peserta_efeis(id):
+    try:
+        # Get parent ID before deleting for redirect
+        res = supabase.table('peserta_efeis').select('pendapatan_id').eq('id', id).single().execute()
+        parent_id = res.data['pendapatan_id']
+        
+        supabase.table('peserta_efeis').delete().eq('id', id).execute()
+        flash("Peserta dipadam.", "warning")
+        return redirect(url_for('efeis_detail_view', id=parent_id))
+    except Exception:
+        return redirect(url_for('efeis_dashboard'))
 
 def render_income_detail(source_name):
     try:
@@ -1408,6 +1510,108 @@ def petros_detail_view(id):
     except Exception as e:
         flash(f"Ralat memuatkan detail Petros: {e}", "danger")
         return redirect(url_for('petros_dashboard'))
+
+# --- ROUTES: EFEIS DETAIL & PESERTA ---
+@app.route('/efeis/detail/<int:id>')
+@login_required
+def efeis_detail_view(id):
+    try:
+        # Dapatkan maklumat sesi kursus (Parent Record)
+        res = supabase.table('pendapatan_lain').select('*').eq('id', id).single().execute()
+        kursus = res.data
+        
+        if kursus['sumber'] != 'Efeis':
+            flash("Rekod ini bukan kursus Efeis.", "warning")
+            return redirect(url_for('index'))
+
+        # Dapatkan senarai peserta
+        p_res = supabase.table('peserta_efeis').select('*').eq('pendapatan_id', id).order('nama_peserta').execute()
+        peserta_list = p_res.data
+
+        # Statistik Ringkas
+        total_yuran = sum(float(p['yuran_dikenakan'] or 0) for p in peserta_list)
+        lulus_count = sum(1 for p in peserta_list if p['status_teori'] == 'Lulus' and p['status_praktikal'] == 'Lulus')
+
+        return render_template('efeis_detail.html', kursus=kursus, peserta_list=peserta_list, total_yuran=total_yuran, lulus_count=lulus_count)
+
+    except Exception as e:
+        flash(f"Ralat memuatkan perincian Efeis: {e}", "danger")
+        return redirect(url_for('efeis_dashboard'))
+
+@app.route('/tambah-peserta-efeis/<int:kursus_id>', methods=['POST'])
+@login_required
+def tambah_peserta_efeis(kursus_id):
+    try:
+        # Dapatkan tarikh kursus untuk kira expiry date
+        res = supabase.table('pendapatan_lain').select('tarikh').eq('id', kursus_id).single().execute()
+        tarikh_kursus = datetime.strptime(res.data['tarikh'], '%Y-%m-%d').date()
+
+        nama = request.form.get('nama_peserta')
+        ic = request.form.get('no_ic')
+        kategori = request.form.get('kategori_peserta') # Individu / Syarikat
+        syarikat = request.form.get('nama_syarikat')
+        jenis = request.form.get('jenis_kursus') # Basic / Refresher / Ulangan
+        s_teori = request.form.get('status_teori')
+        s_praktikal = request.form.get('status_praktikal')
+        yuran = float(request.form.get('yuran_dikenakan') or 0)
+
+        # --- LOGIK PENGIRAAN TARIKH LUPUT SIJIL ---
+        tarikh_tamat = None
+        
+        # Hanya kira jika Lulus Teori DAN Praktikal (Atau N/A bagi kes khas)
+        # Jika gagal mana-mana satu, tiada sijil (None)
+        if s_teori == 'Lulus' and s_praktikal == 'Lulus':
+            if jenis == 'Basic':
+                if kategori == 'Individu':
+                    # Individu: Valid 2 Tahun
+                    tarikh_tamat = tarikh_kursus + relativedelta(years=2)
+                else:
+                    # Syarikat: Valid 5 Tahun
+                    tarikh_tamat = tarikh_kursus + relativedelta(years=5)
+            elif jenis == 'Refresher':
+                # Refresher: Valid 5 Tahun (Circle baru)
+                tarikh_tamat = tarikh_kursus + relativedelta(years=5)
+            # Ulangan: Biasanya ikut validiti asal, tapi buat masa ini kita anggap lulus ulangan = dapat sijil standard based on kategori
+            elif 'Ulangan' in jenis:
+                 if kategori == 'Individu':
+                    tarikh_tamat = tarikh_kursus + relativedelta(years=2)
+                 else:
+                    tarikh_tamat = tarikh_kursus + relativedelta(years=5)
+
+        data = {
+            "pendapatan_id": kursus_id,
+            "nama_peserta": nama,
+            "no_ic": ic,
+            "kategori_peserta": kategori,
+            "nama_syarikat": syarikat if kategori == 'Syarikat' else None,
+            "jenis_kursus": jenis,
+            "status_teori": s_teori,
+            "status_praktikal": s_praktikal,
+            "yuran_dikenakan": yuran,
+            "tarikh_tamat_sijil": tarikh_tamat.isoformat() if tarikh_tamat else None
+        }
+
+        supabase.table('peserta_efeis').insert(data).execute()
+        flash("Peserta berjaya ditambah.", "success")
+        
+    except Exception as e:
+        flash(f"Ralat menambah peserta: {e}", "danger")
+
+    return redirect(url_for('efeis_detail_view', id=kursus_id))
+
+@app.route('/padam-peserta-efeis/<int:id>')
+@login_required
+def padam_peserta_efeis(id):
+    try:
+        # Get parent ID before deleting for redirect
+        res = supabase.table('peserta_efeis').select('pendapatan_id').eq('id', id).single().execute()
+        parent_id = res.data['pendapatan_id']
+        
+        supabase.table('peserta_efeis').delete().eq('id', id).execute()
+        flash("Peserta dipadam.", "warning")
+        return redirect(url_for('efeis_detail_view', id=parent_id))
+    except Exception:
+        return redirect(url_for('efeis_dashboard'))
 
 @app.route('/recalculate-petros')
 @login_required
