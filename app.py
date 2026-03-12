@@ -532,16 +532,10 @@ def efeis_dashboard():
 @app.route('/efeis/detail/<int:id>', endpoint='efeis_detail')
 @login_required
 def efeis_detail_view(id):
-    """
-    Memaparkan halaman terperinci untuk rekod Efeis.
-    Ini adalah fungsi baharu untuk mengelakkan konflik nama.
-    """
     try:
         res = supabase.table('pendapatan_lain').select('*').eq('id', id).eq('sumber', 'Efeis').single().execute()
         if res.data:
-            # Anda perlu cipta template 'efeis_detail.html' atau guna template sedia ada.
-            # Di sini, saya guna 'petros_detail.html' sebagai contoh.
-            return render_template('petros_detail.html', item=res.data, source='Efeis')
+            return render_template('efeis_detail.html', record=res.data)
         else:
             flash('Rekod Efeis tidak ditemui.', 'warning')
             return redirect(url_for('efeis_dashboard'))
@@ -561,9 +555,25 @@ def petros_detail_view(id):
     Memaparkan halaman terperinci untuk rekod Petros.
     """
     try:
+        # Get year and month from request args to pass back to the 'back' button
+        year = request.args.get('year', datetime.now().year, type=int)
+        month = request.args.get('month', datetime.now().month, type=int)
+
         res = supabase.table('pendapatan_lain').select('*, petros_details(*)').eq('id', id).eq('sumber', 'Petros').single().execute()
+        
         if res.data:
-            return render_template('petros_detail.html', item=res.data, source='Petros')
+            record = res.data
+            details = record.get('petros_details', [])
+            total_vol = sum(item['daily_volume'] for item in details)
+            total_sales = sum(item.get('sales_amount', 0) for item in details)
+
+            return render_template('petros_detail.html', 
+                                   record=record, 
+                                   details=details,
+                                   total_vol=total_vol,
+                                   total_sales=total_sales,
+                                   year=year,
+                                   month=month)
         else:
             flash('Rekod Petros tidak ditemui.', 'warning')
             return redirect(url_for('petros_dashboard'))
