@@ -3,225 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perincian Kursus Efeis - KASB</title>
+    <title>Perincian Efeis - {{ record.tarikh }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f8f9fa; }
-        .badge-lulus { background-color: #198754; }
-        .badge-gagal { background-color: #dc3545; }
-        .badge-na { background-color: #6c757d; }
-    </style>
 </head>
-<body>
-
-    <div class="container mt-5 mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <a href="{{ url_for('efeis_dashboard') }}" class="btn btn-outline-secondary mb-2">&larr; Kembali ke Senarai Efeis</a>
-                <h1 class="h3 text-primary fw-bold">🎓 Perincian Peserta Kursus Efeis</h1>
-                <p class="text-muted">Tarikh Kursus: <strong>{{ kursus.tarikh }}</strong> | Nota: {{ kursus.nota or '-' }}</p>
-            </div>
-        </div>
-
-        <!-- Ringkasan Kewangan Kursus Ini -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card bg-primary text-white h-100">
-                    <div class="card-body text-center">
-                        <h6>Jumlah Kutipan Yuran (Rekod Utama)</h6>
-                        <h3>RM {{ "{:,.2f}".format(kursus.kutipan_yuran) }}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-info text-dark h-100">
-                    <div class="card-body text-center">
-                        <h6>Total Yuran Peserta (Tersedia)</h6>
-                        <h3>RM {{ "{:,.2f}".format(total_yuran) }}</h3>
-                        {% if total_yuran != kursus.kutipan_yuran %}
-                        <small class="text-danger fw-bold bg-white px-2 rounded">⚠️ Tidak sepadan</small>
-                        {% else %}
-                        <small class="text-dark fw-bold">✅ Sepadan</small>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-success text-white h-100">
-                    <div class="card-body text-center">
-                        <h6>Kadar Kelulusan</h6>
-                        <h3>{{ lulus_count }} / {{ peserta_list|length }}</h3>
-                        <small>Peserta Lulus Penuh</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Senarai Peserta -->
+<body class="bg-light">
+    <div class="container mt-5">
+        <a href="{{ url_for('efeis_dashboard', year=record.tarikh.split('-')[0]) }}" class="btn btn-outline-secondary mb-3">&larr; Kembali ke Senarai Efeis</a>
+        
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">📋 Senarai Peserta</h5>
-                <span class="badge bg-light text-dark">{{ peserta_list|length }} Orang</span>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle mb-0">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th>Nama Peserta / No. IC</th>
-                                <th>Kategori & Syarikat</th>
-                                <th>Jenis Kursus</th>
-                                <th class="text-center">Teori</th>
-                                <th class="text-center">Praktikal</th>
-                                <th>Status Sijil</th>
-                                <th class="text-end">Yuran (RM)</th>
-                                <th class="text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in peserta_list %}
-                            <tr>
-                                <td>
-                                    <div class="fw-bold">{{ p.nama_peserta }}</div>
-                                    <small class="text-muted">{{ p.no_ic }}</small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info text-dark">{{ p.kategori_peserta }}</span>
-                                    {% if p.nama_syarikat %}
-                                    <div class="small mt-1 text-uppercase">{{ p.nama_syarikat }}</div>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if p.jenis_kursus == 'Basic' %}
-                                        <span class="badge bg-primary">Basic (3 Hari)</span>
-                                    {% elif p.jenis_kursus == 'Refresher' %}
-                                        <span class="badge bg-warning text-dark">Refresher (2 Hari)</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ p.jenis_kursus }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge {% if p.status_teori == 'Lulus' %}badge-lulus{% elif p.status_teori == 'Gagal' %}badge-gagal{% else %}badge-na{% endif %}">
-                                        {{ p.status_teori }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge {% if p.status_praktikal == 'Lulus' %}badge-lulus{% elif p.status_praktikal == 'Gagal' %}badge-gagal{% else %}badge-na{% endif %}">
-                                        {{ p.status_praktikal }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if p.tarikh_tamat_sijil %}
-                                        <div class="small text-muted">Sah Sehingga:</div>
-                                        <div class="fw-bold text-success">{{ p.tarikh_tamat_sijil }}</div>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-end">{{ "{:,.2f}".format(p.yuran_dikenakan) }}</td>
-                                <td class="text-center">
-                                    <a href="{{ url_for('padam_peserta_efeis', id=p.id) }}" class="btn btn-sm btn-danger py-0" onclick="return confirm('Padam peserta ini?')">&times;</a>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">Belum ada peserta didaftarkan untuk sesi ini.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Borang Tambah Peserta -->
-        <div class="card border-success">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">➕ Tambah Peserta Baru</h5>
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 fw-bold">🧾 Perincian Pendapatan Efeis</h5>
             </div>
             <div class="card-body">
-                <form action="{{ url_for('tambah_peserta_efeis', kursus_id=kursus.id) }}" method="post">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label small fw-bold">Nama Penuh</label>
-                            <input type="text" name="nama_peserta" class="form-control" required>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold">No. IC</label>
-                            <input type="text" name="no_ic" class="form-control">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold">Kategori</label>
-                            <select name="kategori_peserta" class="form-select" onchange="toggleSyarikat(this)">
-                                <option value="Individu">Individu</option>
-                                <option value="Syarikat">Syarikat</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-bold">Nama Syarikat (Jika ada)</label>
-                            <input type="text" name="nama_syarikat" id="inputSyarikat" class="form-control" disabled>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold">Jenis Kursus</label>
-                            <select name="jenis_kursus" class="form-select" id="jenisKursus" onchange="updatePrice()">
-                                <option value="Basic">Basic (RM1200)</option>
-                                <option value="Refresher">Refresher (RM800)</option>
-                                <option value="Ulangan Teori">Ulangan Teori (RM250)</option>
-                                <option value="Ulangan Praktikal">Ulangan Praktikal (RM350)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold">Keputusan Teori</label>
-                            <select name="status_teori" class="form-select">
-                                <option value="Lulus">Lulus</option>
-                                <option value="Gagal">Gagal</option>
-                                <option value="N/A">N/A</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold">Keputusan Praktikal</label>
-                            <select name="status_praktikal" class="form-select">
-                                <option value="Lulus">Lulus</option>
-                                <option value="Gagal">Gagal</option>
-                                <option value="N/A">N/A</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold">Yuran (RM)</label>
-                            <input type="number" name="yuran_dikenakan" id="inputYuran" class="form-control" value="1200.00" step="0.01">
-                        </div>
-                        <div class="col-12 text-end">
-                            <button type="submit" class="btn btn-success">Simpan Peserta</button>
-                        </div>
-                    </div>
-                </form>
+                <h5 class="card-title">{{ record.tarikh }}</h5>
+                <p class="card-text">{{ record.nota }}</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Bilangan Peserta
+                        <span class="badge bg-secondary rounded-pill">{{ record.bil_penyertaan }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Kutipan Yuran
+                        <span class="text-success">RM {{ "%.2f"|format(record.kutipan_yuran) }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Kos Pengurusan
+                        <span class="text-danger">- RM {{ "%.2f"|format(record.kos_pengurusan) }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center fw-bold">
+                        Keuntungan Bersih
+                        <span class="badge bg-primary rounded-pill fs-6">RM {{ "%.2f"|format(record.amaun) }}</span>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
-
-    <script>
-        function toggleSyarikat(select) {
-            var input = document.getElementById('inputSyarikat');
-            if (select.value === 'Syarikat') {
-                input.disabled = false;
-                input.required = true;
-            } else {
-                input.disabled = true;
-                input.value = '';
-                input.required = false;
-            }
-        }
-
-        function updatePrice() {
-            var jenis = document.getElementById('jenisKursus').value;
-            var yuran = document.getElementById('inputYuran');
-            
-            if (jenis === 'Basic') yuran.value = "1200.00";
-            else if (jenis === 'Refresher') yuran.value = "800.00";
-            else if (jenis === 'Ulangan Teori') yuran.value = "250.00";
-            else if (jenis === 'Ulangan Praktikal') yuran.value = "350.00";
-        }
-    </script>
-
 </body>
 </html>
