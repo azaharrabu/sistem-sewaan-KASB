@@ -1,7 +1,7 @@
 import os
 import json
 import calendar
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -580,6 +580,186 @@ def petros_detail_view(id):
     except Exception as e:
         flash(f'Ralat memuatkan detail Petros: {e}', 'danger')
         return redirect(url_for('petros_dashboard'))
+
+# --- ROUTES: PENGURUSAN SIRI KURSUS EFEIS ---
+@app.route('/efeis-siri', methods=['GET', 'POST'])
+@login_required
+def urus_efeis_siri():
+    """
+    Menguruskan (mendaftar dan memaparkan) siri kursus EFEIS.
+    """
+    if request.method == 'POST':
+        try:
+            pendapatan_id = request.form.get('pendapatan_id')
+            data = {
+                "nama_siri": request.form.get('nama_siri'),
+                "jenis_kursus": request.form.get('jenis_kursus'),
+                "tarikh_mula": request.form.get('tarikh_mula'),
+                "tarikh_tamat": request.form.get('tarikh_tamat'),
+                "pendapatan_id": int(pendapatan_id) if pendapatan_id else None,
+                "user_id": session.get('user_id')
+            }
+            supabase.table('efeis_siri_kursus').insert(data).execute()
+            flash('Siri kursus baru berjaya direkodkan.', 'success')
+        except Exception as e:
+            flash(f'Ralat merekod siri kursus: {e}', 'danger')
+        
+        return redirect(url_for('urus_efeis_siri'))
+
+    # GET request: Paparkan senarai
+    try:
+        # Dapatkan senarai siri kursus sedia ada
+        siri_res = supabase.table('efeis_siri_kursus').select('*').order('tarikh_mula', desc=True).execute()
+        siri_list = siri_res.data
+        
+        # Dapatkan senarai pendapatan EFEIS untuk dropdown
+        income_res = supabase.table('pendapatan_lain').select('id, tarikh, amaun, nota').eq('sumber', 'Efeis').order('tarikh', desc=True).execute()
+        efeis_income_list = income_res.data
+
+    except Exception as e:
+        flash(f'Ralat memuatkan data siri kursus: {e}', 'danger')
+        siri_list = []
+        efeis_income_list = []
+    
+    return render_template('efeis_siri_list.html', siri_list=siri_list, efeis_income_list=efeis_income_list)
+
+@app.route('/efeis-siri/<int:siri_id>')
+@login_required
+def siri_detail(siri_id):
+    """
+    Memaparkan halaman perincian untuk satu siri kursus, termasuk senarai pesertanya.
+    """
+    try:
+        # Dapatkan maklumat siri kursus
+        siri_res = supabase.table('efeis_siri_kursus').select('*').eq('id', siri_id).single().execute()
+        siri = siri_res.data
+
+        if not siri:
+            flash('Siri kursus tidak ditemui.', 'danger')
+            return redirect(url_for('urus_efeis_siri'))
+
+        # Dapatkan senarai peserta yang telah berdaftar dalam siri ini, bersama maklumat sijil mereka
+        peserta_res = supabase.table('peserta_kursus').select('*, sijil_peserta(*)').eq('siri_id', siri_id).order('nama_penuh').execute()
+        peserta_list = peserta_res.data
+        
+        # Dapatkan senarai peserta yang belum ada siri untuk dipaparkan di dropdown
+        available_peserta_res = supabase.table('peserta_kursus').select('id, nama_penuh, no_ic').is_('siri_id', 'is.null').order('nama_penuh').execute()
+        available_peserta = available_peserta_res.data
+        
+        return render_template('efeis_siri_detail.html', 
+                               siri=siri, 
+                               peserta_list=peserta_list,
+                               available_peserta=available_peserta)
+
+    except Exception as e:
+        flash(f"Ralat memuatkan perincian siri: {e}", 'danger')
+        return redirect(url_for('urus_efeis_siri'))
+
+@app.route('/efeis-siri/<int:siri_id>/tambah-peserta', methods=['POST'])
+@login_required
+def tambah_peserta_ke_siri(siri_id):
+    """
+    Mengendalikan pendaftaran peserta ke dalam siri kursus yang spesifik.
+    """
+    try:
+        peserta_id = request.form.get('peserta_id')
+        kategori = request.form.get('kategori_peserta')
+        
+        if not peserta_id or not kategori:
+            flash('Sila pilih peserta dan kategori.', 'warning')
+            return redirect(url_for('siri_detail', siri_id=siri_id))
+
+        # Update rekod peserta dengan siri_id dan kategori
+        supabase.table('peserta_kursus').update({
+            'siri_id': siri_id,
+            'kategori_peserta': kategori
+        }).eq('id', peserta_id).execute()
+
+        flash('Peserta berjaya didaftarkan ke dalam siri ini.', 'success')
+
+    except Exception as e:
+        flash(f'Ralat mendaftarkan peserta: {e}', 'danger')
+        
+    return redirect(url_for('siri_detail', siri_id=siri_id))
+
+@app.route('/peserta/<int:peserta_id>/update-ujian', methods=['POST'])
+@login_required
+def update_status_ujian(peserta_id):
+    """ Mengemas kini status ujian teori atau praktikal untuk seorang peserta. """
+    try:
+        siri_id = request.form.get('siri_id')
+        jenis_ujian = request.form.get('jenis_ujian') # 'teori' or 'praktikal'
+        status = request.form.get('status') # 'Lulus' or 'Gagal'
+
+        if not all([siri_id, jenis_ujian, status]):
+            flash('Maklumat tidak lengkap untuk mengemaskini status.', 'danger')
+            return redirect(request.referrer or url_for('index'))
+            
+        column_to_update = f"status_ujian_{jenis_ujian}"
+
+        supabase.table('peserta_kursus').update({
+            column_to_update: status
+        }).eq('id', peserta_id).execute()
+
+        flash(f'Status {jenis_ujian} untuk peserta telah dikemaskini kepada "{status}".', 'success')
+
+    except Exception as e:
+        flash(f'Ralat mengemaskini status ujian: {e}', 'danger')
+
+    return redirect(url_for('siri_detail', siri_id=siri_id))
+
+@app.route('/siri/<int:siri_id>/peserta/<int:peserta_id>/keluarkan-sijil', methods=['POST'])
+@login_required
+def keluarkan_sijil(siri_id, peserta_id):
+    """ Menjana dan merekodkan sijil baru untuk peserta yang layak. """
+    try:
+        # 1. Dapatkan maklumat peserta
+        peserta_res = supabase.table('peserta_kursus').select('*').eq('id', peserta_id).single().execute()
+        peserta = peserta_res.data
+
+        if not peserta:
+            raise Exception("Peserta tidak ditemui.")
+
+        # 2. Semak jika layak
+        if peserta.get('status_ujian_teori') != 'Lulus' or peserta.get('status_ujian_praktikal') != 'Lulus':
+            flash('Peserta perlu lulus kedua-dua ujian sebelum sijil boleh dikeluarkan.', 'warning')
+            return redirect(url_for('siri_detail', siri_id=siri_id))
+
+        # 3. Semak jika sijil sudah wujud untuk siri ini
+        sijil_res = supabase.table('sijil_peserta').select('id').eq('peserta_id', peserta_id).eq('siri_id', siri_id).execute()
+        if sijil_res.data:
+            flash('Sijil untuk peserta ini dalam siri ini telah pun dikeluarkan.', 'info')
+            return redirect(url_for('siri_detail', siri_id=siri_id))
+
+        # 4. Tentukan logik sijil
+        today = date.today()
+        no_sijil = f"KASB/EFEIS/{today.year}/{siri_id}/{peserta_id}"
+        
+        if peserta['kategori_peserta'] == 'Syarikat':
+            tarikh_luput = today + timedelta(days=365 * 5) # 5 tahun
+            status_sijil = 'Aktif'
+        else: # Individu
+            tarikh_luput = today + timedelta(days=365 * 2) # 2 tahun untuk cari syarikat
+            status_sijil = 'Menunggu Pendaftaran Syarikat'
+
+        # 5. Simpan rekod sijil baru
+        supabase.table('sijil_peserta').insert({
+            'peserta_id': peserta_id,
+            'siri_id': siri_id,
+            'no_sijil': no_sijil,
+            'tarikh_dikeluarkan': today.isoformat(),
+            'tarikh_luput': tarikh_luput.isoformat(),
+            'status_sijil': status_sijil
+        }).execute()
+
+        flash(f'Sijil berjaya dikeluarkan untuk {peserta["nama_penuh"]}.', 'success')
+
+    except Exception as e:
+        flash(f'Ralat mengeluarkan sijil: {e}', 'danger')
+
+    return redirect(url_for('siri_detail', siri_id=siri_id))
+
+
 
 
 
