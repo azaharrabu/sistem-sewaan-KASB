@@ -167,6 +167,7 @@
                                     <th class="text-end">Kutipan Yuran (RM)</th>
                                     <th class="text-end">Kos Pengurusan (RM)</th>
                                     <th class="text-end">Keuntungan Bersih (RM)</th>
+                                    <th class="text-center">Tindakan</th>
                                 {% elif source == 'Petros' %}
                                     <th>Tarikh</th>
                                     <th class="text-end">Daily Volume (Liter)</th>
@@ -190,6 +191,9 @@
                                     <td class="text-end text-danger">- {{ "{:,.2f}".format(row.kos_pengurusan) }}</td>
                                     <td class="text-end fw-bold text-success">
                                         + {{ "{:,.2f}".format(row.amaun) }}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('efeis_detail', id=row.id) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
                                     </td>
                                 {% elif source == 'Petros' %}
                                     <td>{{ row.tarikh }}</td>
