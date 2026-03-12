@@ -529,6 +529,25 @@ def efeis_dashboard():
         return redirect(url_for('petros_dashboard'))
     return render_income_detail('Efeis')
 
+@app.route('/efeis/detail/<int:id>', endpoint='efeis_detail')
+def efeis_detail_view(id):
+    """
+    Memaparkan halaman terperinci untuk rekod Efeis.
+    Ini adalah fungsi baharu untuk mengelakkan konflik nama.
+    """
+    try:
+        res = supabase.table('pendapatan_lain').select('*').eq('id', id).eq('sumber', 'Efeis').single().execute()
+        if res.data:
+            # Anda perlu cipta template 'efeis_detail.html' atau guna template sedia ada.
+            # Di sini, saya guna 'petros_detail.html' sebagai contoh.
+            return render_template('petros_detail.html', item=res.data, source='Efeis')
+        else:
+            flash('Rekod Efeis tidak ditemui.', 'warning')
+            return redirect(url_for('efeis_dashboard'))
+    except Exception as e:
+        flash(f'Ralat memuatkan detail Efeis: {e}', 'danger')
+        return redirect(url_for('efeis_dashboard'))
+
 @app.route('/petros')
 @login_required
 def petros_dashboard():
