@@ -530,6 +530,7 @@ def efeis_dashboard():
     return render_income_detail('Efeis')
 
 @app.route('/efeis/detail/<int:id>', endpoint='efeis_detail')
+@login_required
 def efeis_detail_view(id):
     """
     Memaparkan halaman terperinci untuk rekod Efeis.
@@ -552,6 +553,23 @@ def efeis_detail_view(id):
 @login_required
 def petros_dashboard():
     return render_income_detail('Petros')
+
+@app.route('/petros/detail/<int:id>', endpoint='petros_detail_view')
+@login_required
+def petros_detail_view(id):
+    """
+    Memaparkan halaman terperinci untuk rekod Petros.
+    """
+    try:
+        res = supabase.table('pendapatan_lain').select('*, petros_details(*)').eq('id', id).eq('sumber', 'Petros').single().execute()
+        if res.data:
+            return render_template('petros_detail.html', item=res.data, source='Petros')
+        else:
+            flash('Rekod Petros tidak ditemui.', 'warning')
+            return redirect(url_for('petros_dashboard'))
+    except Exception as e:
+        flash(f'Ralat memuatkan detail Petros: {e}', 'danger')
+        return redirect(url_for('petros_dashboard'))
 
 
 
