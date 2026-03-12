@@ -529,7 +529,7 @@ def efeis_dashboard():
         return redirect(url_for('petros_dashboard'))
     return render_income_detail('Efeis')
 
-@app.route('/efeis/detail/<int:id>', endpoint='efeis_detail')
+@app.route('/efeis/detail/<int:id>', endpoint='efeis_detail_view')
 @login_required
 def efeis_detail_view(id):
     try:
