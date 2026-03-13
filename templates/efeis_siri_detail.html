@@ -34,6 +34,81 @@
             {% endif %}
         {% endwith %}
 
+        <!-- Bahagian Kos Operasi -->
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">📊 Kos Operasi Siri</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Kiri: Paparan Kos sedia ada -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Butiran Kos Semasa</h6>
+                        {% if kos %}
+                            <ul class="list-group mb-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Makan & Minum: <span>RM {{ "%.2f"|format(kos.makan_minum) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Gas Refill: <span>RM {{ "%.2f"|format(kos.gas_refill) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Kelas: <span>RM {{ "%.2f"|format(kos.kelas) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Elaun Pengajar: <span>RM {{ "%.2f"|format(kos.elaun_pengajar) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Kos Lain: <span>RM {{ "%.2f"|format(kos.kos_lain) }}</span>
+                                </li>
+                                {% if kos.catatan_kos_lain %}
+                                <li class="list-group-item text-muted">
+                                    <small>Catatan: {{ kos.catatan_kos_lain }}</small>
+                                </li>
+                                {% endif %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center fw-bold bg-light">
+                                    Jumlah Kos: <span>RM {{ "%.2f"|format(kos.makan_minum + kos.gas_refill + kos.kelas + kos.elaun_pengajar + kos.kos_lain) }}</span>
+                                </li>
+                            </ul>
+                        {% else %}
+                            <p class="text-muted">Tiada data kos operasi direkodkan untuk siri ini.</p>
+                        {% endif %}
+                    </div>
+                    <!-- Kanan: Borang Kemas Kini Kos -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Kemas Kini Butiran Kos</h6>
+                        <form method="POST" action="{{ url_for('kemas_kini_kos_siri', siri_id=siri.id) }}">
+                            <div class="mb-2">
+                                <label for="makan_minum" class="form-label">Makan & Minum (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="makan_minum" name="makan_minum" value="{{ kos.makan_minum if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="gas_refill" class="form-label">Gas Refill (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="gas_refill" name="gas_refill" value="{{ kos.gas_refill if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="kelas" class="form-label">Kelas (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="kelas" name="kelas" value="{{ kos.kelas if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="elaun_pengajar" class="form-label">Elaun Pengajar (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="elaun_pengajar" name="elaun_pengajar" value="{{ kos.elaun_pengajar if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="kos_lain" class="form-label">Kos Lain (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="kos_lain" name="kos_lain" value="{{ kos.kos_lain if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="catatan_kos_lain" class="form-label">Catatan Kos Lain</label>
+                                <textarea class="form-control" id="catatan_kos_lain" name="catatan_kos_lain" rows="2">{{ kos.catatan_kos_lain if kos else '' }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Simpan Kos</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <!-- Kiri: Daftar Peserta -->
             <div class="col-md-4 mb-4">

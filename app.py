@@ -357,6 +357,30 @@ def index():
         kerjasama_res = supabase.table('kerjasama_ketiga').select('*').gte('tarikh_terima', start_date).lte('tarikh_terima', end_date).execute()
         kerjasama_data = kerjasama_res.data
 
+        # --- Data Tambahan untuk Kira Nett Profit EFEIS ---
+        siri_data_res = supabase.table('efeis_siri_kursus').select('id, pendapatan_id').execute()
+        siri_data = siri_data_res.data
+        kos_data_res = supabase.table('efeis_kos_operasi').select('*').execute()
+        kos_data = kos_data_res.data
+
+        # Cipta lookup table untuk kecekapan
+        siri_to_total_cost = {
+            k['siri_id']: (
+                Decimal(k.get('makan_minum') or 0) + 
+                Decimal(k.get('gas_refill') or 0) + 
+                Decimal(k.get('kelas') or 0) + 
+                Decimal(k.get('elaun_pengajar') or 0) + 
+                Decimal(k.get('kos_lain') or 0)
+            ) for k in kos_data
+        }
+        pendapatan_to_siris = {}
+        for siri in siri_data:
+            if siri.get('pendapatan_id'):
+                if siri['pendapatan_id'] not in pendapatan_to_siris:
+                    pendapatan_to_siris[siri['pendapatan_id']] = []
+                pendapatan_to_siris[siri['pendapatan_id']].append(siri['id'])
+        # --- Tamat Data Tambahan ---
+
         # Struktur Data Kewangan
         financial_data = {m: {'sewaan': 0.0, 'efeis': 0.0, 'petros': 0.0, 'projek': 0.0, 'kerjasama': 0.0, 'total': 0.0} for m in range(1, 13)}
         yearly_totals = {'sewaan': 0.0, 'efeis': 0.0, 'petros': 0.0, 'projek': 0.0, 'kerjasama': 0.0}
@@ -371,17 +395,34 @@ def index():
             yearly_totals['sewaan'] += amt
             total_yearly_income += amt
 
-        # Proses Pendapatan Lain
+        # Proses Pendapatan Lain (Efeis, Petros, etc.)
         for item in other_data:
             dt = datetime.strptime(item['tarikh'], '%Y-%m-%d')
             amt = float(item['amaun'])
-            src = item['sumber'].lower() # 'efeis' atau 'petros'
-            if src in financial_data[dt.month]:
+            src = item['sumber'].lower()
+
+            if src == 'efeis':
+                # Pendapatan EFEIS perlukan kiraan nett profit
+                # 'amaun' dalam `pendapatan_lain` adalah gross profit (Yuran - Kos Pengurusan)
+                # Kita perlu tolak lagi kos operasi dari `efeis_kos_operasi`
+                total_op_cost = Decimal(0)
+                siri_ids_for_income = pendapatan_to_siris.get(item['id'], [])
+                for siri_id in siri_ids_for_income:
+                    total_op_cost += siri_to_total_cost.get(siri_id, Decimal(0))
+                
+                net_amt = float(Decimal(amt) - total_op_cost)
+
+                financial_data[dt.month]['efeis'] += net_amt
+                yearly_totals['efeis'] += net_amt
+                financial_data[dt.month]['total'] += net_amt
+                total_yearly_income += net_amt
+            
+            elif src in financial_data[dt.month]:
+                # Untuk sumber lain (Petros, dll), guna amaun sedia ada
                 financial_data[dt.month][src] += amt
                 yearly_totals[src] += amt
-            
-            financial_data[dt.month]['total'] += amt
-            total_yearly_income += amt
+                financial_data[dt.month]['total'] += amt
+                total_yearly_income += amt
             
         # Proses Projek Baru (Guna tarikh_masuk & komisyen)
         for p in projek_data:
@@ -645,15 +686,49 @@ def siri_detail(siri_id):
         # Dapatkan senarai peserta yang belum ada siri untuk dipaparkan di dropdown
         available_peserta_res = supabase.table('peserta_kursus').select('id, nama_penuh, no_ic').is_('siri_id', 'is.null').order('nama_penuh').execute()
         available_peserta = available_peserta_res.data
+
+        # Dapatkan data kos operasi untuk siri ini
+        kos_res = supabase.table('efeis_kos_operasi').select('*').eq('siri_id', siri_id).single().execute()
+        kos = kos_res.data
         
         return render_template('efeis_siri_detail.html', 
                                siri=siri, 
                                peserta_list=peserta_list,
-                               available_peserta=available_peserta)
+                               available_peserta=available_peserta,
+                               kos=kos)
 
     except Exception as e:
         flash(f"Ralat memuatkan perincian siri: {e}", 'danger')
         return redirect(url_for('urus_efeis_siri'))
+
+@app.route('/siri/<int:siri_id>/kos', methods=['POST'])
+@login_required
+def kemas_kini_kos_siri(siri_id):
+    """
+    Mengemas kini atau mencipta rekod kos operasi untuk siri kursus.
+    """
+    try:
+        data_to_upsert = {
+            "siri_id": siri_id,
+            "makan_minum": request.form.get('makan_minum', type=float),
+            "gas_refill": request.form.get('gas_refill', type=float),
+            "kelas": request.form.get('kelas', type=float),
+            "elaun_pengajar": request.form.get('elaun_pengajar', type=float),
+            "kos_lain": request.form.get('kos_lain', type=float),
+            "catatan_kos_lain": request.form.get('catatan_kos_lain'),
+            "user_id": session.get('user_id')
+        }
+        
+        # Guna upsert untuk kemas kini jika wujud, atau cipta jika belum ada.
+        # 'on_conflict' memberitahu Supabase lajur mana yang perlu disemak untuk konflik.
+        supabase.table('efeis_kos_operasi').upsert(data_to_upsert, on_conflict='siri_id').execute()
+        
+        flash('Butiran kos operasi berjaya disimpan.', 'success')
+
+    except Exception as e:
+        flash(f'Ralat menyimpan kos operasi: {e}', 'danger')
+        
+    return redirect(url_for('siri_detail', siri_id=siri_id))
 
 @app.route('/efeis-siri/<int:siri_id>/tambah-peserta', methods=['POST'])
 @login_required
