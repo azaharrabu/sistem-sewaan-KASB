@@ -36,6 +36,10 @@
                 <h1 class="h3 text-primary fw-bold">📂 Perincian Pendapatan: {{ source }}</h1>
             </div>
             
+            {% if source == 'Efeis' %}
+            <a href="{{ url_for('urus_efeis_siri') }}" class="btn btn-success shadow-sm">🗓️ Urus Siri Kursus &raquo;</a>
+            {% endif %}
+            
             <!-- Filter Tahun -->
             <form action="" method="get" class="d-flex align-items-center">
                 <label class="me-2 fw-bold">Tahun:</label>
