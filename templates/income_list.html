@@ -197,7 +197,7 @@
                                         + {{ "{:,.2f}".format(row.amaun) }}
                                     </td>
                                     <td class="text-center">
-                                        <a href="{{ url_for('efeis_detail', id=row.id) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
+                                        <a href="{{ url_for('efeis_detail_view', id=row.id) }}" class="btn btn-sm btn-info text-white">Lihat Perincian</a>
                                     </td>
                                 {% elif source == 'Petros' %}
                                     <td>{{ row.tarikh }}</td>
