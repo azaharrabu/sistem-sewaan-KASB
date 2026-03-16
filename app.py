@@ -576,7 +576,13 @@ def efeis_detail_view(id):
     try:
         res = supabase.table('pendapatan_lain').select('*').eq('id', id).eq('sumber', 'Efeis').single().execute()
         if res.data:
-            return render_template('efeis_detail.html', record=res.data)
+            record = res.data
+            
+            # Find the linked course series
+            siri_res = supabase.table('efeis_siri_kursus').select('id').eq('pendapatan_id', record['id']).limit(1).execute()
+            siri = siri_res.data[0] if siri_res.data else None
+
+            return render_template('efeis_detail.html', record=record, siri=siri)
         else:
             flash('Rekod Efeis tidak ditemui.', 'warning')
             return redirect(url_for('efeis_dashboard'))
@@ -684,7 +690,7 @@ def siri_detail(siri_id):
         peserta_list = peserta_res.data
         
         # Dapatkan senarai peserta yang belum ada siri untuk dipaparkan di dropdown
-        available_peserta_res = supabase.table('peserta_kursus').select('id, nama_penuh, no_ic').is_('siri_id', 'is.null').order('nama_penuh').execute()
+        available_peserta_res = supabase.table('peserta_kursus').select('id, nama_penuh, no_ic').is_('siri_id', 'null').order('nama_penuh').execute()
         available_peserta = available_peserta_res.data
 
         # Dapatkan data kos operasi untuk siri ini

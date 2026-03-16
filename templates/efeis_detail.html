@@ -35,6 +35,11 @@
                         <span class="badge bg-primary rounded-pill fs-6">RM {{ "%.2f"|format(record.amaun) }}</span>
                     </li>
                 </ul>
+                {% if siri %}
+                <div class="mt-4 text-center">
+                    <a href="{{ url_for('siri_detail', siri_id=siri.id) }}" class="btn btn-primary">Urus Peserta & Kos Operasi</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
