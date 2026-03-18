@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urus Peserta Siri Kursus</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="#">
+</head>
+<body class="bg-light">
+    <div class="container mt-5 mb-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <a href="{{ url_for('urus_efeis_siri') }}" class="btn btn-outline-secondary mb-2">&larr; Kembali ke Senarai Siri</a>
+                <h1 class="h3 text-primary fw-bold">
+                    📚 {{ siri.nama_siri }}
+                </h1>
+                <p class="text-muted mb-0">
+                    <span class="badge {% if siri.jenis_kursus == 'Basic' %}bg-primary{% else %}bg-info{% endif %}">{{ siri.jenis_kursus }}</span> | {{ siri.tarikh_mula }} hingga {{ siri.tarikh_tamat or 'N/A' }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Bahagian Kos Operasi -->
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">📊 Kos Operasi Siri</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Kiri: Paparan Kos sedia ada -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Butiran Kos Semasa</h6>
+                        {% if kos %}
+                            <ul class="list-group mb-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Makan & Minum: <span>RM {{ "%.2f"|format(kos.makan_minum) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Gas Refill: <span>RM {{ "%.2f"|format(kos.gas_refill) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Kelas: <span>RM {{ "%.2f"|format(kos.kelas) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Elaun Pengajar: <span>RM {{ "%.2f"|format(kos.elaun_pengajar) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Kos Lain: <span>RM {{ "%.2f"|format(kos.kos_lain) }}</span>
+                                </li>
+                                {% if kos.catatan_kos_lain %}
+                                <li class="list-group-item text-muted">
+                                    <small>Catatan: {{ kos.catatan_kos_lain }}</small>
+                                </li>
+                                {% endif %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center fw-bold bg-light">
+                                    Jumlah Kos: <span>RM {{ "%.2f"|format(kos.makan_minum + kos.gas_refill + kos.kelas + kos.elaun_pengajar + kos.kos_lain) }}</span>
+                                </li>
+                            </ul>
+                        {% else %}
+                            <p class="text-muted">Tiada data kos operasi direkodkan untuk siri ini.</p>
+                        {% endif %}
+                    </div>
+                    <!-- Kanan: Borang Kemas Kini Kos -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Kemas Kini Butiran Kos</h6>
+                        <form method="POST" action="{{ url_for('kemas_kini_kos_siri', siri_id=siri.id) }}">
+                            <div class="mb-2">
+                                <label for="makan_minum" class="form-label">Makan & Minum (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="makan_minum" name="makan_minum" value="{{ kos.makan_minum if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="gas_refill" class="form-label">Gas Refill (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="gas_refill" name="gas_refill" value="{{ kos.gas_refill if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="kelas" class="form-label">Kelas (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="kelas" name="kelas" value="{{ kos.kelas if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="elaun_pengajar" class="form-label">Elaun Pengajar (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="elaun_pengajar" name="elaun_pengajar" value="{{ kos.elaun_pengajar if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="kos_lain" class="form-label">Kos Lain (RM)</label>
+                                <input type="number" step="0.01" class="form-control" id="kos_lain" name="kos_lain" value="{{ kos.kos_lain if kos else '0.00' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="catatan_kos_lain" class="form-label">Catatan Kos Lain</label>
+                                <textarea class="form-control" id="catatan_kos_lain" name="catatan_kos_lain" rows="2">{{ kos.catatan_kos_lain if kos else '' }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Simpan Kos</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Kiri: Daftar Peserta -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Daftar Peserta ke Siri Ini</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('tambah_peserta_ke_siri', siri_id=siri.id) }}">
+                            <div class="mb-3">
+                                <label for="peserta_id" class="form-label">Pilih Peserta</label>
+                                <select id="peserta_id" name="peserta_id" class="form-select" required>
+                                    <option value="" disabled selected>-- Pilih dari senarai --</option>
+                                    {% for p in available_peserta %}
+                                        <option value="{{ p.id }}">{{ p.nama_penuh }} (IC: {{ p.no_ic }})</option>
+                                    {% else %}
+                                        <option disabled>Tiada peserta baru yang tersedia</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Hanya peserta yang belum didaftarkan dalam mana-mana siri akan dipaparkan.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kategori_peserta" class="form-label">Kategori Peserta</label>
+                                <select id="kategori_peserta" name="kategori_peserta" class="form-select" required>
+                                    <option value="Individu">Individu</option>
+                                    <option value="Syarikat">Syarikat</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Daftar Peserta</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kanan: Senarai Peserta Berdaftar -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Senarai Peserta ({{ peserta_list|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nama Penuh</th>
+                                        <th>No. IC</th>
+                                        <th>Syarikat</th>
+                                        <th>Ujian Teori</th>
+                                        <th>Ujian Praktikal</th>
+                                        <th>Sijil</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in peserta_list %}
+                                    <tr class="align-middle">
+                                        <td>
+                                            <span class="fw-bold">{{ p.nama_penuh }}</span><br>
+                                            <small class="text-muted">{{ p.kategori_peserta }}</small>
+                                        </td>
+                                        <td>{{ p.no_ic }}</td>
+                                        <td>{{ p.nama_syarikat or 'N/A' }}</td>
+                                        <td>
+                                            {% if p.status_ujian_teori == 'Lulus' %}
+                                                <span class="badge bg-success">Lulus</span>
+                                            {% elif p.status_ujian_teori == 'Gagal' %}
+                                                <span class="badge bg-danger">Gagal</span>
+                                            {% else %}
+                                                <form action="{{ url_for('update_status_ujian', peserta_id=p.id) }}" method="POST" class="d-inline">
+                                                    <input type="hidden" name="siri_id" value="{{ siri.id }}">
+                                                    <input type="hidden" name="jenis_ujian" value="teori">
+                                                    <button type="submit" name="status" value="Lulus" class="btn btn-sm btn-outline-success py-0 px-1">L</button>
+                                                    <button type="submit" name="status" value="Gagal" class="btn btn-sm btn-outline-danger py-0 px-1">G</button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if p.status_ujian_praktikal == 'Lulus' %}
+                                                <span class="badge bg-success">Lulus</span>
+                                            {% elif p.status_ujian_praktikal == 'Gagal' %}
+                                                <span class="badge bg-danger">Gagal</span>
+                                            {% else %}
+                                                <form action="{{ url_for('update_status_ujian', peserta_id=p.id) }}" method="POST" class="d-inline">
+                                                    <input type="hidden" name="siri_id" value="{{ siri.id }}">
+                                                    <input type="hidden" name="jenis_ujian" value="praktikal">
+                                                    <button type="submit" name="status" value="Lulus" class="btn btn-sm btn-outline-success py-0 px-1">L</button>
+                                                    <button type="submit" name="status" value="Gagal" class="btn btn-sm btn-outline-danger py-0 px-1">G</button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if p.sijil_peserta %}
+                                                {% set sijil = p.sijil_peserta[0] %}
+                                                <span class="badge bg-success">Dikeluarkan</span><br>
+                                                <small class="text-muted">Luput: {{ sijil.tarikh_luput }}</small>
+                                            {% else %}
+                                                <form action="{{ url_for('keluarkan_sijil', siri_id=siri.id, peserta_id=p.id) }}" method="POST">
+                                                     <button type="submit" class="btn btn-sm btn-primary" 
+                                                        {% if p.status_ujian_teori != 'Lulus' or p.status_ujian_praktikal != 'Lulus' %}
+                                                            disabled title="Peserta perlu lulus kedua-dua ujian"
+                                                        {% endif %}>
+                                                        Keluarkan Sijil
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-3">Tiada peserta didaftarkan dalam siri ini.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -48,6 +48,9 @@
             <a href="{{ url_for('tetapan') }}" class="btn btn-outline-dark shadow-sm me-2">
                 ⚙️ Tetapan Kursus
             </a>
+            <a href="{{ url_for('urus_efeis_siri') }}" class="btn btn-outline-primary shadow-sm me-2">
+                🗓️ Urus Siri Kursus
+            </a>
             <a href="{{ url_for('senarai_peserta') }}" class="btn btn-outline-primary shadow-sm me-2">
                 👥 Semak Senarai Peserta
             </a>
@@ -73,7 +76,7 @@
                 </a>
             </div>
             <div class="col-md">
-                <a href="{{ url_for('efeis_dashboard') }}" class="text-decoration-none">
+                <a href="{{ url_for('efeis_dashboard', year=selected_year) }}" class="text-decoration-none">
                     <div class="card text-white bg-info mb-3 h-100 shadow-sm hover-effect">
                         <div class="card-body text-center">
                             <h6 class="card-title text-uppercase opacity-75">Kursus Efeis</h6>
@@ -84,7 +87,7 @@
                 </a>
             </div>
             <div class="col-md">
-                <a href="{{ url_for('petros_dashboard') }}" class="text-decoration-none">
+                <a href="{{ url_for('petros_dashboard', year=selected_year) }}" class="text-decoration-none">
                     <div class="card text-white bg-warning mb-3 h-100 shadow-sm hover-effect">
                         <div class="card-body text-center">
                             <h6 class="card-title text-uppercase opacity-75 text-dark">Petros</h6>
@@ -95,7 +98,7 @@
                 </a>
             </div>
             <div class="col-md">
-                <a href="{{ url_for('projek_baru_list') }}" class="text-decoration-none">
+                <a href="{{ url_for('projek_baru_list', year=selected_year) }}" class="text-decoration-none">
                     <div class="card text-white bg-success mb-3 h-100 shadow-sm hover-effect">
                         <div class="card-body text-center">
                             <h6 class="card-title text-uppercase opacity-75">Projek Baru</h6>
@@ -106,7 +109,7 @@
                 </a>
             </div>
             <div class="col-md">
-                <a href="{{ url_for('kerjasama_list') }}" class="text-decoration-none">
+                <a href="{{ url_for('kerjasama_list', year=selected_year) }}" class="text-decoration-none">
                     <div class="card text-white bg-secondary mb-3 h-100 shadow-sm hover-effect">
                         <div class="card-body text-center">
                             <h6 class="card-title text-uppercase opacity-75">Kerjasama</h6>
@@ -153,7 +156,7 @@
                             <!-- Baris Efeis -->
                             <tr>
                                 <td class="text-start fw-bold">
-                                    <a href="{{ url_for('efeis_dashboard') }}" class="text-decoration-none text-info">Efeis</a>
+                                    <a href="{{ url_for('efeis_dashboard', year=selected_year) }}" class="text-decoration-none text-info">Efeis</a>
                                 </td>
                                 {% for m in range(1, 13) %}
                                 <td>
@@ -167,7 +170,7 @@
                             <!-- Baris Petros -->
                             <tr>
                                 <td class="text-start fw-bold">
-                                    <a href="{{ url_for('petros_dashboard') }}" class="text-decoration-none text-warning">Petros</a>
+                                    <a href="{{ url_for('petros_dashboard', year=selected_year) }}" class="text-decoration-none text-warning">Petros</a>
                                 </td>
                                 {% for m in range(1, 13) %}
                                 <td>
@@ -181,7 +184,7 @@
                             <!-- Baris Projek Baru -->
                             <tr>
                                 <td class="text-start fw-bold">
-                                    <a href="{{ url_for('projek_baru_list') }}" class="text-decoration-none text-success">Projek Baru</a>
+                                    <a href="{{ url_for('projek_baru_list', year=selected_year) }}" class="text-decoration-none text-success">Projek Baru</a>
                                 </td>
                                 {% for m in range(1, 13) %}
                                 <td>
@@ -193,7 +196,7 @@
                             <!-- Baris Kerjasama -->
                             <tr>
                                 <td class="text-start fw-bold">
-                                    <a href="{{ url_for('kerjasama_list') }}" class="text-decoration-none text-secondary">Kerjasama</a>
+                                    <a href="{{ url_for('kerjasama_list', year=selected_year) }}" class="text-decoration-none text-secondary">Kerjasama</a>
                                 </td>
                                 {% for m in range(1, 13) %}
                                 <td>
