@@ -678,8 +678,8 @@ def siri_detail(siri_id):
     """
     try:
         # Dapatkan maklumat siri kursus
-        siri_res = supabase.table('efeis_siri_kursus').select('*').eq('id', siri_id).single().execute()
-        siri = siri_res.data
+        siri_res = supabase.table('efeis_siri_kursus').select('*').eq('id', siri_id).limit(1).execute()
+        siri = siri_res.data[0] if siri_res.data else None
 
         if not siri:
             flash('Siri kursus tidak ditemui.', 'danger')
@@ -694,8 +694,8 @@ def siri_detail(siri_id):
         available_peserta = available_peserta_res.data
 
         # Dapatkan data kos operasi untuk siri ini
-        kos_res = supabase.table('efeis_kos_operasi').select('*').eq('siri_id', siri_id).single().execute()
-        kos = kos_res.data
+        kos_res = supabase.table('efeis_kos_operasi').select('*').eq('siri_id', siri_id).limit(1).execute()
+        kos = kos_res.data[0] if kos_res.data else None
         
         return render_template('efeis_siri_detail.html', 
                                siri=siri, 
