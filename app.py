@@ -514,6 +514,35 @@ def index():
 
         # -----------------------------------------------------
 
+        month_names = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis']
+        monthly_totals = [financial_data[m]['total'] for m in range(1, 13)]
+        best_month_index = max(range(len(monthly_totals)), key=lambda i: monthly_totals[i]) if monthly_totals else 0
+        best_month_value = monthly_totals[best_month_index] if monthly_totals else 0
+        best_month_name = month_names[best_month_index] if monthly_totals else 'N/A'
+
+        track_streams = {
+            'sewaan': {'label': 'Sewaan Aset', 'color': 'primary', 'link': 'sewaan_dashboard'},
+            'efeis': {'label': 'Kursus Efeis', 'color': 'info', 'link': 'efeis_dashboard'},
+            'petros': {'label': 'Petros', 'color': 'warning', 'link': 'petros_dashboard'},
+            'projek': {'label': 'Projek Baru', 'color': 'success', 'link': 'projek_baru_list'},
+            'kerjasama': {'label': 'Kerjasama', 'color': 'secondary', 'link': 'kerjasama_list'},
+        }
+
+        stream_summary = []
+        for key, meta in track_streams.items():
+            value = yearly_totals.get(key, 0.0)
+            stream_summary.append({
+                'key': key,
+                'label': meta['label'],
+                'color': meta['color'],
+                'value': value,
+                'link': meta['link'],
+                'share': (value / total_yearly_income * 100) if total_yearly_income else 0,
+            })
+
+        top_stream = max(stream_summary, key=lambda item: item['value']) if stream_summary else None
+        avg_monthly_income = (total_yearly_income / 12) if total_yearly_income else 0.0
+
     except Exception as e:
         # If there's an error, display it to make debugging easier
         return f"Database error: {e}"
@@ -526,7 +555,13 @@ def index():
                            totals_breakdown=totals_breakdown,
                            total_yearly_income=total_yearly_income,
                            selected_year=selected_year,
-                           current_year=current_year)
+                           current_year=current_year,
+                           stream_summary=stream_summary,
+                           top_stream=top_stream,
+                           best_month_name=best_month_name,
+                           best_month_value=best_month_value,
+                           avg_monthly_income=avg_monthly_income,
+                           month_names=month_names)
 
 @app.route('/sewaan')
 @login_required

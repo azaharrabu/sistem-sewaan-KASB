@@ -3,355 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Sewaan KASB</title>
-    <!-- Bootstrap CSS untuk styling pantas -->
+    <title>Dashboard Utama KASB</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Elakkan error 404 favicon di log -->
     <link rel="shortcut icon" href="#">
     <style>
-        body { background-color: #f8f9fa; }
-        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .table th { background-color: #2c3e50; color: white; }
+        body {
+            background: linear-gradient(180deg, #f4f7fb 0%, #eef4ff 100%);
+            color: #1c2430;
+            font-family: Arial, sans-serif;
+        }
+        .app-shell {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 18px 48px;
+        }
+        .topbar {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(15, 23, 42, 0.05);
+            border-radius: 22px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+        }
+        .stat-card {
+            border: 0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            height: 100%;
+        }
+        .stat-card .card-body {
+            padding: 1.2rem 1.1rem;
+        }
+        .panel {
+            background: #fff;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+        }
+        .table thead th {
+            background: #0f172a;
+            color: #fff;
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .stream-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+            border-radius: 999px;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.76rem;
+        }
+        .mini-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            margin-bottom: 0.35rem;
+        }
+        .kpi-value {
+            font-size: clamp(1.5rem, 2.2vw, 2.4rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin: 0;
+        }
+        .text-soft {
+            color: #64748b;
+        }
+        .link-card {
+            text-decoration: none;
+            color: inherit;
+        }
+        .link-card:hover {
+            color: inherit;
+            transform: translateY(-2px);
+            transition: 0.2s ease;
+        }
     </style>
 </head>
 <body>
-
-    <div class="container mt-5">
-        
-        <!-- Header & Filter Tahun -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="h3 text-primary fw-bold">
-                    🏠 Dashboard Pendapatan KASB
-                    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
-                </h1>
-                <p class="text-muted mb-0">Ringkasan Prestasi Sewaan & Kewangan</p>
-            </div>
-            <form action="{{ url_for('index') }}" method="get" class="d-flex align-items-center">
-                <label class="me-2 fw-bold">Tahun:</label>
-                <select name="year" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto;">
-                    {% for y in range(current_year, 2024, -1) %}
-                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
-            </form>
-        </div>
-
-        <!-- Pautan Pantas -->
-        <div class="d-flex justify-content-end mb-3">
-            <a href="{{ url_for('serah_terima') }}" class="btn btn-outline-success shadow-sm me-2">
-                📋 Checklist Serah Terima
-            </a>
-            <a href="{{ url_for('urus_modul') }}" class="btn btn-outline-warning text-dark shadow-sm me-2">
-                📚 Pengurusan Modul
-            </a>
-            <a href="{{ url_for('tetapan') }}" class="btn btn-outline-dark shadow-sm me-2">
-                ⚙️ Tetapan Kursus
-            </a>
-            <a href="{{ url_for('urus_efeis_siri') }}" class="btn btn-outline-primary shadow-sm me-2">
-                🗓️ Urus Siri Kursus
-            </a>
-            <a href="{{ url_for('senarai_peserta') }}" class="btn btn-outline-primary shadow-sm me-2">
-                👥 Semak Senarai Peserta
-            </a>
-            <a href="{{ url_for('login_peserta') }}" target="_blank" class="btn btn-outline-info shadow-sm me-2">
-                🔐 Portal Peserta
-            </a>
-            <a href="{{ url_for('daftar_kursus') }}" target="_blank" class="btn btn-success shadow-sm">
-                📝 Link Pendaftaran (Public)
-            </a>
-        </div>
-
-        <!-- Ringkasan Tahunan Mengikut Sumber (Cards) -->
-        <div class="row mb-3">
-            <div class="col-md">
-                <a href="{{ url_for('sewaan_dashboard') }}" class="text-decoration-none">
-                    <div class="card text-white bg-primary mb-3 h-100 shadow-sm hover-effect">
-                        <div class="card-body text-center">
-                            <h6 class="card-title text-uppercase opacity-75">Sewaan Aset</h6>
-                            <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['sewaan']) }}</p>
-                            <small class="text-white-50">Klik untuk perincian &rarr;</small>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md">
-                <a href="{{ url_for('efeis_dashboard', year=selected_year) }}" class="text-decoration-none">
-                    <div class="card text-white bg-info mb-3 h-100 shadow-sm hover-effect">
-                        <div class="card-body text-center">
-                            <h6 class="card-title text-uppercase opacity-75">Kursus Efeis</h6>
-                            <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['efeis']) }}</p>
-                            <small class="text-white-50">Klik untuk perincian &rarr;</small>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md">
-                <a href="{{ url_for('petros_dashboard', year=selected_year) }}" class="text-decoration-none">
-                    <div class="card text-white bg-warning mb-3 h-100 shadow-sm hover-effect">
-                        <div class="card-body text-center">
-                            <h6 class="card-title text-uppercase opacity-75 text-dark">Petros</h6>
-                            <p class="card-text fs-4 fw-bold text-dark">RM {{ "{:,.2f}".format(yearly_totals['petros']) }}</p>
-                            <small class="text-dark-50">Klik untuk perincian &rarr;</small>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md">
-                <a href="{{ url_for('projek_baru_list', year=selected_year) }}" class="text-decoration-none">
-                    <div class="card text-white bg-success mb-3 h-100 shadow-sm hover-effect">
-                        <div class="card-body text-center">
-                            <h6 class="card-title text-uppercase opacity-75">Projek Baru</h6>
-                            <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['projek']) }}</p>
-                            <small class="text-white-50">Klik untuk perincian &rarr;</small>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md">
-                <a href="{{ url_for('kerjasama_list', year=selected_year) }}" class="text-decoration-none">
-                    <div class="card text-white bg-secondary mb-3 h-100 shadow-sm hover-effect">
-                        <div class="card-body text-center">
-                            <h6 class="card-title text-uppercase opacity-75">Kerjasama</h6>
-                            <p class="card-text fs-4 fw-bold">RM {{ "{:,.2f}".format(yearly_totals['kerjasama']) }}</p>
-                            <small class="text-white-50">Klik untuk perincian &rarr;</small>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Ringkasan Kewangan (Total Income) -->
-        <div class="card mb-4 border-dark">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">💰 Jumlah Pendapatan Keseluruhan ({{ selected_year }})</h5>
-                <h3 class="mb-0 fw-bold">RM {{ "{:,.2f}".format(total_yearly_income) }}</h3>
-            </div>
-            <div class="card-body bg-light">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-sm text-center mb-0">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th class="text-start">Sumber</th>
-                                <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th>
-                                <th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
-                                <th class="table-dark">Jumlah</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Baris Sewaan -->
-                            <tr>
-                                <td class="text-start fw-bold">
-                                    <a href="{{ url_for('sewaan_dashboard') }}" class="text-decoration-none text-primary">Sewaan</a>
-                                </td>
-                                {% for m in range(1, 13) %}
-                                <td>
-                                    <span class="{% if financial_data[m]['sewaan'] > 0 %}text-dark{% else %}text-muted{% endif %}">
-                                        {{ "{:,.0f}".format(financial_data[m]['sewaan']) }}
-                                    </span>
-                                </td>
-                                {% endfor %}
-                                <td class="fw-bold table-light">{{ "{:,.0f}".format(yearly_totals['sewaan']) }}</td>
-                            </tr>
-                            <!-- Baris Efeis -->
-                            <tr>
-                                <td class="text-start fw-bold">
-                                    <a href="{{ url_for('efeis_dashboard', year=selected_year) }}" class="text-decoration-none text-info">Efeis</a>
-                                </td>
-                                {% for m in range(1, 13) %}
-                                <td>
-                                    <span class="{% if financial_data[m]['efeis'] > 0 %}text-dark{% else %}text-muted{% endif %}">
-                                        {{ "{:,.0f}".format(financial_data[m]['efeis']) }}
-                                    </span>
-                                </td>
-                                {% endfor %}
-                                <td class="fw-bold table-light">{{ "{:,.0f}".format(yearly_totals['efeis']) }}</td>
-                            </tr>
-                            <!-- Baris Petros -->
-                            <tr>
-                                <td class="text-start fw-bold">
-                                    <a href="{{ url_for('petros_dashboard', year=selected_year) }}" class="text-decoration-none text-warning">Petros</a>
-                                </td>
-                                {% for m in range(1, 13) %}
-                                <td>
-                                    <span class="{% if financial_data[m]['petros'] > 0 %}text-dark{% else %}text-muted{% endif %}">
-                                        {{ "{:,.0f}".format(financial_data[m]['petros']) }}
-                                    </span>
-                                </td>
-                                {% endfor %}
-                                <td class="fw-bold table-light">{{ "{:,.0f}".format(yearly_totals['petros']) }}</td>
-                            </tr>
-                            <!-- Baris Projek Baru -->
-                            <tr>
-                                <td class="text-start fw-bold">
-                                    <a href="{{ url_for('projek_baru_list', year=selected_year) }}" class="text-decoration-none text-success">Projek Baru</a>
-                                </td>
-                                {% for m in range(1, 13) %}
-                                <td>
-                                    <span class="{% if financial_data[m]['projek'] > 0 %}text-dark{% else %}text-muted{% endif %}">{{ "{:,.0f}".format(financial_data[m]['projek']) }}</span>
-                                </td>
-                                {% endfor %}
-                                <td class="fw-bold table-light">{{ "{:,.0f}".format(yearly_totals['projek']) }}</td>
-                            </tr>
-                            <!-- Baris Kerjasama -->
-                            <tr>
-                                <td class="text-start fw-bold">
-                                    <a href="{{ url_for('kerjasama_list', year=selected_year) }}" class="text-decoration-none text-secondary">Kerjasama</a>
-                                </td>
-                                {% for m in range(1, 13) %}
-                                <td>
-                                    <span class="{% if financial_data[m]['kerjasama'] > 0 %}text-dark{% else %}text-muted{% endif %}">{{ "{:,.0f}".format(financial_data[m]['kerjasama']) }}</span>
-                                </td>
-                                {% endfor %}
-                                <td class="fw-bold table-light">{{ "{:,.0f}".format(yearly_totals['kerjasama']) }}</td>
-                            </tr>
-                            <!-- Baris Total -->
-                            <tr class="table-active border-top border-dark">
-                                <td class="text-start fw-bold">JUMLAH</td>
-                                {% for m in range(1, 13) %}
-                                <td class="fw-bold">
-                                    {{ "{:,.0f}".format(financial_data[m]['total']) }}
-                                </td>
-                                {% endfor %}
-                                <td class="fw-bold bg-dark text-white">{{ "{:,.0f}".format(total_yearly_income) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <div class="app-shell">
+        <div class="topbar p-4 mb-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                <div>
+                    <span class="badge bg-primary mb-2">KASB Dashboard</span>
+                    <h1 class="mb-1 fw-bold" style="letter-spacing:-0.04em;">Dashboard Utama Semua Revenue Stream</h1>
+                    <p class="text-soft mb-0">Prestasi keseluruhan perniagaan mengikut sumber pendapatan utama.</p>
                 </div>
-                <small class="text-muted mt-2 d-block">*Angka ini adalah gabungan semua sumber pendapatan (Sewaan, Efeis, Petros, Projek & Kerjasama).</small>
+                <div class="d-flex align-items-center gap-3 flex-wrap justify-content-end">
+                    <form action="{{ url_for('index') }}" method="get" class="d-flex align-items-center gap-2">
+                        <label class="fw-semibold text-soft mb-0">Tahun</label>
+                        <select name="year" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 120px;">
+                            {% for y in range(current_year, 2024, -1) %}
+                            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Log Keluar</a>
+                </div>
             </div>
         </div>
 
-        <!-- HANYA OWNER BOLEH LIHAT PECAHAN GAJI & KOMISYEN -->
+        <div class="panel p-3 p-lg-4 mb-4">
+            <div class="mini-label">Navigasi Pantas</div>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('sewaan_dashboard') }}" class="btn btn-outline-primary btn-sm">Sewaan</a>
+                <a href="{{ url_for('efeis_dashboard', year=selected_year) }}" class="btn btn-outline-info btn-sm">Efeis</a>
+                <a href="{{ url_for('petros_dashboard', year=selected_year) }}" class="btn btn-outline-warning btn-sm">Petros</a>
+                <a href="{{ url_for('projek_baru_list', year=selected_year) }}" class="btn btn-outline-success btn-sm">Projek Baru</a>
+                <a href="{{ url_for('kerjasama_list', year=selected_year) }}" class="btn btn-outline-secondary btn-sm">Kerjasama</a>
+                <a href="{{ url_for('senarai_peserta') }}" class="btn btn-outline-dark btn-sm">Senarai Peserta</a>
+                <a href="{{ url_for('login_peserta') }}" target="_blank" class="btn btn-outline-primary btn-sm">Portal Peserta</a>
+                <a href="{{ url_for('daftar_kursus') }}" target="_blank" class="btn btn-success btn-sm">Pendaftaran Public</a>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-xl-7">
+                <div class="panel p-3 p-lg-4 h-100">
+                    <div class="mini-label">Carta Sumbangan Pendapatan</div>
+                    <h3 class="mb-3 fw-bold">Peratus sumbangan setiap stream</h3>
+                    <div class="d-flex align-items-end justify-content-between gap-3" style="height: 220px;">
+                        {% for stream in stream_summary %}
+                        <div class="flex-fill text-center">
+                            <div class="small text-soft mb-2">{{ "{:,.1f}".format(stream.share) }}%</div>
+                            <div class="mx-auto rounded-top bg-{{ stream.color }}" style="height: {{ [stream.share * 2.2, 18] | max }}px; min-height: 18px; max-width: 72px; width: 100%;"></div>
+                            <div class="small fw-semibold mt-2">{{ stream.label }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-5">
+                <div class="panel p-3 p-lg-4 h-100">
+                    <div class="mini-label">Trend Bulanan</div>
+                    <h3 class="mb-3 fw-bold">Pendapatan tertinggi mengikut bulan</h3>
+                    <div class="d-grid gap-3">
+                        {% for m in range(1, 13) %}
+                        <div>
+                            <div class="d-flex justify-content-between small text-soft mb-1">
+                                <span>{{ month_names[m-1] }}</span>
+                                <span>RM {{ "{:,.0f}".format(financial_data[m]['total']) }}</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ (financial_data[m]['total'] / (total_yearly_income/12) * 100) if total_yearly_income else 0 }}%;"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="card stat-card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="mini-label text-white-50">Jumlah Pendapatan</div>
+                        <p class="kpi-value">RM {{ "{:,.2f}".format(total_yearly_income) }}</p>
+                        <div class="small text-white-50">{{ selected_year }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card stat-card bg-success text-white">
+                    <div class="card-body">
+                        <div class="mini-label text-white-50">Purata Bulanan</div>
+                        <p class="kpi-value">RM {{ "{:,.2f}".format(avg_monthly_income) }}</p>
+                        <div class="small text-white-50">12 bulan</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card stat-card bg-warning text-dark">
+                    <div class="card-body">
+                        <div class="mini-label text-dark-50">Bulan Terbaik</div>
+                        <p class="kpi-value">{{ best_month_name }}</p>
+                        <div class="small text-dark-50">RM {{ "{:,.2f}".format(best_month_value) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card stat-card bg-secondary text-white">
+                    <div class="card-body">
+                        <div class="mini-label text-white-50">Stream Dominan</div>
+                        <p class="kpi-value">{{ top_stream.label if top_stream else 'Tiada' }}</p>
+                        <div class="small text-white-50">RM {{ "{:,.2f}".format(top_stream.value) if top_stream else '0.00' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel p-3 p-lg-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <div class="mini-label">Sorotan Aliran</div>
+                    <h3 class="mb-0 fw-bold">Ringkasan Setiap Revenue Stream</h3>
+                </div>
+            </div>
+            <div class="row g-3">
+                {% for stream in stream_summary %}
+                <div class="col-xl-2 col-md-4 col-sm-6">
+                    <a href="{{ url_for(stream.link, year=selected_year) }}" class="link-card">
+                        <div class="card stat-card border-0 h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="stream-pill bg-{{ stream.color }} text-white">{{ stream.label }}</span>
+                                </div>
+                                <div class="mini-label">Jumlah</div>
+                                <p class="kpi-value fs-4 mb-2">RM {{ "{:,.2f}".format(stream.value) }}</p>
+                                <div class="small text-soft">Sumbangan: {{ "{:,.1f}".format(stream.share) }}%</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel p-3 p-lg-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <div class="mini-label">Paparan Tahunan</div>
+                    <h3 class="mb-0 fw-bold">Komposisi Pendapatan Bulanan</h3>
+                </div>
+                <div class="small text-soft">Gabungan semua aliran pendapatan</div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-start">Sumber</th>
+                            {% for month in month_names %}
+                            <th>{{ month }}</th>
+                            {% endfor %}
+                            <th>Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-start fw-bold text-primary">Sewaan</td>
+                            {% for m in range(1, 13) %}
+                            <td>{{ "{:,.0f}".format(financial_data[m]['sewaan']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-light">{{ "{:,.0f}".format(yearly_totals['sewaan']) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold text-info">Efeis</td>
+                            {% for m in range(1, 13) %}
+                            <td>{{ "{:,.0f}".format(financial_data[m]['efeis']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-light">{{ "{:,.0f}".format(yearly_totals['efeis']) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold text-warning">Petros</td>
+                            {% for m in range(1, 13) %}
+                            <td>{{ "{:,.0f}".format(financial_data[m]['petros']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-light">{{ "{:,.0f}".format(yearly_totals['petros']) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold text-success">Projek Baru</td>
+                            {% for m in range(1, 13) %}
+                            <td>{{ "{:,.0f}".format(financial_data[m]['projek']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-light">{{ "{:,.0f}".format(yearly_totals['projek']) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold text-secondary">Kerjasama</td>
+                            {% for m in range(1, 13) %}
+                            <td>{{ "{:,.0f}".format(financial_data[m]['kerjasama']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-light">{{ "{:,.0f}".format(yearly_totals['kerjasama']) }}</td>
+                        </tr>
+                        <tr class="table-active">
+                            <td class="text-start fw-bold">Jumlah Keseluruhan</td>
+                            {% for m in range(1, 13) %}
+                            <td class="fw-bold">{{ "{:,.0f}".format(financial_data[m]['total']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-dark text-white">{{ "{:,.0f}".format(total_yearly_income) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         {% if session['role'] and session['role']|lower == 'owner' %}
-        <!-- JADUAL PECAHAN GAJI & KOMISYEN -->
-        <div class="row">
-            <!-- Jadual 1: Gaji Asas (8%) -->
-            <div class="col-md-12 mb-4">
-                <div class="card border-info">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0">💼 Pengiraan Gaji Asas (8%)</h5>
-                        <small>Sumber: Sewaan Aset + Kursus Efeis + Petros</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered text-center mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Bulan</th>
-                                        <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th>
-                                        <th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
-                                        <th class="table-dark">Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="text-start fw-bold">Jumlah Sumber (RM)</td>
-                                        {% for m in range(1, 13) %}
-                                        <td class="text-muted">{{ "{:,.0f}".format(breakdown_data[m]['group_a_total']) }}</td>
-                                        {% endfor %}
-                                        <td class="fw-bold">{{ "{:,.0f}".format(totals_breakdown['group_a_total']) }}</td>
-                                    </tr>
-                                    <tr class="table-info">
-                                        <td class="text-start fw-bold">Gaji Asas 8% (RM)</td>
-                                        {% for m in range(1, 13) %}
-                                        <td class="fw-bold text-dark">{{ "{:,.0f}".format(breakdown_data[m]['gaji_asas']) }}</td>
-                                        {% endfor %}
-                                        <td class="fw-bold bg-info text-white">{{ "{:,.2f}".format(totals_breakdown['gaji_asas']) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Jadual 2: Komisyen Projek Baru (Tiered) -->
-            <div class="col-md-12 mb-4">
-                <div class="card border-success">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">🏗️ Komisyen Projek Baru</h5>
-                        <small>Kadar: 10% (Untung &lt; RM500k) | 15% (Untung &ge; RM500k)</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered text-center mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Bulan</th>
-                                        <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th>
-                                        <th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
-                                        <th class="table-dark">Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="text-start">Untung Bersih Projek</td>
-                                        {% for m in range(1, 13) %}
-                                        <td class="text-muted">{{ "{:,.0f}".format(breakdown_data[m]['projek_amt']) }}</td>
-                                        {% endfor %}
-                                        <td class="fw-bold">{{ "{:,.0f}".format(totals_breakdown['projek_amt']) }}</td>
-                                    </tr>
-                                    <tr class="table-success">
-                                        <td class="text-start fw-bold">Komisyen Diterima</td>
-                                        {% for m in range(1, 13) %}
-                                        <td class="fw-bold text-dark">{{ "{:,.0f}".format(breakdown_data[m]['projek_comm']) }}</td>
-                                        {% endfor %}
-                                        <td class="fw-bold bg-success text-white">{{ "{:,.2f}".format(totals_breakdown['projek_comm']) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Jadual 3: Komisyen Kerjasama (1.5/5) -->
-            <div class="col-md-12 mb-4">
-                <div class="card border-secondary">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="mb-0">🤝 Komisyen Kerjasama</h5>
-                        <small>Formula: 1.5/5 daripada Nilai Revenue</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered text-center mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Bulan</th>
-                                        <th>Jan</th><th>Feb</th><th>Mac</th><th>Apr</th><th>Mei</th><th>Jun</th>
-                                        <th>Jul</th><th>Ogo</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Dis</th>
-                                        <th class="table-dark">Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="text-start">Nilai Revenue</td>
-                                        {% for m in range(1, 13) %}
-                                        <td class="text-muted">{{ "{:,.0f}".format(breakdown_data[m]['kerjasama_amt']) }}</td>
-                                        {% endfor %}
-                                        <td class="fw-bold">{{ "{:,.0f}".format(totals_breakdown['kerjasama_amt']) }}</td>
-                                    </tr>
-                                    <tr class="table-secondary">
-                                        <td class="text-start fw-bold">Komisyen (1.5/5)</td>
-                                        {% for m in range(1, 13) %}
-                                        <td class="fw-bold text-dark">{{ "{:,.0f}".format(breakdown_data[m]['kerjasama_comm']) }}</td>
-                                        {% endfor %}
-                                        <td class="fw-bold bg-secondary text-white">{{ "{:,.2f}".format(totals_breakdown['kerjasama_comm']) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+        <div class="panel p-3 p-lg-4 mb-4">
+            <div class="mini-label">Pengiraan Tertier</div>
+            <h3 class="mb-3 fw-bold">Bonus & Komisyen</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-start">Kategori</th>
+                            {% for month in month_names %}
+                            <th>{{ month }}</th>
+                            {% endfor %}
+                            <th>Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-start fw-bold text-info">Gaji Asas 8%</td>
+                            {% for m in range(1, 13) %}
+                            <td>{{ "{:,.0f}".format(breakdown_data[m]['gaji_asas']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-light">{{ "{:,.2f}".format(totals_breakdown['gaji_asas']) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold text-success">Komisyen Projek Baru</td>
+                            {% for m in range(1, 13) %}
+                            <td>{{ "{:,.0f}".format(breakdown_data[m]['projek_comm']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-light">{{ "{:,.2f}".format(totals_breakdown['projek_comm']) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold text-secondary">Komisyen Kerjasama</td>
+                            {% for m in range(1, 13) %}
+                            <td>{{ "{:,.0f}".format(breakdown_data[m]['kerjasama_comm']) }}</td>
+                            {% endfor %}
+                            <td class="fw-bold bg-light">{{ "{:,.2f}".format(totals_breakdown['kerjasama_comm']) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         {% endif %}
-        
-        <footer class="text-center mt-4 text-muted small">
-            &copy; 2026 KASB Properties.
-        </footer>
-    </div>
 
+        <div class="text-center text-soft small mt-4">© 2026 KASB Properties</div>
+    </div>
 </body>
 </html>
